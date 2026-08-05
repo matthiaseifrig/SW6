@@ -90,6 +90,12 @@ Adresse nur einmal, egal wer sie zuerst berechnet.
 
 ## Kunden, Besuche & Notizen
 
+- **Kunde suchen**: Suchfeld oben in der App, durchsucht Firmenname, Ort,
+  Straße, PLZ sowie Ansprechpartner/gesetzliche Vertreter der eigenen (bzw.
+  bei „owner“ + „Alle Kollegen anzeigen“ aller) Kunden – unabhängig von der
+  Ortsauswahl weiter unten. Ein Treffer lässt sich aufklappen und zeigt
+  dieselben Details/Aktionen wie ein Stopp in der Route (Kontakt, Besuch
+  bestätigen, Verlauf).
 - **Kunde hinzufügen**: Formular oben in der App, landet sofort in der
   eigenen Kundenliste.
 - **Besuch vom Kunden bestätigen lassen**: Bei jedem Stopp in der berechneten

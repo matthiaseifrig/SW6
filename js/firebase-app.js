@@ -3,6 +3,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import {
   getAuth,
+  setPersistence,
+  browserLocalPersistence,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
@@ -21,11 +23,19 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Sitzung dauerhaft im Browser merken (statt nur fuer die Tab-Sitzung),
+// damit man nicht bei jedem Aufruf erneut E-Mail/Passwort eingeben muss.
+// Das greift nur innerhalb desselben Browser-Kontexts: Safari behandelt
+// "Zum Home-Bildschirm hinzufuegen" als eigenen Speicherbereich, getrennt
+// von normalen Safari-Tabs - Login-Status wird zwischen beiden nicht geteilt.
+const persistenceReady = setPersistence(auth, browserLocalPersistence);
+
 export function onAuthChange(callback) {
   return onAuthStateChanged(auth, callback);
 }
 
-export function login(email, password) {
+export async function login(email, password) {
+  await persistenceReady;
   return signInWithEmailAndPassword(auth, email, password);
 }
 

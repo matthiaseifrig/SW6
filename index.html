@@ -42,9 +42,21 @@
 
   <div id="app-root" class="hidden">
 
-    <section class="panel" id="add-customer-panel">
+    <section class="panel" id="search-panel">
+      <div class="field">
+        <label for="customer-search">Kunde suchen</label>
+        <input type="text" id="customer-search" placeholder="Firmenname, Ort, Straße oder Ansprechpartner …">
+      </div>
+      <ul id="search-results" class="search-results hidden"></ul>
+      <p id="search-empty" class="hint hidden">Keine Treffer.</p>
+    </section>
+
+    <section class="panel accent" id="add-customer-panel">
       <div class="collapsible-header" id="add-customer-toggle">
-        <h2>Kunde hinzufügen</h2>
+        <div class="collapsible-title">
+          <span class="add-icon">+</span>
+          <h2>Kunde hinzufügen</h2>
+        </div>
         <span class="chevron">▾</span>
       </div>
       <form id="add-customer-form" class="hidden">

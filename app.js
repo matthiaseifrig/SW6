@@ -62,6 +62,10 @@ function cacheEls() {
 
   els.appRoot = document.getElementById("app-root");
 
+  els.searchInput = document.getElementById("customer-search");
+  els.searchResults = document.getElementById("search-results");
+  els.searchEmpty = document.getElementById("search-empty");
+
   els.addCustomerToggle = document.getElementById("add-customer-toggle");
   els.addCustomerForm = document.getElementById("add-customer-form");
   els.addCustomerStatus = document.getElementById("add-customer-status");
@@ -110,6 +114,8 @@ function bindStaticEvents() {
   els.loginForm.addEventListener("submit", onLoginSubmit);
   els.logoutBtn.addEventListener("click", () => logout());
   els.scopeToggle.addEventListener("change", onScopeToggle);
+
+  els.searchInput.addEventListener("input", onSearchInput);
 
   els.addCustomerToggle.addEventListener("click", () => {
     els.addCustomerForm.classList.toggle("hidden");
@@ -861,34 +867,7 @@ function renderStopList(r) {
     if (!meta) {
       body.innerHTML = '<div class="company">Mein Standort (Startpunkt)</div>';
     } else {
-      const addrLine = [meta.strasse, [meta.plz, meta.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-      let html = '<div class="company">' + escapeHtml(meta.unternehmen) + "</div>";
-      html += '<div class="address">' + escapeHtml(addrLine) + "</div>";
-
-      const vertreter = [meta.vertreter1, meta.vertreter2, meta.vertreter3].filter(Boolean);
-      if (vertreter.length) {
-        html += '<div class="vertreter">Vertretung: ' + escapeHtml(vertreter.join(", ")) + "</div>";
-      } else if (meta.inhaber) {
-        html += '<div class="vertreter">' + escapeHtml(meta.inhaber) + "</div>";
-      }
-
-      const contactBits = [];
-      if (meta.telefon) contactBits.push(escapeHtml(meta.telefon));
-      if (meta.website) contactBits.push(escapeHtml(meta.website));
-      if (contactBits.length) html += '<div class="contact">' + contactBits.join(" · ") + "</div>";
-      if (isVisited) {
-        html +=
-          '<div class="visited-badge">✓ ' +
-          (meta.lastVisitConfirmed ? "Vom Kunden bestätigt" : "Besucht") +
-          " am " +
-          escapeHtml(formatDate(meta.lastVisitedAt)) +
-          (meta.lastVisitNote ? ": " + escapeHtml(meta.lastVisitNote) : "") +
-          "</div>";
-      }
-      if (meta.financials) {
-        html += '<div class="financials">' + buildFinancialsText(meta.financials) + "</div>";
-      }
-      body.innerHTML = html;
+      body.innerHTML = buildCustomerDetailsHtml(meta);
       body.appendChild(buildVisitControls(meta));
     }
 
@@ -914,6 +893,127 @@ function renderStopList(r) {
     body.innerHTML = '<div class="company">Zurück zum Start</div>';
     li.appendChild(body);
     els.stopList.appendChild(li);
+  }
+}
+
+function buildCustomerDetailsHtml(meta) {
+  const isVisited = Boolean(meta.lastVisitedAt);
+  const addrLine = [meta.strasse, [meta.plz, meta.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  let html = '<div class="company">' + escapeHtml(meta.unternehmen) + "</div>";
+  html += '<div class="address">' + escapeHtml(addrLine) + "</div>";
+
+  const vertreter = [meta.vertreter1, meta.vertreter2, meta.vertreter3].filter(Boolean);
+  if (vertreter.length) {
+    html += '<div class="vertreter">Vertretung: ' + escapeHtml(vertreter.join(", ")) + "</div>";
+  } else if (meta.inhaber) {
+    html += '<div class="vertreter">' + escapeHtml(meta.inhaber) + "</div>";
+  }
+
+  const contactBits = [];
+  if (meta.telefon) contactBits.push(escapeHtml(meta.telefon));
+  if (meta.website) contactBits.push(escapeHtml(meta.website));
+  if (contactBits.length) html += '<div class="contact">' + contactBits.join(" · ") + "</div>";
+  if (isVisited) {
+    html +=
+      '<div class="visited-badge">✓ ' +
+      (meta.lastVisitConfirmed ? "Vom Kunden bestätigt" : "Besucht") +
+      " am " +
+      escapeHtml(formatDate(meta.lastVisitedAt)) +
+      (meta.lastVisitNote ? ": " + escapeHtml(meta.lastVisitNote) : "") +
+      "</div>";
+  }
+  if (meta.financials) {
+    html += '<div class="financials">' + buildFinancialsText(meta.financials) + "</div>";
+  }
+  return html;
+}
+
+// ---------- Kunden-Suche ----------
+
+const SEARCH_FIELDS = ["unternehmen", "ort", "strasse", "plz", "vertreter1", "vertreter2", "vertreter3", "inhaber"];
+const SEARCH_RESULT_LIMIT = 30;
+
+function onSearchInput() {
+  const q = els.searchInput.value.trim().toLowerCase();
+  if (!q) {
+    els.searchResults.classList.add("hidden");
+    els.searchResults.innerHTML = "";
+    els.searchEmpty.classList.add("hidden");
+    return;
+  }
+  const matches = state.customers
+    .filter((c) => SEARCH_FIELDS.some((f) => (c[f] || "").toLowerCase().includes(q)))
+    .sort((a, b) => (a.unternehmen || "").localeCompare(b.unternehmen || "", "de"));
+  renderSearchResults(matches.slice(0, SEARCH_RESULT_LIMIT), matches.length);
+}
+
+function renderSearchResults(results, totalCount) {
+  els.searchResults.innerHTML = "";
+  if (!results.length) {
+    els.searchResults.classList.add("hidden");
+    els.searchEmpty.classList.remove("hidden");
+    return;
+  }
+  els.searchEmpty.classList.add("hidden");
+  els.searchResults.classList.remove("hidden");
+
+  results.forEach((meta) => {
+    const li = document.createElement("li");
+    li.className = "search-result";
+
+    const summary = document.createElement("div");
+    summary.className = "search-result-summary";
+    const isVisited = Boolean(meta.lastVisitedAt);
+    const addrLine = [meta.strasse, [meta.plz, meta.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    summary.innerHTML =
+      '<span class="stop-index' +
+      (isVisited ? " visited" : "") +
+      '">' +
+      (isVisited ? "✓" : "") +
+      "</span>" +
+      '<div><div class="company">' +
+      escapeHtml(meta.unternehmen) +
+      '</div><div class="address">' +
+      escapeHtml(addrLine) +
+      "</div></div>";
+    li.appendChild(summary);
+
+    const detail = document.createElement("div");
+    detail.className = "search-result-detail hidden";
+    li.appendChild(detail);
+
+    summary.addEventListener("click", async () => {
+      const willShow = detail.classList.contains("hidden");
+      detail.classList.toggle("hidden");
+      if (willShow && !detail.dataset.loaded) {
+        detail.dataset.loaded = "1";
+        detail.innerHTML = buildCustomerDetailsHtml(meta);
+        if (state.role === "owner") {
+          try {
+            const fin = await getFinancials(meta.id);
+            if (fin) {
+              const finDiv = document.createElement("div");
+              finDiv.className = "financials";
+              finDiv.innerHTML = buildFinancialsText(fin);
+              detail.appendChild(finDiv);
+            }
+          } catch (e) {
+            /* Finanzkennzahlen optional - Fehler ignorieren */
+          }
+        }
+        detail.appendChild(buildVisitControls(meta));
+      }
+    });
+
+    els.searchResults.appendChild(li);
+  });
+
+  if (totalCount > results.length) {
+    const hint = document.createElement("li");
+    hint.className = "hint";
+    hint.style.padding = "0.5rem 0.2rem";
+    hint.textContent = totalCount + " Treffer, zeige die ersten " + results.length + " - bitte genauer eingrenzen.";
+    els.searchResults.appendChild(hint);
   }
 }
 
