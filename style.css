@@ -313,6 +313,12 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
   font-family: inherit;
   font-size: 0.9rem;
 }
+.visit-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.visit-form-actions button.secondary { margin-right: 0; }
 .visit-history {
   margin-top: 0.4rem;
   font-size: 0.82rem;

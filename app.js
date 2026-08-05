@@ -1357,15 +1357,26 @@ function buildVisitControls(meta) {
   const textarea = document.createElement("textarea");
   textarea.placeholder = "Notiz (optional, z. B. Gesprächsinhalt)";
   textarea.rows = 2;
+  const actions = document.createElement("div");
+  actions.className = "visit-form-actions";
+
+  const selfReportBtn = document.createElement("button");
+  selfReportBtn.type = "button";
+  selfReportBtn.className = "secondary small";
+  selfReportBtn.textContent = "Besuch selbst eintragen";
+  actions.appendChild(selfReportBtn);
+
   const confirmOpenBtn = document.createElement("button");
   confirmOpenBtn.type = "button";
   confirmOpenBtn.className = "primary small";
   confirmOpenBtn.textContent = "Vom Kunden bestätigen lassen";
+  actions.appendChild(confirmOpenBtn);
+
   form.appendChild(textarea);
-  form.appendChild(confirmOpenBtn);
+  form.appendChild(actions);
   const formHint = document.createElement("p");
   formHint.className = "hint";
-  formHint.textContent = "Damit der Besuch wirklich stattgefunden hat, bestätigt ihn der Kunde direkt auf deinem Handy.";
+  formHint.textContent = "„Besuch selbst eintragen“ reicht als Notiz. „Vom Kunden bestätigen lassen“ ist optional, wenn der Kunde den Besuch zusätzlich direkt auf deinem Handy bestätigen soll.";
   form.appendChild(formHint);
   wrap.appendChild(form);
 
@@ -1377,6 +1388,12 @@ function buildVisitControls(meta) {
 
   confirmOpenBtn.addEventListener("click", () => {
     openConfirmOverlay(meta, textarea.value.trim());
+    form.classList.add("hidden");
+    textarea.value = "";
+  });
+
+  selfReportBtn.addEventListener("click", () => {
+    startSelfReportVisit(meta, textarea.value.trim());
     form.classList.add("hidden");
     textarea.value = "";
   });
@@ -1495,6 +1512,22 @@ function openConfirmOverlay(meta, note) {
 function closeConfirmOverlay() {
   state.pendingConfirm = null;
   els.confirmOverlay.classList.add("hidden");
+}
+
+async function startSelfReportVisit(meta, note) {
+  state.pendingConfirm = { customerId: meta.id, meta, note, visitId: null };
+  try {
+    const visitId = await addVisit(meta.id, { note, byUid: state.user.uid, byName: state.user.email, confirmedByCustomer: false });
+    state.pendingConfirm.visitId = visitId;
+    els.confirmCompany2.textContent = meta.unternehmen;
+    resetYesNoToggles();
+    els.confirmStepVisit.classList.add("hidden");
+    els.confirmStepOutcome.classList.remove("hidden");
+    els.confirmOverlay.classList.remove("hidden");
+  } catch (err) {
+    alert("Konnte Besuch nicht eintragen: " + err.message);
+    state.pendingConfirm = null;
+  }
 }
 
 async function onConfirmVisitClick() {
