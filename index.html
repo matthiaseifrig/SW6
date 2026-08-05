@@ -3,13 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tourenplaner – Jubilare BdSt</title>
+<title>G.B.V.M. GmbH – BdSt – Tourenplaner</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="topbar">
-  <h1>Tourenplaner</h1>
+  <div class="topbar-logos">
+    <span class="logo-badge"><img src="assets/logo-gbvm.png" alt="G.B.V.M. GmbH Logo"></span>
+    <span class="logo-badge"><img src="assets/logo-bdst.png" alt="BdSt Logo"></span>
+  </div>
+  <h1>G.B.V.M. GmbH – BdSt – Tourenplaner und Mitgliederpflege</h1>
   <p class="subtitle">Adressliste, Routenplanung &amp; Besuchsnotizen</p>
   <div id="user-bar" class="user-bar hidden">
     <span id="user-info"></span>
@@ -69,20 +73,21 @@
         </div>
         <div class="field-row">
           <div class="field">
-            <label for="nc-strasse">Straße &amp; Hausnummer</label>
-            <input type="text" id="nc-strasse">
+            <label for="nc-strasse">Straße &amp; Hausnummer *</label>
+            <input type="text" id="nc-strasse" required>
           </div>
         </div>
         <div class="field-row">
           <div class="field">
-            <label for="nc-plz">PLZ</label>
-            <input type="text" id="nc-plz" inputmode="numeric">
+            <label for="nc-plz">PLZ *</label>
+            <input type="text" id="nc-plz" inputmode="numeric" required>
           </div>
           <div class="field">
             <label for="nc-ort">Ort *</label>
             <input type="text" id="nc-ort" required>
           </div>
         </div>
+        <p class="hint">Straße, PLZ und Ort werden für die Routenberechnung benötigt.</p>
         <div class="field">
           <label for="nc-inhaber">Inhaber / Ansprechpartner</label>
           <input type="text" id="nc-inhaber">

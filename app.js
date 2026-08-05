@@ -271,8 +271,8 @@ async function onAddCustomerSubmit(ev) {
     email: document.getElementById("nc-email").value.trim(),
     website: document.getElementById("nc-website").value.trim(),
   };
-  if (!fields.unternehmen || !fields.ort) {
-    els.addCustomerStatus.textContent = "Bitte mindestens Unternehmen und Ort angeben.";
+  if (!fields.unternehmen || !fields.strasse || !fields.plz || !fields.ort) {
+    els.addCustomerStatus.textContent = "Bitte Unternehmen, Straße, PLZ und Ort angeben (sonst funktioniert die Routenberechnung nicht).";
     return;
   }
   els.addCustomerStatus.textContent = "Speichere …";
