@@ -1,7 +1,7 @@
 :root {
-  --color-bg: #f5f6f8;
+  --color-bg: #e4e7ec;
   --color-panel: #ffffff;
-  --color-border: #dde1e6;
+  --color-border: #cdd3db;
   --color-text: #1f2430;
   --color-muted: #6b7280;
   --color-primary: #1a5fb4;
@@ -217,7 +217,38 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
+  margin-bottom: 0.5rem;
 }
+
+.welcome-banner {
+  background: linear-gradient(120deg, #eaf6ef, #eef5ff);
+  border: 1px solid #cdeadb;
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  animation: welcome-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes welcome-in {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.welcome-close {
+  background: none;
+  border: none;
+  font-size: 1.15rem;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  flex: 0 0 auto;
+  line-height: 1;
+}
+.welcome-close:hover { color: var(--color-text); }
 .two-col > .panel {
   flex: 1 1 320px;
   margin-bottom: 0;

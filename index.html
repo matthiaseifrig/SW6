@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – BdSt – Tourenplaner</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20260805f">
+<link rel="stylesheet" href="style.css?v=20260805g">
 </head>
 <body>
 <header class="topbar">
@@ -46,6 +46,11 @@
   </section>
 
   <div id="app-root" class="hidden">
+
+    <div id="welcome-banner" class="welcome-banner hidden">
+      <span id="welcome-text"></span>
+      <button type="button" id="welcome-close" class="welcome-close" aria-label="Schließen">✕</button>
+    </div>
 
     <section class="panel accent" id="dashboard-panel">
       <div class="collapsible-title">
@@ -358,6 +363,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20260805f"></script>
+<script type="module" src="app.js?v=20260805g"></script>
 </body>
 </html>

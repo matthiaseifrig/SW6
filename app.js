@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260805f";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260805g";
 import {
   subscribeCustomers,
   addCustomer,
@@ -21,9 +21,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260805f";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260805f";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260805f";
+} from "./js/data-store.js?v=20260805g";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260805g";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260805g";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -104,6 +104,10 @@ function cacheEls() {
   els.adminImportStatus = document.getElementById("admin-import-status");
   els.backfillBtn = document.getElementById("backfill-btn");
   els.backfillStatus = document.getElementById("backfill-status");
+
+  els.welcomeBanner = document.getElementById("welcome-banner");
+  els.welcomeText = document.getElementById("welcome-text");
+  els.welcomeClose = document.getElementById("welcome-close");
 
   els.dashboardPanel = document.getElementById("dashboard-panel");
   els.statCustomers = document.getElementById("stat-customers");
@@ -206,6 +210,8 @@ function bindStaticEvents() {
   els.statTiles.forEach((btn) => btn.addEventListener("click", () => openStatDetail(btn.dataset.stat)));
   els.statDetailClose.addEventListener("click", () => els.statDetailOverlay.classList.add("hidden"));
 
+  els.welcomeClose.addEventListener("click", () => els.welcomeBanner.classList.add("hidden"));
+
   els.deeplinkBackBtn.addEventListener("click", closeCustomerPage);
 
   document.addEventListener("click", (ev) => {
@@ -263,7 +269,7 @@ async function handleAuthChange(user) {
   }
 
   const profile = await ensureUserDoc(user);
-  state.user = { uid: user.uid, email: user.email };
+  state.user = { uid: user.uid, email: user.email, name: profile.name || user.email };
   state.role = profile.role || "colleague";
 
   els.loginPanel.classList.add("hidden");
@@ -274,10 +280,40 @@ async function handleAuthChange(user) {
   els.scopeToggle.checked = false;
   state.scopeAll = false;
 
+  showWelcomeBanner(state.user.name);
+
   els.adminImportPanel.classList.toggle("hidden", state.role !== "owner");
   if (state.role === "owner") populateAdminImportUsers();
 
   subscribeToCustomers();
+}
+
+const WELCOME_SAYINGS = [
+  "Auf einen erfolgreichen Tag!",
+  "Jeder Besuch zählt.",
+  "Schön, dass du da bist.",
+  "Viel Erfolg unterwegs!",
+  "Auf gute Gespräche heute.",
+];
+
+function friendlyFirstName(name) {
+  const raw = (name || "").trim();
+  if (!raw) return "";
+  const base = raw.includes("@") ? raw.split("@")[0] : raw;
+  const first = base.split(/[\s._-]/)[0];
+  if (!first) return "";
+  return first.charAt(0).toUpperCase() + first.slice(1);
+}
+
+function showWelcomeBanner(name) {
+  const firstName = friendlyFirstName(name);
+  const saying = WELCOME_SAYINGS[Math.floor(Math.random() * WELCOME_SAYINGS.length)];
+  els.welcomeText.textContent = "Willkommen zurück" + (firstName ? ", " + firstName : "") + "! " + saying;
+  els.welcomeBanner.classList.remove("hidden");
+  // Animation neu starten, falls die Bannerklasse schon einmal genutzt wurde.
+  els.welcomeBanner.style.animation = "none";
+  void els.welcomeBanner.offsetWidth;
+  els.welcomeBanner.style.animation = "";
 }
 
 async function populateAdminImportUsers() {
