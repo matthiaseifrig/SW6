@@ -9,9 +9,13 @@ import {
   saveGeocodeResult,
   addVisit,
   getVisits,
+  getFinancials,
   importStaticAddresses,
+  importRecordsForColleague,
   countOwnCustomers,
+  listUsers,
 } from "./js/data-store.js";
+import { parseNorthDataCsv } from "./js/northdata-import.js";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -32,6 +36,7 @@ const state = {
   scopeAll: false,
   unsubscribeCustomers: null,
   gpsCoords: null,
+  pendingConfirm: null, // { customerId, note }
 };
 
 document.addEventListener("DOMContentLoaded", init);
@@ -65,6 +70,16 @@ function cacheEls() {
   els.importBtn = document.getElementById("import-btn");
   els.importStatus = document.getElementById("import-status");
 
+  els.adminImportPanel = document.getElementById("admin-import-panel");
+  els.adminImportToggle = document.getElementById("admin-import-toggle");
+  els.adminImportBody = document.getElementById("admin-import-body");
+  els.adminImportUser = document.getElementById("admin-import-user");
+  els.adminImportFile = document.getElementById("admin-import-file");
+  els.adminImportBtn = document.getElementById("admin-import-btn");
+  els.adminImportProgress = document.getElementById("admin-import-progress");
+  els.adminImportProgressFill = document.getElementById("admin-import-progress-fill");
+  els.adminImportStatus = document.getElementById("admin-import-status");
+
   els.citySelect = document.getElementById("city-select");
   els.startModeRadios = document.querySelectorAll('input[name="start-mode"]');
   els.startAddressSelect = document.getElementById("start-address-select");
@@ -83,6 +98,12 @@ function cacheEls() {
   els.stopList = document.getElementById("stop-list");
   els.unresolved = document.getElementById("unresolved");
   els.unresolvedList = document.getElementById("unresolved-list");
+
+  els.confirmOverlay = document.getElementById("confirm-overlay");
+  els.confirmCompany = document.getElementById("confirm-company");
+  els.confirmBtn = document.getElementById("confirm-btn");
+  els.confirmCancel = document.getElementById("confirm-cancel");
+  els.confirmThanks = document.getElementById("confirm-thanks");
 }
 
 function bindStaticEvents() {
@@ -96,11 +117,19 @@ function bindStaticEvents() {
   els.addCustomerForm.addEventListener("submit", onAddCustomerSubmit);
   els.importBtn.addEventListener("click", onImportClick);
 
+  els.adminImportToggle.addEventListener("click", () => {
+    els.adminImportBody.classList.toggle("hidden");
+  });
+  els.adminImportBtn.addEventListener("click", onAdminImportClick);
+
   els.citySelect.addEventListener("change", onCityChange);
   els.startModeRadios.forEach((r) => r.addEventListener("change", onStartModeChange));
   els.computeBtn.addEventListener("click", onComputeClick);
   els.mapsLinksToggle.addEventListener("click", () => els.mapsLinks.classList.toggle("hidden"));
   els.printBtn.addEventListener("click", () => window.print());
+
+  els.confirmBtn.addEventListener("click", onConfirmVisitClick);
+  els.confirmCancel.addEventListener("click", closeConfirmOverlay);
 }
 
 // ---------- Auth ----------
@@ -153,7 +182,38 @@ async function handleAuthChange(user) {
   els.scopeToggle.checked = false;
   state.scopeAll = false;
 
+  els.adminImportPanel.classList.toggle("hidden", state.role !== "owner");
+  if (state.role === "owner") populateAdminImportUsers();
+
   subscribeToCustomers();
+}
+
+async function populateAdminImportUsers() {
+  els.adminImportUser.innerHTML = "";
+  try {
+    const users = (await listUsers()).filter((u) => u.uid !== state.user.uid);
+    if (!users.length) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "-- noch niemand angemeldet --";
+      els.adminImportUser.appendChild(opt);
+      return;
+    }
+    users
+      .sort((a, b) => (a.email || "").localeCompare(b.email || "", "de"))
+      .forEach((u) => {
+        const opt = document.createElement("option");
+        opt.value = u.uid;
+        opt.textContent = u.name || u.email || u.uid;
+        els.adminImportUser.appendChild(opt);
+      });
+  } catch (err) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Fehler beim Laden der Nutzerliste";
+    els.adminImportUser.appendChild(opt);
+    console.error(err);
+  }
 }
 
 function onScopeToggle() {
@@ -241,6 +301,53 @@ async function onImportClick() {
   });
   els.importStatus.textContent = "Import abgeschlossen.";
   els.importBtn.disabled = false;
+}
+
+function readFileAsText(file, encoding) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file, encoding);
+  });
+}
+
+async function onAdminImportClick() {
+  const targetUid = els.adminImportUser.value;
+  const file = els.adminImportFile.files[0];
+  if (!targetUid) {
+    els.adminImportStatus.textContent = "Bitte eine Person auswählen.";
+    return;
+  }
+  if (!file) {
+    els.adminImportStatus.textContent = "Bitte zuerst eine CSV-Datei auswählen.";
+    return;
+  }
+
+  els.adminImportBtn.disabled = true;
+  els.adminImportStatus.textContent = "Lese Datei …";
+  try {
+    // North-Data-Exporte sind ISO-8859-1/CP1252 kodiert, nicht UTF-8.
+    const text = await readFileAsText(file, "ISO-8859-1");
+    const records = parseNorthDataCsv(text);
+    if (!records.length) {
+      els.adminImportStatus.textContent = "Keine verwertbaren Zeilen in der Datei gefunden.";
+      return;
+    }
+    els.adminImportProgress.classList.remove("hidden");
+    await importRecordsForColleague(targetUid, state.user.uid, records, (done, total) => {
+      els.adminImportProgressFill.style.width = Math.round((done / total) * 100) + "%";
+      els.adminImportStatus.textContent = `Importiere … ${done}/${total}`;
+    });
+    els.adminImportStatus.textContent = `Fertig: ${records.length} Kunden importiert.`;
+    els.adminImportFile.value = "";
+  } catch (err) {
+    els.adminImportStatus.textContent = "Fehler: " + err.message;
+    console.error(err);
+  } finally {
+    els.adminImportProgress.classList.add("hidden");
+    els.adminImportBtn.disabled = false;
+  }
 }
 
 // ---------- Städte / Auswahl ----------
@@ -479,6 +586,27 @@ function formatDistance(meters) {
   return (meters / 1000).toFixed(1).replace(".", ",") + " km";
 }
 
+function formatEuro(n) {
+  if (typeof n !== "number") return null;
+  return n.toLocaleString("de-DE", { maximumFractionDigits: 0 }) + " €";
+}
+
+function formatPercent(n) {
+  if (typeof n !== "number") return null;
+  return n.toLocaleString("de-DE", { maximumFractionDigits: 1 }) + " %";
+}
+
+function buildFinancialsText(f) {
+  const bits = [];
+  const umsatz = formatEuro(f.umsatz);
+  if (umsatz) bits.push("Umsatz " + umsatz + (typeof f.umsatzCagr === "number" ? " (CAGR " + formatPercent(f.umsatzCagr) + ")" : ""));
+  const gewinn = formatEuro(f.gewinn);
+  if (gewinn) bits.push("Gewinn " + gewinn + (typeof f.gewinnCagr === "number" ? " (CAGR " + formatPercent(f.gewinnCagr) + ")" : ""));
+  if (typeof f.mitarbeiterzahl === "number") bits.push("Mitarbeiter " + f.mitarbeiterzahl);
+  if (!bits.length) return "";
+  return '<span class="label">Nur für dich:</span> ' + bits.map(escapeHtml).join(" · ");
+}
+
 function formatDate(ts) {
   if (!ts) return "";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -595,6 +723,20 @@ async function onComputeClick() {
       routeGeometry = null;
     }
 
+    if (state.role === "owner") {
+      setProgress(1, "Lade Finanzkennzahlen …");
+      await Promise.all(
+        orderedMeta.map(async (meta) => {
+          if (!meta) return;
+          try {
+            meta.financials = await getFinancials(meta.id);
+          } catch (e) {
+            meta.financials = null;
+          }
+        })
+      );
+    }
+
     hideProgress();
     renderResults({
       city,
@@ -673,8 +815,9 @@ function renderMap(r) {
   r.orderedPoints.forEach((p, i) => {
     const meta = r.orderedMeta[i];
     const isStart = i === 0;
+    const isVisited = Boolean(meta && meta.lastVisitedAt);
     const label = isStart ? "Start" : String(i);
-    const color = isStart ? "#2c9e6b" : "#1a5fb4";
+    const color = isStart ? "#2c9e6b" : isVisited ? "#b45309" : "#1a5fb4";
     const icon = L.divIcon({
       className: "",
       html:
@@ -709,9 +852,10 @@ function renderStopList(r) {
   r.orderedMeta.forEach((meta, i) => {
     const li = document.createElement("li");
     const isStart = i === 0;
+    const isVisited = Boolean(meta && meta.lastVisitedAt);
 
     const idxSpan = document.createElement("span");
-    idxSpan.className = "stop-index" + (isStart ? " start" : "");
+    idxSpan.className = "stop-index" + (isStart ? " start" : isVisited ? " visited" : "");
     idxSpan.textContent = isStart ? "S" : String(i);
     li.appendChild(idxSpan);
 
@@ -724,16 +868,29 @@ function renderStopList(r) {
       const addrLine = [meta.strasse, [meta.plz, meta.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ");
       let html = '<div class="company">' + escapeHtml(meta.unternehmen) + "</div>";
       html += '<div class="address">' + escapeHtml(addrLine) + "</div>";
+
+      const vertreter = [meta.vertreter1, meta.vertreter2, meta.vertreter3].filter(Boolean);
+      if (vertreter.length) {
+        html += '<div class="vertreter">Vertretung: ' + escapeHtml(vertreter.join(", ")) + "</div>";
+      } else if (meta.inhaber) {
+        html += '<div class="vertreter">' + escapeHtml(meta.inhaber) + "</div>";
+      }
+
       const contactBits = [];
       if (meta.telefon) contactBits.push(escapeHtml(meta.telefon));
       if (meta.website) contactBits.push(escapeHtml(meta.website));
       if (contactBits.length) html += '<div class="contact">' + contactBits.join(" · ") + "</div>";
-      if (meta.lastVisitedAt) {
+      if (isVisited) {
         html +=
-          '<div class="visited-badge">✓ Besucht am ' +
+          '<div class="visited-badge">✓ ' +
+          (meta.lastVisitConfirmed ? "Vom Kunden bestätigt" : "Besucht") +
+          " am " +
           escapeHtml(formatDate(meta.lastVisitedAt)) +
           (meta.lastVisitNote ? ": " + escapeHtml(meta.lastVisitNote) : "") +
           "</div>";
+      }
+      if (meta.financials) {
+        html += '<div class="financials">' + buildFinancialsText(meta.financials) + "</div>";
       }
       body.innerHTML = html;
       body.appendChild(buildVisitControls(meta));
@@ -783,14 +940,18 @@ function buildVisitControls(meta) {
   const form = document.createElement("div");
   form.className = "visit-form hidden";
   const textarea = document.createElement("textarea");
-  textarea.placeholder = "Notiz zum Besuch (optional)";
+  textarea.placeholder = "Notiz (optional, z. B. Gesprächsinhalt)";
   textarea.rows = 2;
-  const saveBtn = document.createElement("button");
-  saveBtn.type = "button";
-  saveBtn.className = "secondary small";
-  saveBtn.textContent = "Speichern";
+  const confirmOpenBtn = document.createElement("button");
+  confirmOpenBtn.type = "button";
+  confirmOpenBtn.className = "primary small";
+  confirmOpenBtn.textContent = "Vom Kunden bestätigen lassen";
   form.appendChild(textarea);
-  form.appendChild(saveBtn);
+  form.appendChild(confirmOpenBtn);
+  const formHint = document.createElement("p");
+  formHint.className = "hint";
+  formHint.textContent = "Damit der Besuch wirklich stattgefunden hat, bestätigt ihn die Kundin/der Kunde direkt auf deinem Handy.";
+  form.appendChild(formHint);
   wrap.appendChild(form);
 
   const historyBox = document.createElement("div");
@@ -799,17 +960,10 @@ function buildVisitControls(meta) {
 
   toggleBtn.addEventListener("click", () => form.classList.toggle("hidden"));
 
-  saveBtn.addEventListener("click", async () => {
-    saveBtn.disabled = true;
-    try {
-      await addVisit(meta.id, { note: textarea.value.trim(), byUid: state.user.uid, byName: state.user.email });
-      textarea.value = "";
-      form.classList.add("hidden");
-    } catch (err) {
-      alert("Konnte Besuch nicht speichern: " + err.message);
-    } finally {
-      saveBtn.disabled = false;
-    }
+  confirmOpenBtn.addEventListener("click", () => {
+    openConfirmOverlay(meta, textarea.value.trim());
+    form.classList.add("hidden");
+    textarea.value = "";
   });
 
   historyBtn.addEventListener("click", async () => {
@@ -830,7 +984,12 @@ function buildVisitControls(meta) {
       const ul = document.createElement("ul");
       visits.forEach((v) => {
         const li = document.createElement("li");
-        li.textContent = formatDate(v.visitedAt) + " – " + (v.byName || "?") + (v.note ? ": " + v.note : "");
+        li.textContent =
+          formatDate(v.visitedAt) +
+          (v.confirmedByCustomer ? " ✓ vom Kunden bestätigt" : "") +
+          " – " +
+          (v.byName || "?") +
+          (v.note ? ": " + v.note : "");
         ul.appendChild(li);
       });
       historyBox.appendChild(ul);
@@ -893,6 +1052,41 @@ function renderMapsLinks(r) {
     hint.className = "hint";
     hint.textContent = "Google Maps erlaubt nur " + GOOGLE_MAPS_CHUNK + " Orte pro Link – die Tour wurde daher in " + chunks.length + " aufeinanderfolgende Abschnitte aufgeteilt.";
     els.mapsLinks.appendChild(hint);
+  }
+}
+
+// ---------- Besuch vom Kunden bestätigen lassen ----------
+
+function openConfirmOverlay(meta, note) {
+  state.pendingConfirm = { customerId: meta.id, note };
+  els.confirmCompany.textContent = meta.unternehmen;
+  els.confirmThanks.classList.add("hidden");
+  els.confirmBtn.classList.remove("hidden");
+  els.confirmCancel.classList.remove("hidden");
+  els.confirmOverlay.classList.remove("hidden");
+}
+
+function closeConfirmOverlay() {
+  state.pendingConfirm = null;
+  els.confirmOverlay.classList.add("hidden");
+}
+
+async function onConfirmVisitClick() {
+  if (!state.pendingConfirm) return;
+  const { customerId, note } = state.pendingConfirm;
+  els.confirmBtn.disabled = true;
+  try {
+    await addVisit(customerId, { note, byUid: state.user.uid, byName: state.user.email, confirmedByCustomer: true });
+    els.confirmBtn.classList.add("hidden");
+    els.confirmCancel.classList.add("hidden");
+    els.confirmThanks.classList.remove("hidden");
+    setTimeout(() => {
+      closeConfirmOverlay();
+      els.confirmBtn.disabled = false;
+    }, 1600);
+  } catch (err) {
+    alert("Konnte Besuch nicht bestätigen: " + err.message);
+    els.confirmBtn.disabled = false;
   }
 }
 

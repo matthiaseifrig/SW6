@@ -7,6 +7,7 @@
   --color-primary: #1a5fb4;
   --color-primary-dark: #103d78;
   --color-accent: #2c9e6b;
+  --color-visited: #b45309;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -220,12 +221,25 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
   font-size: 0.85rem;
 }
 .stop-index.start { background: var(--color-accent); }
+.stop-index.visited { background: var(--color-visited); }
 .stop-body { flex: 1; }
 .stop-body .company { font-weight: 700; }
 .stop-body .address { color: var(--color-muted); font-size: 0.9rem; }
 .stop-body .leg { color: var(--color-muted); font-size: 0.82rem; margin-top: 0.15rem; }
 .stop-body .contact { font-size: 0.82rem; margin-top: 0.15rem; }
 .stop-body .contact a { color: var(--color-primary); }
+.stop-body .vertreter { font-size: 0.82rem; margin-top: 0.15rem; }
+.stop-body .financials {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  background: #fbf3e7;
+  border: 1px solid #f0dfc4;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  display: inline-block;
+}
+.stop-body .financials .label { font-weight: 600; color: #92610c; }
 
 .unresolved {
   margin-top: 1.25rem;
@@ -234,6 +248,48 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
 }
 .unresolved h3 { margin: 0 0 0.3rem; font-size: 1rem; }
 .unresolved ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+
+#admin-import-body { margin-top: 1rem; }
+#admin-import-progress { max-width: 320px; }
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+.confirm-box {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+.confirm-label { margin: 0; color: var(--color-muted); font-size: 0.9rem; }
+.confirm-box h2 { margin: 0.2rem 0 0.75rem; font-size: 1.5rem; }
+.confirm-hint { color: var(--color-muted); margin-bottom: 1.5rem; }
+.confirm-btn {
+  display: block;
+  width: 100%;
+  background: var(--color-accent);
+  color: white;
+  font-size: 1.3rem;
+  padding: 1.5rem 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+.confirm-btn:hover { background: #237a53; }
+.confirm-thanks {
+  margin-top: 1rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  font-size: 1.1rem;
+}
 
 footer {
   max-width: 900px;

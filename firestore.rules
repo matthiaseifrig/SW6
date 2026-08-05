@@ -24,8 +24,9 @@ service cloud.firestore {
     match /customers/{customerId} {
       allow read: if isSignedIn() &&
         (resource.data.ownerUid == request.auth.uid || isOwnerRole());
+      // "owner" darf Kunden auch im Namen einer/s Kolleg:in anlegen (Import).
       allow create: if isSignedIn() &&
-        request.resource.data.ownerUid == request.auth.uid;
+        (request.resource.data.ownerUid == request.auth.uid || isOwnerRole());
       allow update, delete: if isSignedIn() &&
         (resource.data.ownerUid == request.auth.uid || isOwnerRole());
 
@@ -37,6 +38,13 @@ service cloud.firestore {
           (get(/databases/$(database)/documents/customers/$(customerId)).data.ownerUid == request.auth.uid
             || isOwnerRole())
           && request.resource.data.byUid == request.auth.uid;
+      }
+
+      // Finanzkennzahlen (Umsatz, Gewinn, CAGR, Mitarbeiterzahl, ...) sind
+      // vertraulich - nur "owner" darf sie lesen/schreiben, nicht die/der
+      // Kolleg:in, der/dem der Kunde zugeordnet ist.
+      match /financials/{docId} {
+        allow read, write: if isOwnerRole();
       }
     }
   }

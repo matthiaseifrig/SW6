@@ -92,10 +92,42 @@ Adresse nur einmal, egal wer sie zuerst berechnet.
 
 - **Kunde hinzufügen**: Formular oben in der App, landet sofort in der
   eigenen Kundenliste.
-- **Besuch eintragen**: Bei jedem Stopp in der berechneten Route lässt sich
-  „Besuch eintragen“ anklicken, optional mit Notiz. Der letzte Besuch wird
-  direkt in der Liste angezeigt, „Verlauf anzeigen“ zeigt alle bisherigen
-  Besuche mit Datum, Notiz und Person.
+- **Besuch vom Kunden bestätigen lassen**: Bei jedem Stopp in der berechneten
+  Route lässt sich „Besuch eintragen“ öffnen, optional mit einer privaten
+  Notiz. Der eigentliche Besuch wird aber erst über „Vom Kunden bestätigen
+  lassen“ eingetragen: Es öffnet sich eine große Bestätigungsseite, die dem
+  Kunden auf dem Handy übergeben wird, der/die dann selbst mit einem Tap
+  bestätigt. Damit ist sichergestellt, dass wirklich vor Ort bestätigt wurde
+  – reine Selbstauskunft der/des Kolleg:in reicht nicht. Bereits besuchte
+  Adressen werden in Liste und Karte farblich hervorgehoben (orange statt
+  blau), „Verlauf anzeigen“ zeigt alle bisherigen Besuche mit Datum, Notiz
+  und Person.
+- **Finanzkennzahlen (nur für „owner“)**: Wenn Kundendaten Finanzkennzahlen
+  enthalten (aus dem North-Data-Import, siehe unten), zeigt die Route für die
+  Rolle „owner“ zusätzlich Umsatz, Gewinn (jeweils mit CAGR) und
+  Mitarbeiterzahl an. Kolleg:innen sehen diese Zahlen nie – weder in der App
+  noch über die Datenbank (eigene, nur für „owner“ lesbare Firestore-
+  Unter-Sammlung `financials`).
+
+## Kunden für Kolleg:innen importieren (nur „owner“)
+
+Unter „Kunden für Kolleg:in importieren“ kann die Rolle „owner“ eine
+North-Data-CSV-Exportdatei hochladen und im Namen einer bestimmten Person
+importieren:
+
+1. Die Person muss sich vorher **einmal** selbst in der App angemeldet haben
+   (Zugang wie gewohnt vorher in der Firebase-Konsole anlegen) – erst dann
+   taucht sie in der Auswahlliste auf.
+2. North-Data-CSV-Datei auswählen und „Importieren“ klicken.
+3. Übernommen werden: Firmenname, Adresse, bis zu drei gesetzliche
+   Vertreter:innen (Handelsregister), Telefon/E-Mail/Website – sichtbar für
+   „owner“ und die zugeordnete Person. Umsatz, Gewinn, CAGR% und
+   Mitarbeiterzahl landen in der separaten `financials`-Unter-Sammlung und
+   sind ausschließlich für „owner“ sichtbar.
+
+Die alte „Excel-Liste importieren“-Funktion (ursprüngliche 215er-Liste,
+`data/adressen.js`) bleibt unabhängig davon bestehen und importiert weiterhin
+in den eigenen Account der gerade angemeldeten Person.
 
 ## Daten aktualisieren
 

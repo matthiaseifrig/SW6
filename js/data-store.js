@@ -1,11 +1,13 @@
-// Alle Firestore-Zugriffe rund um Kunden/Adressen und Besuche an einer
-// Stelle gebuendelt.
+// Alle Firestore-Zugriffe rund um Kunden/Adressen, Besuche und
+// Finanzkennzahlen an einer Stelle gebuendelt.
 import {
   collection,
   doc,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
+  getDoc,
   query,
   where,
   orderBy,
@@ -18,6 +20,26 @@ import { db } from "./firebase-app.js";
 import { buildAddressMeta } from "./address-utils.js";
 
 const CUSTOMERS = "customers";
+const FINANCIALS_DOC = "summary";
+
+function customerCoreFields(fields) {
+  const meta = buildAddressMeta(fields);
+  return {
+    unternehmen: fields.unternehmen || "",
+    strasse: fields.strasse || "",
+    plz: fields.plz || "",
+    ort: fields.ort || "",
+    inhaber: fields.inhaber || "",
+    vertreter1: fields.vertreter1 || "",
+    vertreter2: fields.vertreter2 || "",
+    vertreter3: fields.vertreter3 || "",
+    telefon: fields.telefon || "",
+    email: fields.email || "",
+    website: fields.website || "",
+    hasAddress: meta.hasAddress,
+    geocodeQuery: meta.geocodeQuery,
+  };
+}
 
 // Liefert laufend (Realtime) die Kundenliste. scope.all=true liefert alle
 // Kunden aller Kollegen (nur fuer die Rolle "owner" von den Sicherheits-
@@ -36,22 +58,14 @@ export function subscribeCustomers(scope, onChange, onError) {
 }
 
 export async function addCustomer(fields, ownerUid) {
-  const meta = buildAddressMeta(fields);
   const docRef = await addDoc(collection(db, CUSTOMERS), {
-    unternehmen: fields.unternehmen || "",
-    strasse: fields.strasse || "",
-    plz: fields.plz || "",
-    ort: fields.ort || "",
-    inhaber: fields.inhaber || "",
-    telefon: fields.telefon || "",
-    email: fields.email || "",
-    website: fields.website || "",
-    hasAddress: meta.hasAddress,
-    geocodeQuery: meta.geocodeQuery,
+    ...customerCoreFields(fields),
     lat: null,
     lon: null,
     lastVisitedAt: null,
     lastVisitNote: "",
+    lastVisitConfirmed: false,
+    source: "manual",
     ownerUid,
     createdBy: ownerUid,
     createdAt: serverTimestamp(),
@@ -82,27 +96,26 @@ export async function saveGeocodeResult(customerId, coords) {
   });
 }
 
-export async function addVisit(customerId, { note, byUid, byName }) {
+export async function addVisit(customerId, { note, byUid, byName, confirmedByCustomer }) {
   await addDoc(collection(db, CUSTOMERS, customerId, "visits"), {
     note: note || "",
     byUid,
     byName,
+    confirmedByCustomer: Boolean(confirmedByCustomer),
     visitedAt: serverTimestamp(),
   });
   await updateDoc(doc(db, CUSTOMERS, customerId), {
     lastVisitedAt: serverTimestamp(),
     lastVisitNote: note || "",
+    lastVisitConfirmed: Boolean(confirmedByCustomer),
   });
 }
 
-export function subscribeVisits(customerId, onChange, onError) {
+export async function getVisits(customerId) {
   const col = collection(db, CUSTOMERS, customerId, "visits");
   const q = query(col, orderBy("visitedAt", "desc"));
-  return onSnapshot(
-    q,
-    (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-    onError
-  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
 // Einmaliger Import der urspruenglichen Excel-Liste (window.ADDRESS_DATA)
@@ -111,22 +124,14 @@ export function subscribeVisits(customerId, onChange, onError) {
 export async function importStaticAddresses(ownerUid, staticRecords, onProgress) {
   let imported = 0;
   for (const rec of staticRecords) {
-    const meta = buildAddressMeta(rec);
     await addDoc(collection(db, CUSTOMERS), {
-      unternehmen: rec.unternehmen || "",
-      strasse: rec.strasse || "",
-      plz: rec.plz || "",
-      ort: rec.ort || "",
-      inhaber: rec.inhaber || "",
-      telefon: rec.telefon || "",
-      email: rec.email || "",
-      website: rec.website || "",
-      hasAddress: meta.hasAddress,
-      geocodeQuery: meta.geocodeQuery,
+      ...customerCoreFields(rec),
       lat: null,
       lon: null,
       lastVisitedAt: null,
       lastVisitNote: "",
+      lastVisitConfirmed: false,
+      source: "excel",
       ownerUid,
       createdBy: ownerUid,
       createdAt: serverTimestamp(),
@@ -137,15 +142,49 @@ export async function importStaticAddresses(ownerUid, staticRecords, onProgress)
   return imported;
 }
 
+// Import fuer eine/n Kolleg:in durch "owner": legt Kunden im Namen von
+// targetOwnerUid an (von den Sicherheitsregeln nur fuer "owner" erlaubt)
+// und speichert optionale Finanzkennzahlen in einer separaten, nur fuer
+// "owner" lesbaren Unter-Sammlung.
+export async function importRecordsForColleague(targetOwnerUid, createdByUid, records, onProgress) {
+  let imported = 0;
+  for (const rec of records) {
+    const docRef = await addDoc(collection(db, CUSTOMERS), {
+      ...customerCoreFields(rec),
+      lat: null,
+      lon: null,
+      lastVisitedAt: null,
+      lastVisitNote: "",
+      lastVisitConfirmed: false,
+      source: rec.source || "import",
+      ownerUid: targetOwnerUid,
+      createdBy: createdByUid,
+      createdAt: serverTimestamp(),
+    });
+    if (rec.financials && Object.values(rec.financials).some((v) => v !== null && v !== undefined)) {
+      await setDoc(doc(db, CUSTOMERS, docRef.id, "financials", FINANCIALS_DOC), rec.financials);
+    }
+    imported++;
+    if (onProgress) onProgress(imported, records.length);
+  }
+  return imported;
+}
+
+export async function getFinancials(customerId) {
+  const snap = await getDoc(doc(db, CUSTOMERS, customerId, "financials", FINANCIALS_DOC));
+  return snap.exists() ? snap.data() : null;
+}
+
 export async function countOwnCustomers(ownerUid) {
   const q = query(collection(db, CUSTOMERS), where("ownerUid", "==", ownerUid));
   const snap = await getDocs(q);
   return snap.size;
 }
 
-export async function getVisits(customerId) {
-  const col = collection(db, CUSTOMERS, customerId, "visits");
-  const q = query(col, orderBy("visitedAt", "desc"));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+// Liste aller registrierten Nutzer:innen - Sicherheitsregeln erlauben das
+// nur fuer die Rolle "owner" (z.B. fuer die Kolleg:innen-Auswahl beim
+// Import).
+export async function listUsers() {
+  const snap = await getDocs(collection(db, "users"));
+  return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
 }
