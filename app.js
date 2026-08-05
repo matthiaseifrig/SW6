@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260805c";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260805d";
 import {
   subscribeCustomers,
   addCustomer,
@@ -22,9 +22,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260805c";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260805c";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260805c";
+} from "./js/data-store.js?v=20260805d";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260805d";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260805d";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -732,7 +732,7 @@ async function onBackfillConsultationsClick() {
   els.backfillConsultationsBtn.disabled = true;
   els.backfillConsultationsStatus.textContent = "Prüfe bestehende Termine …";
   try {
-    const result = await backfillPendingConsultations(state.user.uid, (done, total) => {
+    const result = await backfillPendingConsultations(state.customers, (done, total) => {
       els.backfillConsultationsStatus.textContent = `Prüfe … ${done}/${total}`;
     });
     els.backfillConsultationsStatus.textContent =

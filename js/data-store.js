@@ -19,8 +19,8 @@ import {
   increment,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20260805c";
-import { buildAddressMeta } from "./address-utils.js?v=20260805c";
+import { db } from "./firebase-app.js?v=20260805d";
+import { buildAddressMeta } from "./address-utils.js?v=20260805d";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -236,21 +236,24 @@ export async function backfillSourceTag(source, tag, onProgress) {
 // sein Ergebnis (und damit die Provision) nachtraeglich erfasst werden
 // kann. Bereits als "offen" bekannte oder bereits abgeschlossene Termine
 // werden nicht angefasst.
-export async function backfillPendingConsultations(ownerUid, onProgress) {
-  const q = query(collection(db, CUSTOMERS), where("ownerUid", "==", ownerUid), where("consultationRequested", "==", true));
-  const snap = await getDocs(q);
-  const candidates = snap.docs.filter((d) => !d.data().pendingConsultation);
+//
+// "customers" ist die bereits geladene, nach Scope gefilterte Kundenliste
+// (state.customers) - so deckt die Migration bei "owner" mit aktiviertem
+// "Alle Kollegen anzeigen" auch Kunden ab, die einem Kollegen gehoeren
+// (ownerUid != eigene uid), statt nur die eigenen.
+export async function backfillPendingConsultations(customers, onProgress) {
+  const candidates = customers.filter((c) => c.consultationRequested && !c.pendingConsultation);
   let updated = 0;
   let checked = 0;
-  for (const custDoc of candidates) {
+  for (const cust of candidates) {
     checked++;
     if (onProgress) onProgress(checked, candidates.length);
-    const visitsSnap = await getDocs(query(collection(db, CUSTOMERS, custDoc.id, "visits"), orderBy("visitedAt", "desc")));
+    const visitsSnap = await getDocs(query(collection(db, CUSTOMERS, cust.id, "visits"), orderBy("visitedAt", "desc")));
     const openVisit = visitsSnap.docs.find((v) => v.data().consultationRequested && !v.data().consultationOutcome);
     if (!openVisit) continue;
-    const at = openVisit.data().consultationAt || custDoc.data().consultationAt;
+    const at = openVisit.data().consultationAt || cust.consultationAt;
     if (!at) continue;
-    await updateDoc(custDoc.ref, { pendingConsultation: { visitId: openVisit.id, at } });
+    await updateDoc(doc(db, CUSTOMERS, cust.id), { pendingConsultation: { visitId: openVisit.id, at } });
     updated++;
   }
   return { checked: candidates.length, updated };
