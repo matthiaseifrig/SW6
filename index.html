@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tourenplaner – Jubilare BdSt</title>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>Tourenplaner</h1>
+  <p class="subtitle">Adressliste „Jubilare BdSt“ – Route je Ort, Start wo du willst</p>
+</header>
+
+<main>
+  <section class="panel controls">
+    <div class="field">
+      <label for="city-select">1. Ort wählen</label>
+      <select id="city-select"></select>
+    </div>
+
+    <div class="field">
+      <label>2. Startpunkt</label>
+      <div class="radio-group">
+        <label class="radio"><input type="radio" name="start-mode" value="first" checked> Beliebig (App wählt)</label>
+        <label class="radio"><input type="radio" name="start-mode" value="address"> Bestimmte Adresse</label>
+        <label class="radio"><input type="radio" name="start-mode" value="gps"> Mein aktueller Standort (GPS)</label>
+      </div>
+      <select id="start-address-select" class="hidden"></select>
+      <p id="gps-status" class="hint hidden"></p>
+    </div>
+
+    <div class="field">
+      <label class="checkbox"><input type="checkbox" id="return-to-start"> Am Ende zum Start zurückkehren</label>
+    </div>
+
+    <button id="compute-btn" class="primary">Route berechnen</button>
+    <div id="progress" class="hidden">
+      <div class="progress-bar"><div id="progress-fill"></div></div>
+      <p id="progress-label"></p>
+    </div>
+  </section>
+
+  <section class="panel results hidden" id="results-panel">
+    <div class="results-header">
+      <h2 id="results-title"></h2>
+      <div class="results-actions">
+        <button id="maps-links-toggle" class="secondary">In Google Maps öffnen</button>
+        <button id="print-btn" class="secondary">Drucken / PDF</button>
+      </div>
+    </div>
+    <div id="maps-links" class="maps-links hidden"></div>
+    <div id="map" class="map"></div>
+    <ol id="stop-list" class="stop-list"></ol>
+    <div id="unresolved" class="unresolved hidden">
+      <h3>Nicht auf der Karte einplanbar</h3>
+      <p class="hint">Diese Adressen fehlen (keine Straße/PLZ hinterlegt) oder konnten nicht gefunden werden. Bitte manuell nachschlagen.</p>
+      <ul id="unresolved-list"></ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Geokodierung: OpenStreetMap Nominatim · Routing: OSRM (project-osrm.org) · Daten werden lokal im Browser zwischengespeichert.</p>
+</footer>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="data/adressen.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
