@@ -207,10 +207,15 @@
       </div>
     </section>
 
-    <section class="panel controls">
+    <section class="panel controls accent">
+      <div class="collapsible-title">
+        <span class="add-icon">🧭</span>
+        <h2>Tourenplanung</h2>
+      </div>
       <div class="field">
-        <label for="city-select">1. Ort wählen</label>
-        <select id="city-select"></select>
+        <label for="city-select">1. Ort(e) wählen (mehrfach möglich)</label>
+        <select id="city-select" multiple size="6"></select>
+        <p class="hint">Mehrere Orte lassen sich zu einer gemeinsamen Route kombinieren – praktisch bei kleinen Orten mit wenig Adressen.</p>
       </div>
 
       <div class="field">

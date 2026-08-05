@@ -191,6 +191,7 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
   cursor: pointer;
 }
 .collapsible-title { display: flex; align-items: center; gap: 0.6rem; }
+.panel.controls .collapsible-title { margin-bottom: 1rem; }
 .collapsible-header h2 { margin: 0; font-size: 1.1rem; }
 .collapsible-title label { font-size: 1.1rem; font-weight: 700; }
 .chevron { font-size: 1rem; color: var(--color-muted); }

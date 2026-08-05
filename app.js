@@ -10,7 +10,6 @@ import {
   addVisit,
   updateVisitOutcome,
   getVisits,
-  getVisitStats,
   getFinancials,
   importStaticAddresses,
   importRecordsForColleague,
@@ -283,7 +282,7 @@ function subscribeToCustomers() {
       state.customers = rows;
       regroupByCity();
       populateCitySelect();
-      if (currentCity()) onCityChange();
+      if (selectedCities().length) onCityChange();
       maybeShowImportPanel();
       refreshDashboard();
       maybeShowDeepLinkedCustomer();
@@ -304,31 +303,28 @@ function maybeShowImportPanel() {
 }
 
 // ---------- Dashboard ----------
+//
+// Alle Zahlen kommen direkt aus der bereits geladenen Kundenliste
+// (state.customers) - kein separates Firestore-Query/Index noetig. Besuche,
+// Mitgliedschaft und Beratungstermin sind dafuer als "letzter Stand" am
+// Kundendokument gespiegelt (siehe updateVisitOutcome in data-store.js).
 
-async function refreshDashboard() {
-  els.statCustomers.textContent = String(state.customers.length);
-
-  let visits = [];
-  try {
-    visits = await getVisitStats(state.scopeAll ? { all: true } : { uid: state.user.uid });
-  } catch (err) {
-    console.error(err);
-    return;
-  }
-
-  els.statVisits.textContent = String(visits.length);
-  els.statMemberships.textContent = String(visits.filter((v) => v.membershipSigned).length);
-  els.statConsultations.textContent = String(visits.filter((v) => v.consultationRequested).length);
+function refreshDashboard() {
+  const customers = state.customers;
+  els.statCustomers.textContent = String(customers.length);
+  els.statVisits.textContent = String(customers.filter((c) => c.lastVisitedAt).length);
+  els.statMemberships.textContent = String(customers.filter((c) => c.membershipSigned).length);
+  els.statConsultations.textContent = String(customers.filter((c) => c.consultationRequested).length);
 
   if (state.role === "owner" && state.scopeAll) {
-    await renderDashboardBreakdown(visits);
+    renderDashboardBreakdown();
     els.dashboardBreakdown.classList.remove("hidden");
   } else {
     els.dashboardBreakdown.classList.add("hidden");
   }
 }
 
-async function renderDashboardBreakdown(visits) {
+async function renderDashboardBreakdown() {
   let users = [];
   try {
     users = await listUsers();
@@ -344,13 +340,11 @@ async function renderDashboardBreakdown(visits) {
     return perUid[uid];
   }
   state.customers.forEach((c) => {
-    bucket(c.ownerUid).customers++;
-  });
-  visits.forEach((v) => {
-    const b = bucket(v.byUid);
-    b.visits++;
-    if (v.membershipSigned) b.memberships++;
-    if (v.consultationRequested) b.consultations++;
+    const b = bucket(c.ownerUid);
+    b.customers++;
+    if (c.lastVisitedAt) b.visits++;
+    if (c.membershipSigned) b.memberships++;
+    if (c.consultationRequested) b.consultations++;
   });
 
   els.dashboardBreakdownBody.innerHTML = "";
@@ -537,27 +531,23 @@ function regroupByCity() {
 }
 
 function populateCitySelect() {
-  const previous = els.citySelect.value;
+  const previous = new Set(selectedCities());
   const cities = Object.keys(state.byCity).sort((a, b) => a.localeCompare(b, "de"));
   const frag = document.createDocumentFragment();
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = `-- Ort wählen (${cities.length} Orte, ${state.customers.length} Adressen) --`;
-  frag.appendChild(placeholder);
   cities.forEach((city) => {
     const opt = document.createElement("option");
     opt.value = city;
     const n = state.byCity[city].length;
     opt.textContent = `${city} (${n} ${n === 1 ? "Adresse" : "Adressen"})`;
+    if (previous.has(city)) opt.selected = true;
     frag.appendChild(opt);
   });
   els.citySelect.innerHTML = "";
   els.citySelect.appendChild(frag);
-  if (cities.includes(previous)) els.citySelect.value = previous;
 }
 
-function currentCity() {
-  return els.citySelect.value;
+function selectedCities() {
+  return Array.from(els.citySelect.selectedOptions).map((o) => o.value);
 }
 
 function currentStartMode() {
@@ -575,8 +565,8 @@ function onCityChange() {
 }
 
 function populateStreetSelect() {
-  const city = currentCity();
-  const addresses = (state.byCity[city] || []).filter((a) => a.hasAddress);
+  const cities = selectedCities();
+  const addresses = cities.flatMap((c) => state.byCity[c] || []).filter((a) => a.hasAddress);
   const byKey = new Map();
   addresses.forEach((a) => {
     const key = streetKey(a);
@@ -600,8 +590,8 @@ function selectedStreetKeys() {
 // Adressen des gewaehlten Orts, optional weiter eingeschraenkt auf die
 // ausgewaehlten Straßen (leere Auswahl = keine Einschraenkung).
 function filteredCityAddresses() {
-  const city = currentCity();
-  const all = state.byCity[city] || [];
+  const cities = selectedCities();
+  const all = cities.flatMap((c) => state.byCity[c] || []);
   const keys = selectedStreetKeys();
   if (!keys.length) return all;
   const keySet = new Set(keys);
@@ -843,11 +833,12 @@ function hideProgress() {
 // ---------- Route berechnen ----------
 
 async function onComputeClick() {
-  const city = currentCity();
-  if (!city) {
-    alert("Bitte zuerst einen Ort auswählen.");
+  const cities = selectedCities();
+  if (!cities.length) {
+    alert("Bitte zuerst mindestens einen Ort auswählen.");
     return;
   }
+  const city = cities.join(", ");
   const mode = currentStartMode();
   if (mode === "gps" && !state.gpsCoords) {
     alert("Standort noch nicht verfügbar. Bitte GPS-Freigabe im Browser erlauben und erneut versuchen.");

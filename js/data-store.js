@@ -2,7 +2,6 @@
 // Finanzkennzahlen an einer Stelle gebuendelt.
 import {
   collection,
-  collectionGroup,
   doc,
   addDoc,
   setDoc,
@@ -78,6 +77,9 @@ export async function addCustomer(fields, ownerUid) {
     lastVisitedAt: null,
     lastVisitNote: "",
     lastVisitConfirmed: false,
+    membershipSigned: false,
+    consultationRequested: false,
+    consultationAt: null,
     source: "manual",
     ownerUid,
     createdBy: ownerUid,
@@ -140,22 +142,17 @@ export async function addVisit(customerId, { note, byUid, byName, confirmedByCus
 
 // Ergaenzt einen bestehenden Besuch nachtraeglich um Mitgliedsaufnahme /
 // Beratungstermin-Wunsch (vom Vertriebsmitarbeiter selbst erfasst, nicht
-// vom Kunden bestaetigt).
+// vom Kunden bestaetigt). Wird zusaetzlich am Kundendokument gespiegelt,
+// damit das Dashboard ohne separate Abfrage/Index direkt aus der schon
+// geladenen Kundenliste zaehlen kann.
 export async function updateVisitOutcome(customerId, visitId, { membershipSigned, consultationRequested, consultationAt }) {
-  await updateDoc(doc(db, CUSTOMERS, customerId, "visits", visitId), {
+  const outcome = {
     membershipSigned: Boolean(membershipSigned),
     consultationRequested: Boolean(consultationRequested),
     consultationAt: consultationAt || null,
-  });
-}
-
-// Liefert alle Besuche im aktuellen Scope (eigene oder - fuer "owner" -
-// alle) fuer das Dashboard. Einmalige Abfrage, kein Realtime-Listener.
-export async function getVisitStats(scope) {
-  const col = collectionGroup(db, "visits");
-  const q = scope.all ? query(col) : query(col, where("byUid", "==", scope.uid));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data());
+  };
+  await updateDoc(doc(db, CUSTOMERS, customerId, "visits", visitId), outcome);
+  await updateDoc(doc(db, CUSTOMERS, customerId), outcome);
 }
 
 // Traegt einen Tag nachtraeglich bei allen Kunden mit der angegebenen
@@ -194,6 +191,9 @@ export async function importStaticAddresses(ownerUid, staticRecords, onProgress)
       lastVisitedAt: null,
       lastVisitNote: "",
       lastVisitConfirmed: false,
+      membershipSigned: false,
+      consultationRequested: false,
+      consultationAt: null,
       source: "excel",
       ownerUid,
       createdBy: ownerUid,
@@ -219,6 +219,9 @@ export async function importRecordsForColleague(targetOwnerUid, createdByUid, re
       lastVisitedAt: null,
       lastVisitNote: "",
       lastVisitConfirmed: false,
+      membershipSigned: false,
+      consultationRequested: false,
+      consultationAt: null,
       source: rec.source || "import",
       ownerUid: targetOwnerUid,
       createdBy: createdByUid,
