@@ -14,6 +14,8 @@ import {
   importRecordsForColleague,
   countOwnCustomers,
   listUsers,
+  addTag,
+  removeTag,
 } from "./js/data-store.js";
 import { parseNorthDataCsv } from "./js/northdata-import.js";
 
@@ -251,7 +253,7 @@ function subscribeToCustomers() {
 
 function maybeShowImportPanel() {
   // Die urspruengliche 215er-Liste soll nur "owner" selbst importieren
-  // koennen - Kolleg:innen bekommen ihre Kunden per Admin-Import oder
+  // koennen - Kollegen bekommen ihre Kunden per Kunden Import oder
   // legen sie einzeln ueber "Kunde hinzufuegen" an.
   const show = state.role === "owner" && !state.scopeAll && state.customers.length === 0;
   els.importPanel.classList.toggle("hidden", !show);
@@ -270,6 +272,11 @@ async function onAddCustomerSubmit(ev) {
     telefon: document.getElementById("nc-telefon").value.trim(),
     email: document.getElementById("nc-email").value.trim(),
     website: document.getElementById("nc-website").value.trim(),
+    tags: document
+      .getElementById("nc-tags")
+      .value.split(",")
+      .map((t) => t.trim())
+      .filter(Boolean),
   };
   if (!fields.unternehmen || !fields.strasse || !fields.plz || !fields.ort) {
     els.addCustomerStatus.textContent = "Bitte Unternehmen, Straße, PLZ und Ort angeben (sonst funktioniert die Routenberechnung nicht).";
@@ -868,6 +875,7 @@ function renderStopList(r) {
       body.innerHTML = '<div class="company">Mein Standort (Startpunkt)</div>';
     } else {
       body.innerHTML = buildCustomerDetailsHtml(meta);
+      body.appendChild(buildTagsSection(meta));
       body.appendChild(buildVisitControls(meta));
     }
 
@@ -926,6 +934,86 @@ function buildCustomerDetailsHtml(meta) {
     html += '<div class="financials">' + buildFinancialsText(meta.financials) + "</div>";
   }
   return html;
+}
+
+function buildTagsSection(meta) {
+  const wrap = document.createElement("div");
+  wrap.className = "tags-section";
+
+  const pillRow = document.createElement("div");
+  pillRow.className = "tags";
+  wrap.appendChild(pillRow);
+
+  const currentTags = Array.isArray(meta.tags) ? meta.tags.slice() : [];
+
+  function renderPills() {
+    pillRow.innerHTML = "";
+    currentTags.forEach((tag) => {
+      const pill = document.createElement("span");
+      pill.className = "tag-pill";
+      const label = document.createElement("span");
+      label.textContent = tag;
+      pill.appendChild(label);
+      const remove = document.createElement("span");
+      remove.className = "tag-remove";
+      remove.textContent = "×";
+      remove.title = "Tag entfernen";
+      remove.addEventListener("click", async () => {
+        try {
+          await removeTag(meta.id, tag);
+          const idx = currentTags.indexOf(tag);
+          if (idx !== -1) currentTags.splice(idx, 1);
+          meta.tags = currentTags.slice();
+          renderPills();
+        } catch (err) {
+          alert("Konnte Tag nicht entfernen: " + err.message);
+        }
+      });
+      pill.appendChild(remove);
+      pillRow.appendChild(pill);
+    });
+
+    const addBtn = document.createElement("span");
+    addBtn.className = "link-btn";
+    addBtn.style.cursor = "pointer";
+    addBtn.textContent = "+ Tag";
+    addBtn.addEventListener("click", () => form.classList.toggle("hidden"));
+    pillRow.appendChild(addBtn);
+  }
+
+  const form = document.createElement("div");
+  form.className = "tag-add-form hidden";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "z. B. LinkedIn";
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.className = "secondary small";
+  saveBtn.textContent = "Hinzufügen";
+  form.appendChild(input);
+  form.appendChild(saveBtn);
+  wrap.appendChild(form);
+
+  saveBtn.addEventListener("click", async () => {
+    const tag = input.value.trim();
+    if (!tag) return;
+    saveBtn.disabled = true;
+    try {
+      await addTag(meta.id, tag);
+      if (!currentTags.includes(tag)) currentTags.push(tag);
+      meta.tags = currentTags.slice();
+      input.value = "";
+      form.classList.add("hidden");
+      renderPills();
+    } catch (err) {
+      alert("Konnte Tag nicht hinzufügen: " + err.message);
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+
+  renderPills();
+  return wrap;
 }
 
 // ---------- Kunden-Suche ----------
@@ -1001,6 +1089,7 @@ function renderSearchResults(results, totalCount) {
             /* Finanzkennzahlen optional - Fehler ignorieren */
           }
         }
+        detail.appendChild(buildTagsSection(meta));
         detail.appendChild(buildVisitControls(meta));
       }
     });
@@ -1046,7 +1135,7 @@ function buildVisitControls(meta) {
   form.appendChild(confirmOpenBtn);
   const formHint = document.createElement("p");
   formHint.className = "hint";
-  formHint.textContent = "Damit der Besuch wirklich stattgefunden hat, bestätigt ihn die Kundin/der Kunde direkt auf deinem Handy.";
+  formHint.textContent = "Damit der Besuch wirklich stattgefunden hat, bestätigt ihn der Kunde direkt auf deinem Handy.";
   form.appendChild(formHint);
   wrap.appendChild(form);
 

@@ -14,6 +14,8 @@ import {
   onSnapshot,
   getDocs,
   serverTimestamp,
+  arrayUnion,
+  arrayRemove,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
 import { db } from "./firebase-app.js";
@@ -21,6 +23,15 @@ import { buildAddressMeta } from "./address-utils.js";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
+const DEFAULT_TAG = "Akquise";
+
+// Jeder neu angelegte/importierte Kunde bekommt automatisch den Tag
+// "Akquise" - zusaetzliche Tags (z.B. "LinkedIn") kommen dazu.
+function normalizeTags(tags) {
+  const list = Array.isArray(tags) ? tags : [];
+  const cleaned = list.map((t) => String(t).trim()).filter(Boolean);
+  return Array.from(new Set([DEFAULT_TAG, ...cleaned]));
+}
 
 function customerCoreFields(fields) {
   const meta = buildAddressMeta(fields);
@@ -36,6 +47,7 @@ function customerCoreFields(fields) {
     telefon: fields.telefon || "",
     email: fields.email || "",
     website: fields.website || "",
+    tags: normalizeTags(fields.tags),
     hasAddress: meta.hasAddress,
     geocodeQuery: meta.geocodeQuery,
   };
@@ -87,6 +99,16 @@ export async function updateCustomer(customerId, fields) {
 
 export async function deleteCustomer(customerId) {
   await deleteDoc(doc(db, CUSTOMERS, customerId));
+}
+
+export async function addTag(customerId, tag) {
+  const clean = String(tag).trim();
+  if (!clean) return;
+  await updateDoc(doc(db, CUSTOMERS, customerId), { tags: arrayUnion(clean) });
+}
+
+export async function removeTag(customerId, tag) {
+  await updateDoc(doc(db, CUSTOMERS, customerId), { tags: arrayRemove(tag) });
 }
 
 export async function saveGeocodeResult(customerId, coords) {
@@ -142,7 +164,7 @@ export async function importStaticAddresses(ownerUid, staticRecords, onProgress)
   return imported;
 }
 
-// Import fuer eine/n Kolleg:in durch "owner": legt Kunden im Namen von
+// Import fuer einen Kollegen durch "owner": legt Kunden im Namen von
 // targetOwnerUid an (von den Sicherheitsregeln nur fuer "owner" erlaubt)
 // und speichert optionale Finanzkennzahlen in einer separaten, nur fuer
 // "owner" lesbaren Unter-Sammlung.
@@ -181,9 +203,8 @@ export async function countOwnCustomers(ownerUid) {
   return snap.size;
 }
 
-// Liste aller registrierten Nutzer:innen - Sicherheitsregeln erlauben das
-// nur fuer die Rolle "owner" (z.B. fuer die Kolleg:innen-Auswahl beim
-// Import).
+// Liste aller registrierten Nutzer - Sicherheitsregeln erlauben das
+// nur fuer die Rolle "owner" (z.B. fuer die Auswahl beim Kunden Import).
 export async function listUsers() {
   const snap = await getDocs(collection(db, "users"));
   return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));

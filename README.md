@@ -1,6 +1,6 @@
 # Tourenplaner – Jubilare BdSt
 
-Web-App zur Tourenplanung mit eigenem Kundenstamm pro Nutzer/in: Login,
+Web-App zur Tourenplanung mit eigenem Kundenstamm pro Nutzer: Login,
 Kunden anlegen, Besuche mit Notiz eintragen, und pro Ort eine nach
 tatsächlicher Fahrzeit optimierte Route mit Karte und Google-Maps-Link.
 
@@ -17,11 +17,11 @@ der Liste, dein aktueller GPS-Standort, oder du überlässt die Wahl der App.
 Login und alle Kunden-/Besuchsdaten laufen über ein Firebase-Projekt
 (Authentication + Firestore, kostenloser Spark-Tarif):
 
-- Jede Person (Chef/in wie Kolleg/innen) hat einen eigenen Zugang
+- Jede Person (Chef wie Kollegen) hat einen eigenen Zugang
   (E-Mail/Passwort), angelegt in der Firebase-Konsole unter
   **Authentication → Nutzer → Nutzer hinzufügen**. Es gibt keine
   Selbstregistrierung in der App.
-- Standardmäßig bekommt jede/r neue Nutzer/in die Rolle **„colleague“** und
+- Standardmäßig bekommt jeder neue Nutzer die Rolle **„colleague“** und
   sieht/bearbeitet nur die eigenen angelegten Kunden.
 - Eine Person mit der Rolle **„owner“** sieht zusätzlich einen Schalter „Alle
   Kollegen anzeigen“ und kann so auf die Gesamtdaten aller zugreifen.
@@ -36,8 +36,8 @@ Login und alle Kunden-/Besuchsdaten laufen über ein Firebase-Projekt
   weitere Person legt neue Kunden i. d. R. selbst über „Kunde hinzufügen“ an).
 - **Sicherheitsregeln**: Die Datei `firestore.rules` in diesem Repo enthält
   den Regeltext, der in der Firebase-Konsole unter **Firestore Database →
-  Regeln** eingefügt und veröffentlicht werden muss, damit jede/r nur die
-  eigenen Daten sieht (bzw. „owner“ alle).
+  Regeln** eingefügt und veröffentlicht werden muss, damit jeder Nutzer nur
+  die eigenen Daten sieht (bzw. „owner“ alle).
 
 ## Nutzung
 
@@ -104,30 +104,34 @@ Adresse nur einmal, egal wer sie zuerst berechnet.
   lassen“ eingetragen: Es öffnet sich eine große Bestätigungsseite, die dem
   Kunden auf dem Handy übergeben wird, der/die dann selbst mit einem Tap
   bestätigt. Damit ist sichergestellt, dass wirklich vor Ort bestätigt wurde
-  – reine Selbstauskunft der/des Kolleg:in reicht nicht. Bereits besuchte
+  – reine Selbstauskunft des Kollegen reicht nicht. Bereits besuchte
   Adressen werden in Liste und Karte farblich hervorgehoben (orange statt
   blau), „Verlauf anzeigen“ zeigt alle bisherigen Besuche mit Datum, Notiz
   und Person.
+- **Tags**: Jeder neu angelegte oder importierte Kunde bekommt automatisch
+  den Tag „Akquise“. Weitere Tags (z. B. „LinkedIn“) lassen sich beim
+  Anlegen direkt mit angeben oder später jederzeit über „+ Tag“ an jedem
+  Kunden hinzufügen/entfernen (mehrere Tags pro Kunde möglich).
 - **Finanzkennzahlen (nur für „owner“)**: Wenn Kundendaten Finanzkennzahlen
-  enthalten (aus dem North-Data-Import, siehe unten), zeigt die Route für die
+  enthalten (aus dem Kunden Import, siehe unten), zeigt die Route für die
   Rolle „owner“ zusätzlich Umsatz, Gewinn (jeweils mit CAGR) und
-  Mitarbeiterzahl an. Kolleg:innen sehen diese Zahlen nie – weder in der App
+  Mitarbeiterzahl an. Kollegen sehen diese Zahlen nie – weder in der App
   noch über die Datenbank (eigene, nur für „owner“ lesbare Firestore-
   Unter-Sammlung `financials`).
 
-## Kunden für Kolleg:innen importieren (nur „owner“)
+## Kunden Import (nur „owner“)
 
-Unter „Kunden für Kolleg:in importieren“ kann die Rolle „owner“ eine
-North-Data-CSV-Exportdatei hochladen und im Namen einer bestimmten Person
-importieren:
+Unter „Kunden Import“ kann die Rolle „owner“ eine North-Data-CSV-Exportdatei
+hochladen und im Namen einer bestimmten Person importieren:
 
 1. Die Person muss sich vorher **einmal** selbst in der App angemeldet haben
    (Zugang wie gewohnt vorher in der Firebase-Konsole anlegen) – erst dann
    taucht sie in der Auswahlliste auf.
 2. North-Data-CSV-Datei auswählen und „Importieren“ klicken.
 3. Übernommen werden: Firmenname, Adresse, bis zu drei gesetzliche
-   Vertreter:innen (Handelsregister), Telefon/E-Mail/Website – sichtbar für
-   „owner“ und die zugeordnete Person. Umsatz, Gewinn, CAGR% und
+   Vertreter (Handelsregister), Telefon/E-Mail/Website – sichtbar für
+   „owner“ und die zugeordnete Person. Alle importierten Kunden werden
+   automatisch mit „Akquise“ getaggt. Umsatz, Gewinn, CAGR% und
    Mitarbeiterzahl landen in der separaten `financials`-Unter-Sammlung und
    sind ausschließlich für „owner“ sichtbar.
 
