@@ -108,10 +108,18 @@ Adresse nur einmal, egal wer sie zuerst berechnet.
   Adressen werden in Liste und Karte farblich hervorgehoben (orange statt
   blau), „Verlauf anzeigen“ zeigt alle bisherigen Besuche mit Datum, Notiz
   und Person.
-- **Tags**: Jeder neu angelegte oder importierte Kunde bekommt automatisch
-  den Tag „Akquise“. Weitere Tags (z. B. „LinkedIn“) lassen sich beim
-  Anlegen direkt mit angeben oder später jederzeit über „+ Tag“ an jedem
-  Kunden hinzufügen/entfernen (mehrere Tags pro Kunde möglich).
+- **Tags**: feste Liste (`js/tags.js`): „Akquise“ (automatisch bei jedem
+  neuen/importierten Kunden), „North Data“ (automatisch beim Kunden Import),
+  „LinkedIn“, „Persönlicher Kontakt“. Bewusst keine Freitext-Tags, damit
+  keine wild wachsende Sammlung entsteht. Weitere Tags aus der Liste lassen
+  sich beim Anlegen direkt ankreuzen oder später jederzeit über „+ Tag“ an
+  jedem Kunden hinzufügen/entfernen (mehrere Tags pro Kunde möglich).
+- **Mitgliedschaft & Beratungstermin**: Direkt im Anschluss an eine vom
+  Kunden bestätigte Besuchsbestätigung fragt die App (nur für den
+  Mitarbeiter, nicht für den Kunden sichtbar) „BdSt-Mitgliedschaft
+  abgeschlossen?“ und „Beratungstermin gewünscht?“ ab; bei „Ja“ zum
+  Beratungstermin lassen sich Datum und Uhrzeit eintragen. Diese Angaben
+  fließen direkt ins Dashboard ein.
 - **Finanzkennzahlen (nur für „owner“)**: Wenn Kundendaten Finanzkennzahlen
   enthalten (aus dem Kunden Import, siehe unten), zeigt die Route für die
   Rolle „owner“ zusätzlich Umsatz, Gewinn (jeweils mit CAGR) und
@@ -139,6 +147,35 @@ Die alte „Excel-Liste importieren“-Funktion (ursprüngliche 215er-Liste,
 `data/adressen.js`) bleibt unabhängig davon bestehen und importiert weiterhin
 in den eigenen Account der gerade angemeldeten Person.
 
+Kunden, die schon **vor** Einführung des „North Data“-Tags importiert wurden,
+lassen sich über den Button „Tag „North Data“ nachtragen“ (im selben Bereich)
+einmalig nachträglich taggen.
+
+## Ort + Straße bei der Routenplanung
+
+Nach der Ortsauswahl lässt sich zusätzlich eine oder mehrere Straßen
+auswählen (Mehrfachauswahl, PLZ in Klammern). Ohne Auswahl wird wie bisher
+der komplette Ort geplant – bei großen Orten mit vielen hundert Adressen
+(z. B. München) empfiehlt sich aber eine Eingrenzung auf einzelne Straßen
+oder Straßenzüge, sonst dauert die Berechnung entsprechend lange.
+
+## Dashboard
+
+Direkt nach dem Login zeigt die App oben eine Kennzahlen-Übersicht: Anzahl
+angelegter Kunden, bestätigte Besuche, abgeschlossene BdSt-Mitgliedschaften
+und gewünschte Beratungstermine – standardmäßig für die eigenen Daten. Für
+die Rolle „owner“ mit aktiviertem „Alle Kollegen anzeigen“ werden zusätzlich
+die Gesamtzahlen sowie eine Tabelle mit den Werten pro Person angezeigt.
+
+## Route drucken / als PDF, QR-Codes
+
+„Drucken / PDF“ nutzt den normalen Druckdialog des Browsers (dort „Als PDF
+speichern“ wählbar). Der Ausdruck enthält einen Hinweis, Besuche nach dem
+Termin unbedingt im System nachzutragen, sowie pro Kunde einen QR-Code. Der
+QR-Code verlinkt zurück in die App zu genau diesem Kunden (`?customer=…`) –
+kurz scannen öffnet direkt dessen Kontaktdaten samt „Besuch eintragen“, ohne
+erst suchen zu müssen.
+
 ## Daten aktualisieren
 
 Die Adressdaten liegen sowohl als `data/adressen.json` (lesbar) als auch als
@@ -163,5 +200,6 @@ Das Skript überschreibt beide Dateien im `data/`-Ordner.
 - Die Kontaktfelder (Inhaber/Telefon/E-Mail/Website) stammen unverändert aus
   der Quelltabelle; bei einzelnen Zeilen sind dort in der Originaldatei nicht
   alle Spalten konsistent befüllt.
-- Leaflet (Kartenbibliothek) ist lokal unter `vendor/leaflet/` eingebunden,
-  es wird also kein externes CDN für die Kartendarstellung selbst benötigt.
+- Leaflet (Kartenbibliothek) und die QR-Code-Bibliothek (`qrcode-generator`)
+  sind lokal unter `vendor/` eingebunden, es wird also kein externes CDN für
+  Karten- oder QR-Code-Darstellung benötigt.

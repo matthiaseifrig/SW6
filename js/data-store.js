@@ -2,6 +2,7 @@
 // Finanzkennzahlen an einer Stelle gebuendelt.
 import {
   collection,
+  collectionGroup,
   doc,
   addDoc,
   setDoc,
@@ -119,11 +120,14 @@ export async function saveGeocodeResult(customerId, coords) {
 }
 
 export async function addVisit(customerId, { note, byUid, byName, confirmedByCustomer }) {
-  await addDoc(collection(db, CUSTOMERS, customerId, "visits"), {
+  const visitRef = await addDoc(collection(db, CUSTOMERS, customerId, "visits"), {
     note: note || "",
     byUid,
     byName,
     confirmedByCustomer: Boolean(confirmedByCustomer),
+    membershipSigned: false,
+    consultationRequested: false,
+    consultationAt: null,
     visitedAt: serverTimestamp(),
   });
   await updateDoc(doc(db, CUSTOMERS, customerId), {
@@ -131,6 +135,43 @@ export async function addVisit(customerId, { note, byUid, byName, confirmedByCus
     lastVisitNote: note || "",
     lastVisitConfirmed: Boolean(confirmedByCustomer),
   });
+  return visitRef.id;
+}
+
+// Ergaenzt einen bestehenden Besuch nachtraeglich um Mitgliedsaufnahme /
+// Beratungstermin-Wunsch (vom Vertriebsmitarbeiter selbst erfasst, nicht
+// vom Kunden bestaetigt).
+export async function updateVisitOutcome(customerId, visitId, { membershipSigned, consultationRequested, consultationAt }) {
+  await updateDoc(doc(db, CUSTOMERS, customerId, "visits", visitId), {
+    membershipSigned: Boolean(membershipSigned),
+    consultationRequested: Boolean(consultationRequested),
+    consultationAt: consultationAt || null,
+  });
+}
+
+// Liefert alle Besuche im aktuellen Scope (eigene oder - fuer "owner" -
+// alle) fuer das Dashboard. Einmalige Abfrage, kein Realtime-Listener.
+export async function getVisitStats(scope) {
+  const col = collectionGroup(db, "visits");
+  const q = scope.all ? query(col) : query(col, where("byUid", "==", scope.uid));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => d.data());
+}
+
+// Traegt einen Tag nachtraeglich bei allen Kunden mit der angegebenen
+// "source" nach (z.B. "North Data" bei bereits importierten
+// North-Data-Kunden, die den Tag noch nicht hatten).
+export async function backfillSourceTag(source, tag, onProgress) {
+  const q = query(collection(db, CUSTOMERS), where("source", "==", source));
+  const snap = await getDocs(q);
+  const missing = snap.docs.filter((d) => !(d.data().tags || []).includes(tag));
+  let done = 0;
+  for (const d of missing) {
+    await updateDoc(d.ref, { tags: arrayUnion(tag) });
+    done++;
+    if (onProgress) onProgress(done, missing.length);
+  }
+  return { updated: done, alreadyTagged: snap.size - missing.length };
 }
 
 export async function getVisits(customerId) {

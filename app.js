@@ -8,7 +8,9 @@ import {
   addCustomer,
   saveGeocodeResult,
   addVisit,
+  updateVisitOutcome,
   getVisits,
+  getVisitStats,
   getFinancials,
   importStaticAddresses,
   importRecordsForColleague,
@@ -16,8 +18,10 @@ import {
   listUsers,
   addTag,
   removeTag,
+  backfillSourceTag,
 } from "./js/data-store.js";
 import { parseNorthDataCsv } from "./js/northdata-import.js";
+import { TAG_OPTIONS } from "./js/tags.js";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -38,8 +42,11 @@ const state = {
   scopeAll: false,
   unsubscribeCustomers: null,
   gpsCoords: null,
-  pendingConfirm: null, // { customerId, note }
+  pendingConfirm: null, // { customerId, note, visitId, outcome }
+  deepLinkHandled: false,
 };
+
+const QUERY_CUSTOMER_ID = new URLSearchParams(location.search).get("customer");
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -85,8 +92,24 @@ function cacheEls() {
   els.adminImportProgress = document.getElementById("admin-import-progress");
   els.adminImportProgressFill = document.getElementById("admin-import-progress-fill");
   els.adminImportStatus = document.getElementById("admin-import-status");
+  els.backfillBtn = document.getElementById("backfill-btn");
+  els.backfillStatus = document.getElementById("backfill-status");
+
+  els.dashboardPanel = document.getElementById("dashboard-panel");
+  els.statCustomers = document.getElementById("stat-customers");
+  els.statVisits = document.getElementById("stat-visits");
+  els.statMemberships = document.getElementById("stat-memberships");
+  els.statConsultations = document.getElementById("stat-consultations");
+  els.dashboardBreakdown = document.getElementById("dashboard-breakdown");
+  els.dashboardBreakdownBody = document.getElementById("dashboard-breakdown-body");
+
+  els.deeplinkPanel = document.getElementById("deeplink-panel");
+  els.deeplinkBody = document.getElementById("deeplink-body");
+
+  els.ncTagsOptions = document.getElementById("nc-tags-options");
 
   els.citySelect = document.getElementById("city-select");
+  els.streetSelect = document.getElementById("street-select");
   els.startModeRadios = document.querySelectorAll('input[name="start-mode"]');
   els.startAddressSelect = document.getElementById("start-address-select");
   els.gpsStatus = document.getElementById("gps-status");
@@ -106,10 +129,18 @@ function cacheEls() {
   els.unresolvedList = document.getElementById("unresolved-list");
 
   els.confirmOverlay = document.getElementById("confirm-overlay");
+  els.confirmStepVisit = document.getElementById("confirm-step-visit");
   els.confirmCompany = document.getElementById("confirm-company");
   els.confirmBtn = document.getElementById("confirm-btn");
   els.confirmCancel = document.getElementById("confirm-cancel");
-  els.confirmThanks = document.getElementById("confirm-thanks");
+  els.confirmStepOutcome = document.getElementById("confirm-step-outcome");
+  els.confirmCompany2 = document.getElementById("confirm-company-2");
+  els.consultationDatetime = document.getElementById("consultation-datetime");
+  els.consultationDate = document.getElementById("consultation-date");
+  els.consultationTime = document.getElementById("consultation-time");
+  els.outcomeSaveBtn = document.getElementById("outcome-save-btn");
+  els.outcomeSkipBtn = document.getElementById("outcome-skip-btn");
+  els.yesnoToggles = document.querySelectorAll(".yesno-toggle");
 }
 
 function bindStaticEvents() {
@@ -129,8 +160,10 @@ function bindStaticEvents() {
     els.adminImportBody.classList.toggle("hidden");
   });
   els.adminImportBtn.addEventListener("click", onAdminImportClick);
+  els.backfillBtn.addEventListener("click", onBackfillClick);
 
   els.citySelect.addEventListener("change", onCityChange);
+  els.streetSelect.addEventListener("change", refreshStartAddressOptions);
   els.startModeRadios.forEach((r) => r.addEventListener("change", onStartModeChange));
   els.computeBtn.addEventListener("click", onComputeClick);
   els.mapsLinksToggle.addEventListener("click", () => els.mapsLinks.classList.toggle("hidden"));
@@ -138,6 +171,15 @@ function bindStaticEvents() {
 
   els.confirmBtn.addEventListener("click", onConfirmVisitClick);
   els.confirmCancel.addEventListener("click", closeConfirmOverlay);
+  els.outcomeSaveBtn.addEventListener("click", onOutcomeSaveClick);
+  els.outcomeSkipBtn.addEventListener("click", closeConfirmOverlay);
+  els.yesnoToggles.forEach((toggle) => {
+    toggle.querySelectorAll(".yesno-btn").forEach((btn) => {
+      btn.addEventListener("click", () => onYesNoClick(toggle, btn));
+    });
+  });
+
+  populateTagCheckboxes();
 }
 
 // ---------- Auth ----------
@@ -243,6 +285,8 @@ function subscribeToCustomers() {
       populateCitySelect();
       if (currentCity()) onCityChange();
       maybeShowImportPanel();
+      refreshDashboard();
+      maybeShowDeepLinkedCustomer();
     },
     (err) => {
       console.error(err);
@@ -259,7 +303,132 @@ function maybeShowImportPanel() {
   els.importPanel.classList.toggle("hidden", !show);
 }
 
+// ---------- Dashboard ----------
+
+async function refreshDashboard() {
+  els.statCustomers.textContent = String(state.customers.length);
+
+  let visits = [];
+  try {
+    visits = await getVisitStats(state.scopeAll ? { all: true } : { uid: state.user.uid });
+  } catch (err) {
+    console.error(err);
+    return;
+  }
+
+  els.statVisits.textContent = String(visits.length);
+  els.statMemberships.textContent = String(visits.filter((v) => v.membershipSigned).length);
+  els.statConsultations.textContent = String(visits.filter((v) => v.consultationRequested).length);
+
+  if (state.role === "owner" && state.scopeAll) {
+    await renderDashboardBreakdown(visits);
+    els.dashboardBreakdown.classList.remove("hidden");
+  } else {
+    els.dashboardBreakdown.classList.add("hidden");
+  }
+}
+
+async function renderDashboardBreakdown(visits) {
+  let users = [];
+  try {
+    users = await listUsers();
+  } catch (err) {
+    console.error(err);
+  }
+  const nameByUid = {};
+  users.forEach((u) => (nameByUid[u.uid] = u.name || u.email || u.uid));
+
+  const perUid = {};
+  function bucket(uid) {
+    if (!perUid[uid]) perUid[uid] = { customers: 0, visits: 0, memberships: 0, consultations: 0 };
+    return perUid[uid];
+  }
+  state.customers.forEach((c) => {
+    bucket(c.ownerUid).customers++;
+  });
+  visits.forEach((v) => {
+    const b = bucket(v.byUid);
+    b.visits++;
+    if (v.membershipSigned) b.memberships++;
+    if (v.consultationRequested) b.consultations++;
+  });
+
+  els.dashboardBreakdownBody.innerHTML = "";
+  Object.keys(perUid)
+    .sort((a, b) => (nameByUid[a] || a).localeCompare(nameByUid[b] || b, "de"))
+    .forEach((uid) => {
+      const row = perUid[uid];
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" +
+        escapeHtml(nameByUid[uid] || uid) +
+        "</td><td>" +
+        row.customers +
+        "</td><td>" +
+        row.visits +
+        "</td><td>" +
+        row.memberships +
+        "</td><td>" +
+        row.consultations +
+        "</td>";
+      els.dashboardBreakdownBody.appendChild(tr);
+    });
+}
+
+// ---------- Direktlink zu einem Kunden (?customer=ID, z.B. per QR-Code) ----------
+
+function maybeShowDeepLinkedCustomer() {
+  if (!QUERY_CUSTOMER_ID || state.deepLinkHandled) return;
+  const meta = state.customers.find((c) => c.id === QUERY_CUSTOMER_ID);
+  if (!meta) return;
+  state.deepLinkHandled = true;
+  els.deeplinkPanel.classList.remove("hidden");
+  els.deeplinkBody.innerHTML = buildCustomerDetailsHtml(meta);
+  els.deeplinkBody.appendChild(buildTagsSection(meta));
+  els.deeplinkBody.appendChild(buildVisitControls(meta));
+  els.deeplinkPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// ---------- Nachtraeglicher Tag-Backfill (Kunden Import) ----------
+
+async function onBackfillClick() {
+  els.backfillBtn.disabled = true;
+  els.backfillStatus.textContent = "Prüfe bestehende Kunden …";
+  try {
+    const result = await backfillSourceTag("northdata", "North Data", (done, total) => {
+      els.backfillStatus.textContent = `Trage nach … ${done}/${total}`;
+    });
+    els.backfillStatus.textContent = `Fertig: ${result.updated} Kunden ergänzt (${result.alreadyTagged} hatten den Tag schon).`;
+  } catch (err) {
+    els.backfillStatus.textContent = "Fehler: " + err.message;
+  } finally {
+    els.backfillBtn.disabled = false;
+  }
+}
+
 // ---------- Kunde hinzufügen ----------
+
+function populateTagCheckboxes() {
+  els.ncTagsOptions.innerHTML = "";
+  TAG_OPTIONS.forEach((tag) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.value = tag;
+    if (tag === "Akquise") {
+      input.checked = true;
+      input.defaultChecked = true;
+      input.disabled = true;
+    }
+    label.appendChild(input);
+    label.appendChild(document.createTextNode(tag));
+    els.ncTagsOptions.appendChild(label);
+  });
+}
+
+function selectedTagCheckboxes(container) {
+  return Array.from(container.querySelectorAll("input[type=checkbox]:checked")).map((c) => c.value);
+}
 
 async function onAddCustomerSubmit(ev) {
   ev.preventDefault();
@@ -272,14 +441,11 @@ async function onAddCustomerSubmit(ev) {
     telefon: document.getElementById("nc-telefon").value.trim(),
     email: document.getElementById("nc-email").value.trim(),
     website: document.getElementById("nc-website").value.trim(),
-    tags: document
-      .getElementById("nc-tags")
-      .value.split(",")
-      .map((t) => t.trim())
-      .filter(Boolean),
+    tags: selectedTagCheckboxes(els.ncTagsOptions),
   };
-  if (!fields.unternehmen || !fields.strasse || !fields.plz || !fields.ort) {
-    els.addCustomerStatus.textContent = "Bitte Unternehmen, Straße, PLZ und Ort angeben (sonst funktioniert die Routenberechnung nicht).";
+  if (!fields.unternehmen || !fields.strasse || !fields.plz || !fields.ort || !fields.inhaber) {
+    els.addCustomerStatus.textContent =
+      "Bitte Unternehmen, Ansprechpartner, Straße, PLZ und Ort angeben (sonst funktioniert die Routenberechnung nicht).";
     return;
   }
   els.addCustomerStatus.textContent = "Speichere …";
@@ -399,9 +565,51 @@ function currentStartMode() {
   return checked ? checked.value : "first";
 }
 
+function streetKey(a) {
+  return (a.strasse || "") + "|" + (a.plz || "");
+}
+
 function onCityChange() {
+  populateStreetSelect();
+  refreshStartAddressOptions();
+}
+
+function populateStreetSelect() {
   const city = currentCity();
   const addresses = (state.byCity[city] || []).filter((a) => a.hasAddress);
+  const byKey = new Map();
+  addresses.forEach((a) => {
+    const key = streetKey(a);
+    if (!byKey.has(key)) byKey.set(key, { strasse: a.strasse, plz: a.plz, count: 0 });
+    byKey.get(key).count++;
+  });
+  const entries = Array.from(byKey.entries()).sort((a, b) => a[1].strasse.localeCompare(b[1].strasse, "de"));
+  els.streetSelect.innerHTML = "";
+  entries.forEach(([key, info]) => {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = `${info.strasse} (${info.plz}) – ${info.count} ${info.count === 1 ? "Kunde" : "Kunden"}`;
+    els.streetSelect.appendChild(opt);
+  });
+}
+
+function selectedStreetKeys() {
+  return Array.from(els.streetSelect.selectedOptions).map((o) => o.value);
+}
+
+// Adressen des gewaehlten Orts, optional weiter eingeschraenkt auf die
+// ausgewaehlten Straßen (leere Auswahl = keine Einschraenkung).
+function filteredCityAddresses() {
+  const city = currentCity();
+  const all = state.byCity[city] || [];
+  const keys = selectedStreetKeys();
+  if (!keys.length) return all;
+  const keySet = new Set(keys);
+  return all.filter((a) => keySet.has(streetKey(a)));
+}
+
+function refreshStartAddressOptions() {
+  const addresses = filteredCityAddresses().filter((a) => a.hasAddress);
   const frag = document.createDocumentFragment();
   addresses.forEach((a) => {
     const opt = document.createElement("option");
@@ -650,7 +858,7 @@ async function onComputeClick() {
   els.resultsPanel.classList.add("hidden");
 
   try {
-    const all = state.byCity[city] || [];
+    const all = filteredCityAddresses();
     const withAddress = all.filter((a) => a.hasAddress);
     const withoutAddress = all.filter((a) => !a.hasAddress);
 
@@ -877,6 +1085,7 @@ function renderStopList(r) {
       body.innerHTML = buildCustomerDetailsHtml(meta);
       body.appendChild(buildTagsSection(meta));
       body.appendChild(buildVisitControls(meta));
+      body.appendChild(buildCustomerQrCode(meta));
     }
 
     if (i > 0) {
@@ -902,6 +1111,23 @@ function renderStopList(r) {
     li.appendChild(body);
     els.stopList.appendChild(li);
   }
+}
+
+// QR-Code je Kunde: verlinkt zurueck in die App (fuer Ausdrucke/PDF), damit
+// man nach einem Besuch direkt zum Kunden springen und ihn eintragen kann.
+function buildCustomerQrCode(meta) {
+  const wrap = document.createElement("div");
+  wrap.className = "qr-code";
+  try {
+    const url = location.origin + location.pathname + "?customer=" + encodeURIComponent(meta.id);
+    const qr = window.qrcode(0, "M");
+    qr.addData(url);
+    qr.make();
+    wrap.innerHTML = qr.createSvgTag({ cellSize: 3, margin: 2 });
+  } catch (e) {
+    console.error("QR-Code konnte nicht erzeugt werden", e);
+  }
+  return wrap;
 }
 
 function buildCustomerDetailsHtml(meta) {
@@ -973,36 +1199,49 @@ function buildTagsSection(meta) {
       pillRow.appendChild(pill);
     });
 
-    const addBtn = document.createElement("span");
-    addBtn.className = "link-btn";
-    addBtn.style.cursor = "pointer";
-    addBtn.textContent = "+ Tag";
-    addBtn.addEventListener("click", () => form.classList.toggle("hidden"));
-    pillRow.appendChild(addBtn);
+    const remaining = TAG_OPTIONS.filter((t) => !currentTags.includes(t));
+    if (remaining.length) {
+      const addBtn = document.createElement("span");
+      addBtn.className = "link-btn";
+      addBtn.style.cursor = "pointer";
+      addBtn.textContent = "+ Tag";
+      addBtn.addEventListener("click", () => {
+        populateSelect();
+        form.classList.toggle("hidden");
+      });
+      pillRow.appendChild(addBtn);
+    }
   }
 
   const form = document.createElement("div");
   form.className = "tag-add-form hidden";
-  const input = document.createElement("input");
-  input.type = "text";
-  input.placeholder = "z. B. LinkedIn";
+  const select = document.createElement("select");
   const saveBtn = document.createElement("button");
   saveBtn.type = "button";
   saveBtn.className = "secondary small";
   saveBtn.textContent = "Hinzufügen";
-  form.appendChild(input);
+  form.appendChild(select);
   form.appendChild(saveBtn);
   wrap.appendChild(form);
 
+  function populateSelect() {
+    select.innerHTML = "";
+    TAG_OPTIONS.filter((t) => !currentTags.includes(t)).forEach((t) => {
+      const opt = document.createElement("option");
+      opt.value = t;
+      opt.textContent = t;
+      select.appendChild(opt);
+    });
+  }
+
   saveBtn.addEventListener("click", async () => {
-    const tag = input.value.trim();
+    const tag = select.value;
     if (!tag) return;
     saveBtn.disabled = true;
     try {
       await addTag(meta.id, tag);
       if (!currentTags.includes(tag)) currentTags.push(tag);
       meta.tags = currentTags.slice();
-      input.value = "";
       form.classList.add("hidden");
       renderPills();
     } catch (err) {
@@ -1242,12 +1481,23 @@ function renderMapsLinks(r) {
 
 // ---------- Besuch vom Kunden bestätigen lassen ----------
 
+function resetYesNoToggles() {
+  els.yesnoToggles.forEach((toggle) => {
+    toggle.querySelectorAll(".yesno-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.value === "false");
+    });
+  });
+  els.consultationDatetime.classList.add("hidden");
+  els.consultationDate.value = "";
+  els.consultationTime.value = "";
+}
+
 function openConfirmOverlay(meta, note) {
-  state.pendingConfirm = { customerId: meta.id, note };
+  state.pendingConfirm = { customerId: meta.id, meta, note, visitId: null };
   els.confirmCompany.textContent = meta.unternehmen;
-  els.confirmThanks.classList.add("hidden");
-  els.confirmBtn.classList.remove("hidden");
-  els.confirmCancel.classList.remove("hidden");
+  els.confirmStepVisit.classList.remove("hidden");
+  els.confirmStepOutcome.classList.add("hidden");
+  resetYesNoToggles();
   els.confirmOverlay.classList.remove("hidden");
 }
 
@@ -1261,17 +1511,49 @@ async function onConfirmVisitClick() {
   const { customerId, note } = state.pendingConfirm;
   els.confirmBtn.disabled = true;
   try {
-    await addVisit(customerId, { note, byUid: state.user.uid, byName: state.user.email, confirmedByCustomer: true });
-    els.confirmBtn.classList.add("hidden");
-    els.confirmCancel.classList.add("hidden");
-    els.confirmThanks.classList.remove("hidden");
-    setTimeout(() => {
-      closeConfirmOverlay();
-      els.confirmBtn.disabled = false;
-    }, 1600);
+    const visitId = await addVisit(customerId, { note, byUid: state.user.uid, byName: state.user.email, confirmedByCustomer: true });
+    state.pendingConfirm.visitId = visitId;
+    els.confirmCompany2.textContent = state.pendingConfirm.meta.unternehmen;
+    els.confirmStepVisit.classList.add("hidden");
+    els.confirmStepOutcome.classList.remove("hidden");
   } catch (err) {
     alert("Konnte Besuch nicht bestätigen: " + err.message);
+  } finally {
     els.confirmBtn.disabled = false;
+  }
+}
+
+function onYesNoClick(toggle, btn) {
+  toggle.querySelectorAll(".yesno-btn").forEach((b) => b.classList.toggle("active", b === btn));
+  if (toggle.dataset.field === "consultation") {
+    els.consultationDatetime.classList.toggle("hidden", btn.dataset.value !== "true");
+  }
+}
+
+function yesNoValue(field) {
+  const toggle = document.querySelector('.yesno-toggle[data-field="' + field + '"]');
+  const active = toggle.querySelector(".yesno-btn.active");
+  return active ? active.dataset.value === "true" : false;
+}
+
+async function onOutcomeSaveClick() {
+  if (!state.pendingConfirm || !state.pendingConfirm.visitId) return;
+  const { customerId, visitId } = state.pendingConfirm;
+  const membershipSigned = yesNoValue("membership");
+  const consultationRequested = yesNoValue("consultation");
+  let consultationAt = null;
+  if (consultationRequested && els.consultationDate.value) {
+    consultationAt = els.consultationDate.value + "T" + (els.consultationTime.value || "00:00") + ":00";
+  }
+  els.outcomeSaveBtn.disabled = true;
+  try {
+    await updateVisitOutcome(customerId, visitId, { membershipSigned, consultationRequested, consultationAt });
+    closeConfirmOverlay();
+    refreshDashboard();
+  } catch (err) {
+    alert("Konnte Angaben nicht speichern: " + err.message);
+  } finally {
+    els.outcomeSaveBtn.disabled = false;
   }
 }
 

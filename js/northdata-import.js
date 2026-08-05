@@ -104,7 +104,7 @@ export function parseNorthDataCsv(text) {
     const row = rows[r];
     if (!row.length || row.every((c) => !c.trim())) continue;
 
-    const rec = { source: "northdata" };
+    const rec = { source: "northdata", tags: ["North Data"] };
     Object.entries(COLUMN_MAP).forEach(([field, label]) => {
       rec[field] = get(row, label);
     });

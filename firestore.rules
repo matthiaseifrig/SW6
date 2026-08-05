@@ -38,6 +38,10 @@ service cloud.firestore {
           (get(/databases/$(database)/documents/customers/$(customerId)).data.ownerUid == request.auth.uid
             || isOwnerRole())
           && request.resource.data.byUid == request.auth.uid;
+        // Nachtraegliches Ergaenzen von Mitgliedsaufnahme/Beratungstermin
+        // durch die Person, die den Besuch eingetragen hat (oder "owner").
+        allow update: if isSignedIn() &&
+          (resource.data.byUid == request.auth.uid || isOwnerRole());
       }
 
       // Finanzkennzahlen (Umsatz, Gewinn, CAGR, Mitarbeiterzahl, ...) sind
@@ -46,6 +50,13 @@ service cloud.firestore {
       match /financials/{docId} {
         allow read, write: if isOwnerRole();
       }
+    }
+
+    // Collection-Group-Regel: erlaubt dem Dashboard, mit einer einzigen
+    // Abfrage ueber alle "visits"-Unter-Sammlungen hinweg die eigenen
+    // Besuche zu zaehlen (bzw. alle, fuer die Rolle "owner").
+    match /{path=**}/visits/{visitId} {
+      allow read: if isSignedIn() && (resource.data.byUid == request.auth.uid || isOwnerRole());
     }
   }
 }

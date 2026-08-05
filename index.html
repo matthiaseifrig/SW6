@@ -47,6 +47,50 @@
 
   <div id="app-root" class="hidden">
 
+    <section class="panel accent" id="dashboard-panel">
+      <div class="collapsible-title">
+        <span class="add-icon">📊</span>
+        <h2>Dashboard</h2>
+      </div>
+      <div id="dashboard-stats" class="stat-grid">
+        <div class="stat-tile">
+          <div class="stat-value" id="stat-customers">–</div>
+          <div class="stat-label">Kunden angelegt</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-value" id="stat-visits">–</div>
+          <div class="stat-label">Besuche bestätigt</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-value" id="stat-memberships">–</div>
+          <div class="stat-label">BdSt-Mitglieder</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-value" id="stat-consultations">–</div>
+          <div class="stat-label">Beratungstermine</div>
+        </div>
+      </div>
+      <div id="dashboard-breakdown" class="hidden">
+        <h3>Pro Person</h3>
+        <div class="table-scroll">
+          <table id="dashboard-breakdown-table">
+            <thead>
+              <tr><th>Person</th><th>Kunden</th><th>Besuche</th><th>Mitglieder</th><th>Termine</th></tr>
+            </thead>
+            <tbody id="dashboard-breakdown-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel accent hidden" id="deeplink-panel">
+      <div class="collapsible-title">
+        <span class="add-icon">🔗</span>
+        <h2>Direkt geöffneter Kunde</h2>
+      </div>
+      <div id="deeplink-body"></div>
+    </section>
+
     <section class="panel accent" id="search-panel">
       <div class="field">
         <div class="collapsible-title">
@@ -90,8 +134,8 @@
         </div>
         <p class="hint">Straße, PLZ und Ort werden für die Routenberechnung benötigt.</p>
         <div class="field">
-          <label for="nc-inhaber">Inhaber / Ansprechpartner</label>
-          <input type="text" id="nc-inhaber">
+          <label for="nc-inhaber">Inhaber / Ansprechpartner *</label>
+          <input type="text" id="nc-inhaber" required>
         </div>
         <div class="field-row">
           <div class="field">
@@ -108,9 +152,9 @@
           <input type="text" id="nc-website">
         </div>
         <div class="field">
-          <label for="nc-tags">Tags (Komma-getrennt)</label>
-          <input type="text" id="nc-tags" placeholder="z. B. LinkedIn">
-          <p class="hint">Wird automatisch zusätzlich mit „Akquise“ getaggt.</p>
+          <label>Tags</label>
+          <div id="nc-tags-options" class="tag-checkboxes"></div>
+          <p class="hint">„Akquise“ wird automatisch immer vergeben.</p>
         </div>
         <button type="submit" class="primary">Kunde speichern</button>
         <p id="add-customer-status" class="hint"></p>
@@ -136,7 +180,8 @@
           Lädt eine North-Data-CSV-Exportdatei (Firmenname, Adresse, gesetzliche
           Vertreter, Finanzkennzahlen) und legt die Kunden im Namen der
           ausgewählten Person an. Diese Person muss sich vorher einmal selbst
-          angemeldet haben, damit sie hier auswählbar ist.
+          angemeldet haben, damit sie hier auswählbar ist. Importierte Kunden
+          werden automatisch mit „Akquise“ und „North Data“ getaggt.
         </p>
         <div class="field">
           <label for="admin-import-user">Für wen importieren?</label>
@@ -151,6 +196,14 @@
           <div class="progress-bar"><div id="admin-import-progress-fill"></div></div>
         </div>
         <p id="admin-import-status" class="hint"></p>
+
+        <hr class="divider">
+        <p class="hint">
+          Bereits vor dieser Funktion importierte North-Data-Kunden tragen den
+          Tag „North Data“ eventuell noch nicht nach. Einmalig nachtragen:
+        </p>
+        <button id="backfill-btn" class="secondary">Tag „North Data“ nachtragen</button>
+        <p id="backfill-status" class="hint"></p>
       </div>
     </section>
 
@@ -161,7 +214,13 @@
       </div>
 
       <div class="field">
-        <label>2. Startpunkt</label>
+        <label for="street-select">2. Straße (optional, mehrfach wählbar)</label>
+        <select id="street-select" multiple size="5"></select>
+        <p class="hint">Nichts ausgewählt = alle Straßen in diesem Ort. Bei großen Orten (z. B. München) empfohlen, damit die Route nicht zu groß wird.</p>
+      </div>
+
+      <div class="field">
+        <label>3. Startpunkt</label>
         <div class="radio-group">
           <label class="radio"><input type="radio" name="start-mode" value="first" checked> Beliebig (App wählt)</label>
           <label class="radio"><input type="radio" name="start-mode" value="address"> Bestimmte Adresse</label>
@@ -183,6 +242,11 @@
     </section>
 
     <section class="panel results hidden" id="results-panel">
+      <p class="print-only print-reminder">
+        Wichtig: Besuche nach dem Termin bitte unbedingt im System nachtragen
+        (Tourenplaner öffnen, Kunde antippen oder QR-Code scannen, „Besuch
+        eintragen“).
+      </p>
       <div class="results-header">
         <h2 id="results-title"></h2>
         <div class="results-actions">
@@ -206,12 +270,47 @@
 
 <div id="confirm-overlay" class="confirm-overlay hidden">
   <div class="confirm-box">
-    <p class="confirm-label">Besuch bei</p>
-    <h2 id="confirm-company"></h2>
-    <p class="confirm-hint">Bitte an den Kunden übergeben.</p>
-    <button id="confirm-btn" class="confirm-btn">✓ Besuch bestätigen</button>
-    <button id="confirm-cancel" class="secondary">Abbrechen</button>
-    <p id="confirm-thanks" class="confirm-thanks hidden">Danke! Besuch wurde bestätigt.</p>
+    <div id="confirm-step-visit">
+      <p class="confirm-label">Besuch bei</p>
+      <h2 id="confirm-company"></h2>
+      <p class="confirm-hint">Bitte an den Kunden übergeben.</p>
+      <button id="confirm-btn" class="confirm-btn">✓ Besuch bestätigen</button>
+      <button id="confirm-cancel" class="secondary">Abbrechen</button>
+    </div>
+    <div id="confirm-step-outcome" class="hidden">
+      <p class="confirm-label">Danke! Noch kurz für dich:</p>
+      <h2 id="confirm-company-2"></h2>
+
+      <div class="field">
+        <label>BdSt-Mitgliedschaft abgeschlossen?</label>
+        <div class="yesno-toggle" data-field="membership">
+          <button type="button" class="yesno-btn" data-value="true">Ja</button>
+          <button type="button" class="yesno-btn active" data-value="false">Nein</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Beratungstermin gewünscht?</label>
+        <div class="yesno-toggle" data-field="consultation">
+          <button type="button" class="yesno-btn" data-value="true">Ja</button>
+          <button type="button" class="yesno-btn active" data-value="false">Nein</button>
+        </div>
+      </div>
+
+      <div id="consultation-datetime" class="field-row hidden">
+        <div class="field">
+          <label for="consultation-date">Datum</label>
+          <input type="date" id="consultation-date">
+        </div>
+        <div class="field">
+          <label for="consultation-time">Uhrzeit</label>
+          <input type="time" id="consultation-time">
+        </div>
+      </div>
+
+      <button id="outcome-save-btn" class="confirm-btn">Speichern</button>
+      <button id="outcome-skip-btn" class="secondary">Ohne diese Angaben speichern</button>
+    </div>
   </div>
 </div>
 
@@ -220,6 +319,7 @@
 </footer>
 
 <script src="vendor/leaflet/leaflet.js"></script>
+<script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
 <script type="module" src="app.js"></script>
 </body>
