@@ -10,63 +10,149 @@
 <body>
 <header class="topbar">
   <h1>Tourenplaner</h1>
-  <p class="subtitle">Adressliste „Jubilare BdSt“ – Route je Ort, Start wo du willst</p>
+  <p class="subtitle">Adressliste, Routenplanung &amp; Besuchsnotizen</p>
+  <div id="user-bar" class="user-bar hidden">
+    <span id="user-info"></span>
+    <label id="scope-toggle-label" class="scope-toggle hidden">
+      <input type="checkbox" id="scope-toggle">
+      Alle Kollegen anzeigen
+    </label>
+    <button id="logout-btn" class="secondary small">Abmelden</button>
+  </div>
 </header>
 
 <main>
-  <section class="panel controls">
-    <div class="field">
-      <label for="city-select">1. Ort wählen</label>
-      <select id="city-select"></select>
-    </div>
 
-    <div class="field">
-      <label>2. Startpunkt</label>
-      <div class="radio-group">
-        <label class="radio"><input type="radio" name="start-mode" value="first" checked> Beliebig (App wählt)</label>
-        <label class="radio"><input type="radio" name="start-mode" value="address"> Bestimmte Adresse</label>
-        <label class="radio"><input type="radio" name="start-mode" value="gps"> Mein aktueller Standort (GPS)</label>
+  <section class="panel" id="login-panel">
+    <h2>Anmelden</h2>
+    <p class="hint">Zugangsdaten hast du von deinem Chef/Admin erhalten (in der Firebase-Konsole angelegt).</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="login-email">E-Mail</label>
+        <input type="email" id="login-email" autocomplete="username" required>
       </div>
-      <select id="start-address-select" class="hidden"></select>
-      <p id="gps-status" class="hint hidden"></p>
-    </div>
-
-    <div class="field">
-      <label class="checkbox"><input type="checkbox" id="return-to-start"> Am Ende zum Start zurückkehren</label>
-    </div>
-
-    <button id="compute-btn" class="primary">Route berechnen</button>
-    <div id="progress" class="hidden">
-      <div class="progress-bar"><div id="progress-fill"></div></div>
-      <p id="progress-label"></p>
-    </div>
+      <div class="field">
+        <label for="login-password">Passwort</label>
+        <input type="password" id="login-password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="primary">Anmelden</button>
+      <p id="login-error" class="error hidden"></p>
+    </form>
   </section>
 
-  <section class="panel results hidden" id="results-panel">
-    <div class="results-header">
-      <h2 id="results-title"></h2>
-      <div class="results-actions">
-        <button id="maps-links-toggle" class="secondary">In Google Maps öffnen</button>
-        <button id="print-btn" class="secondary">Drucken / PDF</button>
+  <div id="app-root" class="hidden">
+
+    <section class="panel" id="add-customer-panel">
+      <div class="collapsible-header" id="add-customer-toggle">
+        <h2>Kunde hinzufügen</h2>
+        <span class="chevron">▾</span>
       </div>
-    </div>
-    <div id="maps-links" class="maps-links hidden"></div>
-    <div id="map" class="map"></div>
-    <ol id="stop-list" class="stop-list"></ol>
-    <div id="unresolved" class="unresolved hidden">
-      <h3>Nicht auf der Karte einplanbar</h3>
-      <p class="hint">Diese Adressen fehlen (keine Straße/PLZ hinterlegt) oder konnten nicht gefunden werden. Bitte manuell nachschlagen.</p>
-      <ul id="unresolved-list"></ul>
-    </div>
-  </section>
+      <form id="add-customer-form" class="hidden">
+        <div class="field">
+          <label for="nc-unternehmen">Unternehmen *</label>
+          <input type="text" id="nc-unternehmen" required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="nc-strasse">Straße &amp; Hausnummer</label>
+            <input type="text" id="nc-strasse">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="nc-plz">PLZ</label>
+            <input type="text" id="nc-plz" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="nc-ort">Ort *</label>
+            <input type="text" id="nc-ort" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="nc-inhaber">Inhaber / Ansprechpartner</label>
+          <input type="text" id="nc-inhaber">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="nc-telefon">Telefon</label>
+            <input type="text" id="nc-telefon">
+          </div>
+          <div class="field">
+            <label for="nc-email">E-Mail</label>
+            <input type="email" id="nc-email">
+          </div>
+        </div>
+        <div class="field">
+          <label for="nc-website">Website</label>
+          <input type="text" id="nc-website">
+        </div>
+        <button type="submit" class="primary">Kunde speichern</button>
+        <p id="add-customer-status" class="hint"></p>
+      </form>
+    </section>
+
+    <section class="panel hidden" id="import-panel">
+      <p class="hint">Deine Kundenliste ist noch leer. Du kannst die ursprüngliche Excel-Liste (215 Adressen) einmalig importieren:</p>
+      <button id="import-btn" class="secondary">Excel-Liste importieren</button>
+      <p id="import-status" class="hint"></p>
+    </section>
+
+    <section class="panel controls">
+      <div class="field">
+        <label for="city-select">1. Ort wählen</label>
+        <select id="city-select"></select>
+      </div>
+
+      <div class="field">
+        <label>2. Startpunkt</label>
+        <div class="radio-group">
+          <label class="radio"><input type="radio" name="start-mode" value="first" checked> Beliebig (App wählt)</label>
+          <label class="radio"><input type="radio" name="start-mode" value="address"> Bestimmte Adresse</label>
+          <label class="radio"><input type="radio" name="start-mode" value="gps"> Mein aktueller Standort (GPS)</label>
+        </div>
+        <select id="start-address-select" class="hidden"></select>
+        <p id="gps-status" class="hint hidden"></p>
+      </div>
+
+      <div class="field">
+        <label class="checkbox"><input type="checkbox" id="return-to-start"> Am Ende zum Start zurückkehren</label>
+      </div>
+
+      <button id="compute-btn" class="primary">Route berechnen</button>
+      <div id="progress" class="hidden">
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        <p id="progress-label"></p>
+      </div>
+    </section>
+
+    <section class="panel results hidden" id="results-panel">
+      <div class="results-header">
+        <h2 id="results-title"></h2>
+        <div class="results-actions">
+          <button id="maps-links-toggle" class="secondary">In Google Maps öffnen</button>
+          <button id="print-btn" class="secondary">Drucken / PDF</button>
+        </div>
+      </div>
+      <div id="maps-links" class="maps-links hidden"></div>
+      <div id="map" class="map"></div>
+      <ol id="stop-list" class="stop-list"></ol>
+      <div id="unresolved" class="unresolved hidden">
+        <h3>Nicht auf der Karte einplanbar</h3>
+        <p class="hint">Diese Adressen fehlen (keine Straße/PLZ hinterlegt) oder konnten nicht gefunden werden. Bitte manuell nachschlagen.</p>
+        <ul id="unresolved-list"></ul>
+      </div>
+    </section>
+
+  </div>
+
 </main>
 
 <footer>
-  <p>Geokodierung: OpenStreetMap Nominatim · Routing: OSRM (project-osrm.org) · Daten werden lokal im Browser zwischengespeichert.</p>
+  <p>Geokodierung: OpenStreetMap Nominatim · Routing: OSRM (project-osrm.org) · Kunden-, Besuchs- und Notizdaten: Firebase.</p>
 </footer>
 
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="data/adressen.js"></script>
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

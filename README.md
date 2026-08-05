@@ -1,28 +1,59 @@
 # Tourenplaner – Jubilare BdSt
 
-Kleine Web-App zur Tourenplanung für die Adressliste aus `Jubilare_BdSt.xlsx`
-(Tabelle „Tabelle1“, 215 Adressen in ca. 100 Orten).
+Web-App zur Tourenplanung mit eigenem Kundenstamm pro Nutzer/in: Login,
+Kunden anlegen, Besuche mit Notiz eintragen, und pro Ort eine nach
+tatsächlicher Fahrzeit optimierte Route mit Karte und Google-Maps-Link.
 
-Du wählst einen Ort aus (z. B. „Landshut“ oder „München“) und bekommst eine nach
-tatsächlicher Fahrzeit optimierte Reihenfolge, in der du alle Adressen in
-diesem Ort abfahren kannst – inklusive Karte und Link zur Navigation in Google
-Maps. Der Startpunkt ist frei wählbar: eine beliebige Adresse aus der Liste,
-dein aktueller GPS-Standort, oder du überlässt die Wahl der App.
+Ursprünglich aus `Jubilare_BdSt.xlsx` (Tabelle „Tabelle1“, 215 Adressen)
+befüllt, seitdem als kleines Mini-CRM ausgebaut.
+
+Du wählst einen Ort aus (z. B. „Landshut“ oder „München“) und bekommst eine
+optimierte Reihenfolge, in der du alle *eigenen* Adressen in diesem Ort
+abfahren kannst. Der Startpunkt ist frei wählbar: eine beliebige Adresse aus
+der Liste, dein aktueller GPS-Standort, oder du überlässt die Wahl der App.
+
+## Zugänge, Rollen & Daten (Firebase)
+
+Login und alle Kunden-/Besuchsdaten laufen über ein Firebase-Projekt
+(Authentication + Firestore, kostenloser Spark-Tarif):
+
+- Jede Person (Chef/in wie Kolleg/innen) hat einen eigenen Zugang
+  (E-Mail/Passwort), angelegt in der Firebase-Konsole unter
+  **Authentication → Nutzer → Nutzer hinzufügen**. Es gibt keine
+  Selbstregistrierung in der App.
+- Standardmäßig bekommt jede/r neue Nutzer/in die Rolle **„colleague“** und
+  sieht/bearbeitet nur die eigenen angelegten Kunden.
+- Eine Person mit der Rolle **„owner“** sieht zusätzlich einen Schalter „Alle
+  Kollegen anzeigen“ und kann so auf die Gesamtdaten aller zugreifen.
+  Die Rolle wird **einmalig manuell** gesetzt: Firebase-Konsole →
+  **Firestore Database → Daten** → Sammlung `users` → das Dokument mit der
+  eigenen User-ID öffnen → Feld `role` von `colleague` auf `owner` ändern.
+  (Das Dokument entsteht automatisch beim ersten Login; vorher ist es noch
+  nicht da.)
+- Beim ersten Login einer neuen Person ist die eigene Kundenliste leer – über
+  den Button „Excel-Liste importieren“ lässt sich einmalig die ursprüngliche
+  215-Adressen-Liste übernehmen (sinnvoll für die erste/Haupt-Person; jede
+  weitere Person legt neue Kunden i. d. R. selbst über „Kunde hinzufügen“ an).
+- **Sicherheitsregeln**: Die Datei `firestore.rules` in diesem Repo enthält
+  den Regeltext, der in der Firebase-Konsole unter **Firestore Database →
+  Regeln** eingefügt und veröffentlicht werden muss, damit jede/r nur die
+  eigenen Daten sieht (bzw. „owner“ alle).
 
 ## Nutzung
 
 1. Repo lokal öffnen und einen einfachen Webserver im Projektordner starten
-   (nötig, da manche Browser `fetch`/lokale Skripte bei `file://` einschränken):
+   (nötig, da manche Browser `fetch`/ES-Module bei `file://` einschränken):
    ```bash
    npx http-server -p 8080 .
    # oder: python3 -m http.server 8080
    ```
-2. Im Browser `http://localhost:8080` öffnen.
+2. Im Browser `http://localhost:8080` öffnen und mit E-Mail/Passwort anmelden.
 3. Ort auswählen, Startpunkt festlegen, „Route berechnen“ klicken.
 
 Alternativ lässt sich der Ordner unverändert z. B. über **GitHub Pages**
 veröffentlichen (Settings → Pages → Branch auswählen) – die App ist rein
-statisch (HTML/CSS/JS), es gibt keinen Server-Anteil.
+statisch (HTML/CSS/JS), es gibt keinen eigenen Server-Anteil (nur Firebase
+als Backend-Dienst).
 
 ## Wie die Route berechnet wird
 
@@ -52,6 +83,19 @@ statisch (HTML/CSS/JS), es gibt keinen Server-Anteil.
 Adressen ohne hinterlegte Straße/PLZ (in der Quelldatei mit „–“ markiert)
 oder die sich nicht geokodieren lassen, werden unterhalb der Route separat
 aufgelistet statt in die Karte/Route einbezogen.
+
+Einmal gefundene Koordinaten werden direkt am Kunden in Firestore gespeichert
+(nicht nur lokal im Browser) – die Geokodierung passiert also für jede
+Adresse nur einmal, egal wer sie zuerst berechnet.
+
+## Kunden, Besuche & Notizen
+
+- **Kunde hinzufügen**: Formular oben in der App, landet sofort in der
+  eigenen Kundenliste.
+- **Besuch eintragen**: Bei jedem Stopp in der berechneten Route lässt sich
+  „Besuch eintragen“ anklicken, optional mit Notiz. Der letzte Besuch wird
+  direkt in der Liste angezeigt, „Verlauf anzeigen“ zeigt alle bisherigen
+  Besuche mit Datum, Notiz und Person.
 
 ## Daten aktualisieren
 

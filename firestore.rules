@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwnerRole() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
+    }
+
+    // Jede/r Angemeldete darf das eigene Profil lesen/anlegen.
+    // Die Rolle darf man sich nicht selbst setzen - das darf nur "owner".
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isOwnerRole());
+      allow create: if isSignedIn() && request.auth.uid == uid
+                    && request.resource.data.role == 'colleague';
+      allow update: if isOwnerRole();
+    }
+
+    match /customers/{customerId} {
+      allow read: if isSignedIn() &&
+        (resource.data.ownerUid == request.auth.uid || isOwnerRole());
+      allow create: if isSignedIn() &&
+        request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isSignedIn() &&
+        (resource.data.ownerUid == request.auth.uid || isOwnerRole());
+
+      match /visits/{visitId} {
+        allow read: if isSignedIn() &&
+          (get(/databases/$(database)/documents/customers/$(customerId)).data.ownerUid == request.auth.uid
+            || isOwnerRole());
+        allow create: if isSignedIn() &&
+          (get(/databases/$(database)/documents/customers/$(customerId)).data.ownerUid == request.auth.uid
+            || isOwnerRole())
+          && request.resource.data.byUid == request.auth.uid;
+      }
+    }
+  }
+}
