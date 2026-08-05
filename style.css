@@ -244,6 +244,8 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
 }
 .stat-value { font-size: 1.7rem; font-weight: 800; color: var(--color-primary-dark); line-height: 1.1; }
 .stat-label { font-size: 0.78rem; color: var(--color-muted); margin-top: 0.25rem; }
+.stat-tile.wide { grid-column: 1 / -1; background: #eaf6ef; border-color: #cdeadb; }
+.stat-tile.wide .stat-value { color: #1f7a4d; }
 
 #dashboard-breakdown { margin-top: 1.25rem; }
 #dashboard-breakdown h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
@@ -328,6 +330,52 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
   padding: 0.5rem 0.7rem;
 }
 .visit-history ul { margin: 0; padding-left: 1.1rem; }
+
+.open-customer-link { color: inherit; text-decoration: none; cursor: pointer; }
+.open-customer-link:hover { text-decoration: underline; color: var(--color-primary); }
+
+#deeplink-back-btn { margin-bottom: 0.75rem; }
+
+.contacts-section { margin-top: 1rem; }
+.contacts-section h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+.contacts-list { list-style: none; margin: 0 0 0.5rem; padding: 0; font-size: 0.9rem; }
+.contacts-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.contacts-list li:last-child { border-bottom: none; }
+.contact-add-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  max-width: 420px;
+}
+.contact-add-form input { flex: 1 1 120px; }
+
+.visit-history-full { margin-top: 1rem; }
+.visit-history-full h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+.visit-history-list { list-style: none; margin: 0; padding: 0; font-size: 0.88rem; }
+.visit-history-list li { padding: 0.5rem 0; border-bottom: 1px solid var(--color-border); }
+.visit-history-list li:last-child { border-bottom: none; }
+.visit-badges { margin-top: 0.2rem; color: var(--color-muted); font-size: 0.82rem; }
+
+.pending-consultation {
+  background: #fbf3e7;
+  border: 1px solid #f0dfc4;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+.pending-consultation button { margin-top: 0.5rem; }
+
+#open-consultations-list .search-result { padding: 0.4rem 0.2rem; }
+#open-consultations-list button { margin: 0.4rem 0 0.6rem; }
 
 .progress-bar {
   height: 8px;
@@ -536,7 +584,7 @@ footer {
 @media print {
   .topbar, .controls, .maps-links, .map, footer, .results-actions,
   #dashboard-panel, #deeplink-panel, #search-panel, #add-customer-panel,
-  #import-panel, #admin-import-panel, .visit-controls { display: none !important; }
+  #import-panel, #admin-import-panel, #open-consultations-panel, .visit-controls { display: none !important; }
   body { background: white; }
   .panel { border: none; padding: 0; }
   .print-only { display: block; }

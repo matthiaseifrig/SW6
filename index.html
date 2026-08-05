@@ -69,13 +69,17 @@
           <div class="stat-value" id="stat-consultations">–</div>
           <div class="stat-label">Beratungstermine</div>
         </div>
+        <div class="stat-tile wide">
+          <div class="stat-value" id="stat-provision">–</div>
+          <div class="stat-label">Provision (netto)</div>
+        </div>
       </div>
       <div id="dashboard-breakdown" class="hidden">
         <h3>Pro Person</h3>
         <div class="table-scroll">
           <table id="dashboard-breakdown-table">
             <thead>
-              <tr><th>Person</th><th>Kunden</th><th>Besuche</th><th>Mitglieder</th><th>Termine</th></tr>
+              <tr><th>Person</th><th>Kunden</th><th>Besuche</th><th>Mitglieder</th><th>Termine</th><th>Provision</th></tr>
             </thead>
             <tbody id="dashboard-breakdown-body"></tbody>
           </table>
@@ -83,11 +87,21 @@
       </div>
     </section>
 
+    <section class="panel accent hidden" id="open-consultations-panel">
+      <div class="collapsible-title">
+        <span class="add-icon">📅</span>
+        <h2>Offene Beratungstermine</h2>
+      </div>
+      <p class="hint">Termine, deren Ergebnis (Aufnahme ja/nein) noch nicht eingetragen wurde.</p>
+      <ul id="open-consultations-list" class="search-results"></ul>
+    </section>
+
     <section class="panel accent hidden" id="deeplink-panel">
       <div class="collapsible-title">
         <span class="add-icon">🔗</span>
-        <h2>Direkt geöffneter Kunde</h2>
+        <h2>Kundenseite</h2>
       </div>
+      <button type="button" id="deeplink-back-btn" class="link-btn">← Zurück zur Übersicht</button>
       <div id="deeplink-body"></div>
     </section>
 
@@ -294,6 +308,11 @@
         </div>
       </div>
 
+      <div id="membership-amount-field" class="field hidden">
+        <label for="membership-amount">Provision für diese Aufnahme (€ netto)</label>
+        <input type="number" id="membership-amount" step="0.01" min="0" value="150">
+      </div>
+
       <div class="field">
         <label>Beratungstermin gewünscht?</label>
         <div class="yesno-toggle" data-field="consultation">
@@ -316,6 +335,30 @@
       <button id="outcome-save-btn" class="confirm-btn">Speichern</button>
       <button id="outcome-skip-btn" class="secondary">Ohne diese Angaben speichern</button>
     </div>
+  </div>
+</div>
+
+<div id="consultation-resolve-overlay" class="confirm-overlay hidden">
+  <div class="confirm-box">
+    <p class="confirm-label">Beratungstermin bei</p>
+    <h2 id="cr-company"></h2>
+    <p class="confirm-hint" id="cr-when"></p>
+
+    <div class="field">
+      <label>Wurde eine BdSt-Mitgliedschaft abgeschlossen?</label>
+      <div class="yesno-toggle" id="cr-toggle" data-field="cr-membership">
+        <button type="button" class="yesno-btn" data-value="true">Ja</button>
+        <button type="button" class="yesno-btn active" data-value="false">Nein</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="cr-amount">Provision (€ netto)</label>
+      <input type="number" id="cr-amount" step="0.01" min="0">
+    </div>
+
+    <button id="cr-save-btn" class="confirm-btn">Speichern</button>
+    <button id="cr-cancel-btn" class="secondary">Abbrechen</button>
   </div>
 </div>
 

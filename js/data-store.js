@@ -16,6 +16,7 @@ import {
   serverTimestamp,
   arrayUnion,
   arrayRemove,
+  increment,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
 import { db } from "./firebase-app.js";
@@ -80,6 +81,9 @@ export async function addCustomer(fields, ownerUid) {
     membershipSigned: false,
     consultationRequested: false,
     consultationAt: null,
+    contacts: [],
+    totalProvision: 0,
+    pendingConsultation: null,
     source: "manual",
     ownerUid,
     createdBy: ownerUid,
@@ -128,8 +132,11 @@ export async function addVisit(customerId, { note, byUid, byName, confirmedByCus
     byName,
     confirmedByCustomer: Boolean(confirmedByCustomer),
     membershipSigned: false,
+    membershipAmount: null,
     consultationRequested: false,
     consultationAt: null,
+    consultationOutcome: null,
+    consultationAmount: null,
     visitedAt: serverTimestamp(),
   });
   await updateDoc(doc(db, CUSTOMERS, customerId), {
@@ -145,14 +152,65 @@ export async function addVisit(customerId, { note, byUid, byName, confirmedByCus
 // vom Kunden bestaetigt). Wird zusaetzlich am Kundendokument gespiegelt,
 // damit das Dashboard ohne separate Abfrage/Index direkt aus der schon
 // geladenen Kundenliste zaehlen kann.
-export async function updateVisitOutcome(customerId, visitId, { membershipSigned, consultationRequested, consultationAt }) {
+//
+// Provisionslogik (Stand: Absprache mit Matthias):
+// - Mitgliedschaft direkt beim Besuch (nicht ueber einen separat
+//   vereinbarten Beratungstermin) -> membershipAmount, Standard 150 EUR
+//   netto, editierbar (z.B. bei hoeherem Mitgliedsbeitrag).
+// - Ein separat vereinbarter Beratungstermin wird zunaechst nur als
+//   "offen" auf dem Kundendokument gemerkt (pendingConsultation). Das
+//   Ergebnis (Aufnahme ja/nein, 200 EUR bzw. 112,50 EUR) wird erst
+//   spaeter ueber resolveConsultation() erfasst, wenn der Termin
+//   stattgefunden hat.
+export async function updateVisitOutcome(customerId, visitId, { membershipSigned, membershipAmount, consultationRequested, consultationAt }) {
+  const amount = membershipSigned ? Number(membershipAmount) || 0 : null;
   const outcome = {
     membershipSigned: Boolean(membershipSigned),
+    membershipAmount: amount,
     consultationRequested: Boolean(consultationRequested),
     consultationAt: consultationAt || null,
   };
   await updateDoc(doc(db, CUSTOMERS, customerId, "visits", visitId), outcome);
-  await updateDoc(doc(db, CUSTOMERS, customerId), outcome);
+
+  const customerUpdate = { ...outcome };
+  if (membershipSigned && amount) {
+    customerUpdate.totalProvision = increment(amount);
+  }
+  customerUpdate.pendingConsultation = consultationRequested && consultationAt ? { visitId, at: consultationAt } : null;
+  await updateDoc(doc(db, CUSTOMERS, customerId), customerUpdate);
+}
+
+// Traegt das Ergebnis eines zuvor vereinbarten Beratungstermins nach, sobald
+// er stattgefunden hat (siehe pendingConsultation auf dem Kundendokument).
+export async function resolveConsultation(customerId, visitId, { membershipSigned, amount }) {
+  const amt = Number(amount) || 0;
+  const outcome = {
+    consultationOutcome: membershipSigned ? "membership" : "none",
+    consultationAmount: amt,
+  };
+  await updateDoc(doc(db, CUSTOMERS, customerId, "visits", visitId), outcome);
+
+  const customerUpdate = {
+    pendingConsultation: null,
+    totalProvision: increment(amt),
+  };
+  if (membershipSigned) customerUpdate.membershipSigned = true;
+  await updateDoc(doc(db, CUSTOMERS, customerId), customerUpdate);
+}
+
+// Weitere Ansprechpartner zusaetzlich zu Inhaber/gesetzlichen Vertretern
+// (z.B. bei Firmen mit mehreren Kontaktpersonen).
+export async function addContact(customerId, contact) {
+  await updateDoc(doc(db, CUSTOMERS, customerId), {
+    contacts: arrayUnion({ name: contact.name || "", rolle: contact.rolle || "", telefon: contact.telefon || "" }),
+  });
+}
+
+export async function removeContact(customerId, index) {
+  const snap = await getDoc(doc(db, CUSTOMERS, customerId));
+  const contacts = (snap.exists() && snap.data().contacts) || [];
+  contacts.splice(index, 1);
+  await updateDoc(doc(db, CUSTOMERS, customerId), { contacts });
 }
 
 // Traegt einen Tag nachtraeglich bei allen Kunden mit der angegebenen
@@ -194,6 +252,9 @@ export async function importStaticAddresses(ownerUid, staticRecords, onProgress)
       membershipSigned: false,
       consultationRequested: false,
       consultationAt: null,
+      contacts: [],
+      totalProvision: 0,
+      pendingConsultation: null,
       source: "excel",
       ownerUid,
       createdBy: ownerUid,
@@ -222,6 +283,9 @@ export async function importRecordsForColleague(targetOwnerUid, createdByUid, re
       membershipSigned: false,
       consultationRequested: false,
       consultationAt: null,
+      contacts: [],
+      totalProvision: 0,
+      pendingConsultation: null,
       source: rec.source || "import",
       ownerUid: targetOwnerUid,
       createdBy: createdByUid,

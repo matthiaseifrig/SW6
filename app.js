@@ -9,6 +9,9 @@ import {
   saveGeocodeResult,
   addVisit,
   updateVisitOutcome,
+  resolveConsultation,
+  addContact,
+  removeContact,
   getVisits,
   getFinancials,
   importStaticAddresses,
@@ -29,6 +32,15 @@ const NOMINATIM_DELAY_MS = 1100; // Nominatim-Nutzungsrichtlinie: max. 1 Anfrage
 const MAX_MULTISTART_N = 120;
 const GOOGLE_MAPS_CHUNK = 10;
 
+// Provisions-Standardsaetze (netto, editierbar bei der Eingabe):
+// - Aufnahme direkt beim Besuch (kein separat vereinbarter Termin)
+// - separat vereinbarter Beratungstermin, der stattfindet und zu keiner
+//   Aufnahme fuehrt
+// - separat vereinbarter Beratungstermin, der direkt zu einer Aufnahme fuehrt
+const MEMBERSHIP_DEFAULT_AMOUNT = 150;
+const CONSULT_NO_AMOUNT = 112.5;
+const CONSULT_YES_AMOUNT = 200;
+
 const els = {};
 let map = null;
 let mapLayer = null;
@@ -42,10 +54,10 @@ const state = {
   unsubscribeCustomers: null,
   gpsCoords: null,
   pendingConfirm: null, // { customerId, note, visitId, outcome }
-  deepLinkHandled: false,
+  pendingConsultationResolve: null, // { customerId, visitId, meta }
+  openCustomerId: new URLSearchParams(location.search).get("customer") || null,
+  customerPageScrolled: false,
 };
-
-const QUERY_CUSTOMER_ID = new URLSearchParams(location.search).get("customer");
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -99,10 +111,15 @@ function cacheEls() {
   els.statVisits = document.getElementById("stat-visits");
   els.statMemberships = document.getElementById("stat-memberships");
   els.statConsultations = document.getElementById("stat-consultations");
+  els.statProvision = document.getElementById("stat-provision");
   els.dashboardBreakdown = document.getElementById("dashboard-breakdown");
   els.dashboardBreakdownBody = document.getElementById("dashboard-breakdown-body");
 
+  els.openConsultationsPanel = document.getElementById("open-consultations-panel");
+  els.openConsultationsList = document.getElementById("open-consultations-list");
+
   els.deeplinkPanel = document.getElementById("deeplink-panel");
+  els.deeplinkBackBtn = document.getElementById("deeplink-back-btn");
   els.deeplinkBody = document.getElementById("deeplink-body");
 
   els.ncTagsOptions = document.getElementById("nc-tags-options");
@@ -134,12 +151,22 @@ function cacheEls() {
   els.confirmCancel = document.getElementById("confirm-cancel");
   els.confirmStepOutcome = document.getElementById("confirm-step-outcome");
   els.confirmCompany2 = document.getElementById("confirm-company-2");
+  els.membershipAmountField = document.getElementById("membership-amount-field");
+  els.membershipAmount = document.getElementById("membership-amount");
   els.consultationDatetime = document.getElementById("consultation-datetime");
   els.consultationDate = document.getElementById("consultation-date");
   els.consultationTime = document.getElementById("consultation-time");
   els.outcomeSaveBtn = document.getElementById("outcome-save-btn");
   els.outcomeSkipBtn = document.getElementById("outcome-skip-btn");
   els.yesnoToggles = document.querySelectorAll(".yesno-toggle");
+
+  els.consultationResolveOverlay = document.getElementById("consultation-resolve-overlay");
+  els.crCompany = document.getElementById("cr-company");
+  els.crWhen = document.getElementById("cr-when");
+  els.crToggle = document.getElementById("cr-toggle");
+  els.crAmount = document.getElementById("cr-amount");
+  els.crSaveBtn = document.getElementById("cr-save-btn");
+  els.crCancelBtn = document.getElementById("cr-cancel-btn");
 }
 
 function bindStaticEvents() {
@@ -176,6 +203,24 @@ function bindStaticEvents() {
     toggle.querySelectorAll(".yesno-btn").forEach((btn) => {
       btn.addEventListener("click", () => onYesNoClick(toggle, btn));
     });
+  });
+
+  els.crSaveBtn.addEventListener("click", onCrSaveClick);
+  els.crCancelBtn.addEventListener("click", closeConsultationResolve);
+
+  els.deeplinkBackBtn.addEventListener("click", closeCustomerPage);
+
+  document.addEventListener("click", (ev) => {
+    const link = ev.target.closest(".open-customer-link");
+    if (!link) return;
+    if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;
+    ev.preventDefault();
+    openCustomerPage(link.dataset.customerId);
+  });
+
+  window.addEventListener("popstate", () => {
+    state.openCustomerId = new URLSearchParams(location.search).get("customer") || null;
+    refreshCustomerPage();
   });
 
   populateTagCheckboxes();
@@ -285,7 +330,8 @@ function subscribeToCustomers() {
       if (selectedCities().length) onCityChange();
       maybeShowImportPanel();
       refreshDashboard();
-      maybeShowDeepLinkedCustomer();
+      refreshOpenConsultations();
+      refreshCustomerPage();
     },
     (err) => {
       console.error(err);
@@ -315,6 +361,7 @@ function refreshDashboard() {
   els.statVisits.textContent = String(customers.filter((c) => c.lastVisitedAt).length);
   els.statMemberships.textContent = String(customers.filter((c) => c.membershipSigned).length);
   els.statConsultations.textContent = String(customers.filter((c) => c.consultationRequested).length);
+  els.statProvision.textContent = formatEuroPrecise(customers.reduce((sum, c) => sum + (c.totalProvision || 0), 0));
 
   if (state.role === "owner" && state.scopeAll) {
     renderDashboardBreakdown();
@@ -336,7 +383,7 @@ async function renderDashboardBreakdown() {
 
   const perUid = {};
   function bucket(uid) {
-    if (!perUid[uid]) perUid[uid] = { customers: 0, visits: 0, memberships: 0, consultations: 0 };
+    if (!perUid[uid]) perUid[uid] = { customers: 0, visits: 0, memberships: 0, consultations: 0, provision: 0 };
     return perUid[uid];
   }
   state.customers.forEach((c) => {
@@ -345,6 +392,7 @@ async function renderDashboardBreakdown() {
     if (c.lastVisitedAt) b.visits++;
     if (c.membershipSigned) b.memberships++;
     if (c.consultationRequested) b.consultations++;
+    b.provision += c.totalProvision || 0;
   });
 
   els.dashboardBreakdownBody.innerHTML = "";
@@ -364,23 +412,314 @@ async function renderDashboardBreakdown() {
         row.memberships +
         "</td><td>" +
         row.consultations +
+        "</td><td>" +
+        escapeHtml(formatEuroPrecise(row.provision)) +
         "</td>";
       els.dashboardBreakdownBody.appendChild(tr);
     });
 }
 
-// ---------- Direktlink zu einem Kunden (?customer=ID, z.B. per QR-Code) ----------
+// ---------- Kundenseite (Klick auf Kundennamen oder ?customer=ID per QR-Code) ----------
+//
+// Erreichbar entweder per Direktlink (z.B. gescannter QR-Code auf einem
+// Ausdruck) oder per Klick auf einen Kundennamen irgendwo in der App
+// (Suche, Tourenplaner, offene Termine). Navigation passiert client-seitig
+// (history.pushState) statt per Seiten-Reload.
 
-function maybeShowDeepLinkedCustomer() {
-  if (!QUERY_CUSTOMER_ID || state.deepLinkHandled) return;
-  const meta = state.customers.find((c) => c.id === QUERY_CUSTOMER_ID);
+function openCustomerPage(id) {
+  const meta = state.customers.find((c) => c.id === id);
   if (!meta) return;
-  state.deepLinkHandled = true;
-  els.deeplinkPanel.classList.remove("hidden");
-  els.deeplinkBody.innerHTML = buildCustomerDetailsHtml(meta);
+  history.pushState({ customerId: id }, "", "?customer=" + encodeURIComponent(id));
+  state.openCustomerId = id;
+  state.customerPageScrolled = false;
+  renderCustomerPage(meta);
+}
+
+function closeCustomerPage() {
+  history.pushState({}, "", location.pathname);
+  state.openCustomerId = null;
+  els.deeplinkPanel.classList.add("hidden");
+  els.deeplinkBody.innerHTML = "";
+}
+
+function refreshCustomerPage() {
+  if (!state.openCustomerId) {
+    els.deeplinkPanel.classList.add("hidden");
+    return;
+  }
+  const meta = state.customers.find((c) => c.id === state.openCustomerId);
+  if (!meta) {
+    els.deeplinkPanel.classList.add("hidden");
+    return;
+  }
+  renderCustomerPage(meta);
+}
+
+async function renderCustomerPage(meta) {
+  els.deeplinkBody.innerHTML = "";
+  const detailsDiv = document.createElement("div");
+  detailsDiv.innerHTML = buildCustomerDetailsHtml(meta);
+  els.deeplinkBody.appendChild(detailsDiv);
+
+  if (state.role === "owner" && !meta.financials) {
+    try {
+      const fin = await getFinancials(meta.id);
+      if (fin) {
+        const finDiv = document.createElement("div");
+        finDiv.className = "financials";
+        finDiv.innerHTML = buildFinancialsText(fin);
+        detailsDiv.appendChild(finDiv);
+      }
+    } catch (e) {
+      /* Finanzkennzahlen optional - Fehler ignorieren */
+    }
+  }
+
   els.deeplinkBody.appendChild(buildTagsSection(meta));
+  els.deeplinkBody.appendChild(buildContactsSection(meta));
   els.deeplinkBody.appendChild(buildVisitControls(meta));
-  els.deeplinkPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  const historyBox = document.createElement("div");
+  historyBox.className = "visit-history-full";
+  historyBox.textContent = "Lade Verlauf …";
+  els.deeplinkBody.appendChild(historyBox);
+
+  els.deeplinkPanel.classList.remove("hidden");
+  if (!state.customerPageScrolled) {
+    state.customerPageScrolled = true;
+    els.deeplinkPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  try {
+    const visits = await getVisits(meta.id);
+    renderVisitHistoryFull(historyBox, meta, visits);
+  } catch (err) {
+    historyBox.textContent = "Fehler beim Laden des Verlaufs: " + err.message;
+  }
+}
+
+function formatPlainDateTime(s) {
+  if (!s) return "";
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  return d.toLocaleDateString("de-DE") + " " + d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+}
+
+function renderVisitHistoryFull(container, meta, visits) {
+  container.innerHTML = "";
+  const heading = document.createElement("h3");
+  heading.textContent = "Besuche & Termine";
+  container.appendChild(heading);
+
+  if (meta.pendingConsultation) {
+    const pending = document.createElement("div");
+    pending.className = "pending-consultation";
+    pending.innerHTML = "<strong>Offener Beratungstermin</strong> am " + escapeHtml(formatPlainDateTime(meta.pendingConsultation.at));
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "primary small";
+    btn.textContent = "Ergebnis eintragen";
+    btn.addEventListener("click", () => openConsultationResolve(meta));
+    pending.appendChild(document.createElement("br"));
+    pending.appendChild(btn);
+    container.appendChild(pending);
+  }
+
+  if (!visits.length) {
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "Noch keine Besuche eingetragen.";
+    container.appendChild(p);
+    return;
+  }
+
+  const ul = document.createElement("ul");
+  ul.className = "visit-history-list";
+  visits.forEach((v) => {
+    const li = document.createElement("li");
+    const parts = [formatDate(v.visitedAt)];
+    if (v.confirmedByCustomer) parts.push("✓ vom Kunden bestätigt");
+    parts.push("– " + (v.byName || "?"));
+    if (v.note) parts.push(": " + v.note);
+
+    const badges = [];
+    if (v.membershipSigned) badges.push("Aufnahme direkt beim Besuch (" + formatEuroPrecise(v.membershipAmount) + ")");
+    if (v.consultationRequested) {
+      if (v.consultationOutcome === "membership") badges.push("Termin → Aufnahme (" + formatEuroPrecise(v.consultationAmount) + ")");
+      else if (v.consultationOutcome === "none") badges.push("Termin → keine Aufnahme (" + formatEuroPrecise(v.consultationAmount) + ")");
+      else badges.push("Termin vereinbart für " + escapeHtml(formatPlainDateTime(v.consultationAt)) + " (Ergebnis offen)");
+    }
+
+    li.innerHTML = escapeHtml(parts.join(" ")) + (badges.length ? '<div class="visit-badges">' + badges.map(escapeHtml).join(" · ") + "</div>" : "");
+    ul.appendChild(li);
+  });
+  container.appendChild(ul);
+}
+
+function buildContactsSection(meta) {
+  const wrap = document.createElement("div");
+  wrap.className = "contacts-section";
+  const heading = document.createElement("h3");
+  heading.textContent = "Ansprechpartner";
+  wrap.appendChild(heading);
+
+  const list = document.createElement("ul");
+  list.className = "contacts-list";
+
+  const fixed = [];
+  if (meta.inhaber) fixed.push(meta.inhaber + " (Inhaber)");
+  [meta.vertreter1, meta.vertreter2, meta.vertreter3].filter(Boolean).forEach((v) => fixed.push(v + " (Vertretung)"));
+  fixed.forEach((label) => {
+    const li = document.createElement("li");
+    li.textContent = label;
+    list.appendChild(li);
+  });
+
+  const extra = Array.isArray(meta.contacts) ? meta.contacts : [];
+  extra.forEach((c, idx) => {
+    const li = document.createElement("li");
+    const labelSpan = document.createElement("span");
+    labelSpan.textContent = [c.name, c.rolle, c.telefon].filter(Boolean).join(" · ");
+    li.appendChild(labelSpan);
+    const removeBtn = document.createElement("span");
+    removeBtn.className = "tag-remove";
+    removeBtn.textContent = "×";
+    removeBtn.title = "Ansprechpartner entfernen";
+    removeBtn.addEventListener("click", async () => {
+      try {
+        await removeContact(meta.id, idx);
+      } catch (err) {
+        alert("Konnte Ansprechpartner nicht entfernen: " + err.message);
+      }
+    });
+    li.appendChild(removeBtn);
+    list.appendChild(li);
+  });
+
+  if (!fixed.length && !extra.length) {
+    const li = document.createElement("li");
+    li.className = "hint";
+    li.textContent = "Noch kein Ansprechpartner hinterlegt.";
+    list.appendChild(li);
+  }
+  wrap.appendChild(list);
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.type = "button";
+  toggleBtn.className = "link-btn";
+  toggleBtn.textContent = "+ Ansprechpartner hinzufügen";
+  wrap.appendChild(toggleBtn);
+
+  const form = document.createElement("div");
+  form.className = "contact-add-form hidden";
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.placeholder = "Name *";
+  const roleInput = document.createElement("input");
+  roleInput.type = "text";
+  roleInput.placeholder = "Rolle (optional)";
+  const phoneInput = document.createElement("input");
+  phoneInput.type = "text";
+  phoneInput.placeholder = "Telefon (optional)";
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.className = "secondary small";
+  saveBtn.textContent = "Speichern";
+  form.appendChild(nameInput);
+  form.appendChild(roleInput);
+  form.appendChild(phoneInput);
+  form.appendChild(saveBtn);
+  wrap.appendChild(form);
+
+  toggleBtn.addEventListener("click", () => form.classList.toggle("hidden"));
+  saveBtn.addEventListener("click", async () => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      nameInput.focus();
+      return;
+    }
+    saveBtn.disabled = true;
+    try {
+      await addContact(meta.id, { name, rolle: roleInput.value.trim(), telefon: phoneInput.value.trim() });
+      nameInput.value = "";
+      roleInput.value = "";
+      phoneInput.value = "";
+      form.classList.add("hidden");
+    } catch (err) {
+      alert("Konnte Ansprechpartner nicht speichern: " + err.message);
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+
+  return wrap;
+}
+
+// ---------- Offene Beratungstermine (Dashboard) ----------
+
+function refreshOpenConsultations() {
+  const pending = state.customers.filter((c) => c.pendingConsultation);
+  els.openConsultationsPanel.classList.toggle("hidden", pending.length === 0);
+  els.openConsultationsList.innerHTML = "";
+  pending
+    .sort((a, b) => new Date(a.pendingConsultation.at) - new Date(b.pendingConsultation.at))
+    .forEach((meta) => {
+      const li = document.createElement("li");
+      li.className = "search-result";
+      const summary = document.createElement("div");
+      summary.className = "search-result-summary";
+      summary.innerHTML =
+        '<div><div class="company"><a href="?customer=' +
+        encodeURIComponent(meta.id) +
+        '" class="open-customer-link" data-customer-id="' +
+        escapeHtml(meta.id) +
+        '">' +
+        escapeHtml(meta.unternehmen) +
+        '</a></div><div class="address">Termin am ' +
+        escapeHtml(formatPlainDateTime(meta.pendingConsultation.at)) +
+        "</div></div>";
+      li.appendChild(summary);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "primary small";
+      btn.textContent = "Ergebnis eintragen";
+      btn.addEventListener("click", () => openConsultationResolve(meta));
+      li.appendChild(btn);
+      els.openConsultationsList.appendChild(li);
+    });
+}
+
+function openConsultationResolve(meta) {
+  if (!meta.pendingConsultation) return;
+  state.pendingConsultationResolve = { customerId: meta.id, visitId: meta.pendingConsultation.visitId };
+  els.crCompany.textContent = meta.unternehmen;
+  els.crWhen.textContent = "Termin am " + formatPlainDateTime(meta.pendingConsultation.at);
+  els.crToggle.querySelectorAll(".yesno-btn").forEach((b) => b.classList.toggle("active", b.dataset.value === "false"));
+  els.crAmount.value = CONSULT_NO_AMOUNT;
+  els.consultationResolveOverlay.classList.remove("hidden");
+}
+
+function closeConsultationResolve() {
+  state.pendingConsultationResolve = null;
+  els.consultationResolveOverlay.classList.add("hidden");
+}
+
+async function onCrSaveClick() {
+  if (!state.pendingConsultationResolve) return;
+  const { customerId, visitId } = state.pendingConsultationResolve;
+  const active = els.crToggle.querySelector(".yesno-btn.active");
+  const membershipSigned = active ? active.dataset.value === "true" : false;
+  const amount = parseFloat(String(els.crAmount.value).replace(",", ".")) || 0;
+  els.crSaveBtn.disabled = true;
+  try {
+    await resolveConsultation(customerId, visitId, { membershipSigned, amount });
+    closeConsultationResolve();
+    refreshDashboard();
+  } catch (err) {
+    alert("Konnte Ergebnis nicht speichern: " + err.message);
+  } finally {
+    els.crSaveBtn.disabled = false;
+  }
 }
 
 // ---------- Nachtraeglicher Tag-Backfill (Kunden Import) ----------
@@ -798,6 +1137,11 @@ function formatEuro(n) {
   return n.toLocaleString("de-DE", { maximumFractionDigits: 0 }) + " €";
 }
 
+function formatEuroPrecise(n) {
+  const num = typeof n === "number" ? n : 0;
+  return num.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+}
+
 function formatPercent(n) {
   if (typeof n !== "number") return null;
   return n.toLocaleString("de-DE", { maximumFractionDigits: 1 }) + " %";
@@ -1124,7 +1468,14 @@ function buildCustomerQrCode(meta) {
 function buildCustomerDetailsHtml(meta) {
   const isVisited = Boolean(meta.lastVisitedAt);
   const addrLine = [meta.strasse, [meta.plz, meta.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-  let html = '<div class="company">' + escapeHtml(meta.unternehmen) + "</div>";
+  let html =
+    '<div class="company"><a href="?customer=' +
+    encodeURIComponent(meta.id) +
+    '" class="open-customer-link" data-customer-id="' +
+    escapeHtml(meta.id) +
+    '">' +
+    escapeHtml(meta.unternehmen) +
+    "</a></div>";
   html += '<div class="address">' + escapeHtml(addrLine) + "</div>";
 
   const vertreter = [meta.vertreter1, meta.vertreter2, meta.vertreter3].filter(Boolean);
@@ -1296,33 +1647,7 @@ function renderSearchResults(results, totalCount) {
       "</div></div>";
     li.appendChild(summary);
 
-    const detail = document.createElement("div");
-    detail.className = "search-result-detail hidden";
-    li.appendChild(detail);
-
-    summary.addEventListener("click", async () => {
-      const willShow = detail.classList.contains("hidden");
-      detail.classList.toggle("hidden");
-      if (willShow && !detail.dataset.loaded) {
-        detail.dataset.loaded = "1";
-        detail.innerHTML = buildCustomerDetailsHtml(meta);
-        if (state.role === "owner") {
-          try {
-            const fin = await getFinancials(meta.id);
-            if (fin) {
-              const finDiv = document.createElement("div");
-              finDiv.className = "financials";
-              finDiv.innerHTML = buildFinancialsText(fin);
-              detail.appendChild(finDiv);
-            }
-          } catch (e) {
-            /* Finanzkennzahlen optional - Fehler ignorieren */
-          }
-        }
-        detail.appendChild(buildTagsSection(meta));
-        detail.appendChild(buildVisitControls(meta));
-      }
-    });
+    summary.addEventListener("click", () => openCustomerPage(meta.id));
 
     els.searchResults.appendChild(li);
   });
@@ -1498,6 +1823,8 @@ function resetYesNoToggles() {
   els.consultationDatetime.classList.add("hidden");
   els.consultationDate.value = "";
   els.consultationTime.value = "";
+  els.membershipAmountField.classList.add("hidden");
+  els.membershipAmount.value = MEMBERSHIP_DEFAULT_AMOUNT;
 }
 
 function openConfirmOverlay(meta, note) {
@@ -1552,6 +1879,12 @@ function onYesNoClick(toggle, btn) {
   if (toggle.dataset.field === "consultation") {
     els.consultationDatetime.classList.toggle("hidden", btn.dataset.value !== "true");
   }
+  if (toggle.dataset.field === "membership") {
+    els.membershipAmountField.classList.toggle("hidden", btn.dataset.value !== "true");
+  }
+  if (toggle.dataset.field === "cr-membership") {
+    els.crAmount.value = btn.dataset.value === "true" ? CONSULT_YES_AMOUNT : CONSULT_NO_AMOUNT;
+  }
 }
 
 function yesNoValue(field) {
@@ -1569,9 +1902,13 @@ async function onOutcomeSaveClick() {
   if (consultationRequested && els.consultationDate.value) {
     consultationAt = els.consultationDate.value + "T" + (els.consultationTime.value || "00:00") + ":00";
   }
+  let membershipAmount = null;
+  if (membershipSigned) {
+    membershipAmount = parseFloat(String(els.membershipAmount.value).replace(",", ".")) || 0;
+  }
   els.outcomeSaveBtn.disabled = true;
   try {
-    await updateVisitOutcome(customerId, visitId, { membershipSigned, consultationRequested, consultationAt });
+    await updateVisitOutcome(customerId, visitId, { membershipSigned, membershipAmount, consultationRequested, consultationAt });
     closeConfirmOverlay();
     refreshDashboard();
   } catch (err) {
