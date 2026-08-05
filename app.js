@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260805e";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260805f";
 import {
   subscribeCustomers,
   addCustomer,
@@ -21,9 +21,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260805e";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260805e";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260805e";
+} from "./js/data-store.js?v=20260805f";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260805f";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260805f";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -113,6 +113,12 @@ function cacheEls() {
   els.statProvision = document.getElementById("stat-provision");
   els.dashboardBreakdown = document.getElementById("dashboard-breakdown");
   els.dashboardBreakdownBody = document.getElementById("dashboard-breakdown-body");
+  els.statTiles = document.querySelectorAll(".stat-tile");
+  els.statDetailOverlay = document.getElementById("stat-detail-overlay");
+  els.statDetailClose = document.getElementById("stat-detail-close");
+  els.statDetailTitle = document.getElementById("stat-detail-title");
+  els.statDetailSubtitle = document.getElementById("stat-detail-subtitle");
+  els.statDetailBody = document.getElementById("stat-detail-body");
   els.backfillProvisionsBtn = document.getElementById("backfill-provisions-btn");
   els.backfillProvisionsStatus = document.getElementById("backfill-provisions-status");
 
@@ -196,6 +202,9 @@ function bindStaticEvents() {
   });
 
   els.backfillProvisionsBtn.addEventListener("click", onBackfillProvisionsClick);
+
+  els.statTiles.forEach((btn) => btn.addEventListener("click", () => openStatDetail(btn.dataset.stat)));
+  els.statDetailClose.addEventListener("click", () => els.statDetailOverlay.classList.add("hidden"));
 
   els.deeplinkBackBtn.addEventListener("click", closeCustomerPage);
 
@@ -405,6 +414,147 @@ async function renderDashboardBreakdown() {
         "</td>";
       els.dashboardBreakdownBody.appendChild(tr);
     });
+}
+
+// ---------- Dashboard-Aufschlüsselung nach Monat ----------
+//
+// "Kunden angelegt" laesst sich direkt aus state.customers ableiten.
+// Besuche/Mitglieder/Termine/Provision haengen dagegen am einzelnen
+// Besuchsdatum, nicht am "letzter Stand" auf dem Kundendokument - dafuer
+// werden die Besuchs-Unterdokumente aller sichtbaren Kunden geladen (nur
+// bei Klick, nicht bei jedem Dashboard-Refresh).
+
+const STAT_LABELS = {
+  customers: "Kunden angelegt",
+  visits: "Besuche",
+  memberships: "BdSt-Mitgliedschaften",
+  consultations: "Beratungstermine",
+  provision: "Provision (netto)",
+};
+
+function monthKeyFromDate(d) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+}
+
+function monthLabelFromKey(key) {
+  const [y, m] = key.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+}
+
+function toJsDate(ts) {
+  if (!ts) return null;
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function sortedMonthlyRows(buckets) {
+  return Object.keys(buckets)
+    .sort((a, b) => (a < b ? 1 : -1))
+    .map((key) => ({ label: monthLabelFromKey(key), value: buckets[key] }));
+}
+
+function renderMonthlyTable(container, rows, valueLabel, isEuro) {
+  if (!rows.length) {
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "Keine Daten vorhanden.";
+    container.appendChild(p);
+    return;
+  }
+  const total = rows.reduce((sum, r) => sum + r.value, 0);
+  const totalP = document.createElement("p");
+  totalP.className = "stat-detail-total";
+  totalP.innerHTML = "<strong>Gesamt: " + escapeHtml(isEuro ? formatEuroPrecise(total) : String(total)) + "</strong>";
+  container.appendChild(totalP);
+
+  const wrap = document.createElement("div");
+  wrap.className = "table-scroll";
+  const table = document.createElement("table");
+  table.className = "stat-detail-table";
+  const bodyRows = rows
+    .map(
+      (r) =>
+        "<tr><td>" + escapeHtml(r.label) + '</td><td class="num">' + escapeHtml(isEuro ? formatEuroPrecise(r.value) : String(r.value)) + "</td></tr>"
+    )
+    .join("");
+  table.innerHTML = "<thead><tr><th>Monat</th><th>" + escapeHtml(valueLabel) + "</th></tr></thead><tbody>" + bodyRows + "</tbody>";
+  wrap.appendChild(table);
+  container.appendChild(wrap);
+}
+
+async function loadAllVisitsForCustomers(customers, onProgress) {
+  const all = [];
+  const BATCH = 8;
+  for (let i = 0; i < customers.length; i += BATCH) {
+    const batch = customers.slice(i, i + BATCH);
+    const results = await Promise.all(batch.map((c) => getVisits(c.id).catch(() => [])));
+    results.forEach((visits) => all.push(...visits));
+    if (onProgress) onProgress(Math.min(i + BATCH, customers.length), customers.length);
+  }
+  return all;
+}
+
+async function openStatDetail(stat) {
+  els.statDetailTitle.textContent = STAT_LABELS[stat] || stat;
+  els.statDetailSubtitle.textContent = state.role === "owner" && state.scopeAll ? "Alle Kollegen · aktueller Stand" : "Eigene Kunden · aktueller Stand";
+  els.statDetailBody.innerHTML = "";
+  els.statDetailOverlay.classList.remove("hidden");
+
+  if (stat === "customers") {
+    const buckets = {};
+    state.customers.forEach((c) => {
+      const d = toJsDate(c.createdAt);
+      if (!d) return;
+      const key = monthKeyFromDate(d);
+      buckets[key] = (buckets[key] || 0) + 1;
+    });
+    renderMonthlyTable(els.statDetailBody, sortedMonthlyRows(buckets), "Kunden", false);
+    return;
+  }
+
+  const loading = document.createElement("p");
+  loading.className = "hint";
+  loading.textContent = "Lade Besuchsdaten …";
+  els.statDetailBody.appendChild(loading);
+
+  try {
+    const visits = await loadAllVisitsForCustomers(state.customers, (done, total) => {
+      loading.textContent = `Lade Besuchsdaten … ${done}/${total} Kunden`;
+    });
+    const buckets = {};
+    let isEuro = false;
+    let valueLabel = "Anzahl";
+    visits.forEach((v) => {
+      const d = toJsDate(v.visitedAt);
+      if (!d) return;
+      const key = monthKeyFromDate(d);
+      if (stat === "visits") {
+        buckets[key] = (buckets[key] || 0) + 1;
+      } else if (stat === "memberships") {
+        if (v.membershipSigned) buckets[key] = (buckets[key] || 0) + 1;
+      } else if (stat === "consultations") {
+        if (v.consultationRequested) buckets[key] = (buckets[key] || 0) + 1;
+      } else if (stat === "provision") {
+        if (v.provisionAmount) buckets[key] = (buckets[key] || 0) + v.provisionAmount;
+        isEuro = true;
+        valueLabel = "Provision";
+      }
+    });
+    els.statDetailBody.innerHTML = "";
+    if (stat === "visits") {
+      const note = document.createElement("p");
+      note.className = "hint";
+      note.textContent = "Zählt jeden eingetragenen Besuch, auch Mehrfachbesuche beim gleichen Kunden.";
+      els.statDetailBody.appendChild(note);
+    }
+    renderMonthlyTable(els.statDetailBody, sortedMonthlyRows(buckets), valueLabel, isEuro);
+  } catch (err) {
+    els.statDetailBody.innerHTML = "";
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "Fehler beim Laden: " + err.message;
+    els.statDetailBody.appendChild(p);
+  }
 }
 
 // ---------- Kundenseite (Klick auf Kundennamen oder ?customer=ID per QR-Code) ----------

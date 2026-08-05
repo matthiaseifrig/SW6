@@ -213,6 +213,17 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
 
 #add-customer-form { margin-top: 1rem; }
 
+.two-col {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.two-col > .panel {
+  flex: 1 1 320px;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
 .tag-checkboxes { display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; }
 .tag-checkboxes label {
   display: flex;
@@ -241,11 +252,26 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
   border-radius: 10px;
   padding: 0.85rem 0.6rem;
   text-align: center;
+  width: 100%;
+  font-family: inherit;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
+.stat-tile:hover { box-shadow: 0 3px 12px rgba(26, 95, 180, 0.18); transform: translateY(-1px); }
 .stat-value { font-size: 1.7rem; font-weight: 800; color: var(--color-primary-dark); line-height: 1.1; }
 .stat-label { font-size: 0.78rem; color: var(--color-muted); margin-top: 0.25rem; }
 .stat-tile.wide { grid-column: 1 / -1; background: #eaf6ef; border-color: #cdeadb; }
 .stat-tile.wide .stat-value { color: #1f7a4d; }
+
+.stat-detail-box { max-width: 480px; text-align: left; max-height: 85vh; overflow-y: auto; }
+.stat-detail-header { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.stat-detail-header h2 { margin: 0; font-size: 1.2rem; }
+#stat-detail-close { margin: 0; font-size: 1.1rem; text-decoration: none; }
+.stat-detail-table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin-top: 0.5rem; }
+.stat-detail-table th, .stat-detail-table td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--color-border); }
+.stat-detail-table th { color: var(--color-muted); font-weight: 600; }
+.stat-detail-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.stat-detail-total { margin: 0.6rem 0 0; }
 
 #dashboard-breakdown { margin-top: 1.25rem; }
 #dashboard-breakdown h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – BdSt – Tourenplaner</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20260805e">
+<link rel="stylesheet" href="style.css?v=20260805f">
 </head>
 <body>
 <header class="topbar">
@@ -53,27 +53,28 @@
         <h2>Dashboard</h2>
       </div>
       <div id="dashboard-stats" class="stat-grid">
-        <div class="stat-tile">
+        <button type="button" class="stat-tile" data-stat="customers">
           <div class="stat-value" id="stat-customers">–</div>
           <div class="stat-label">Kunden angelegt</div>
-        </div>
-        <div class="stat-tile">
+        </button>
+        <button type="button" class="stat-tile" data-stat="visits">
           <div class="stat-value" id="stat-visits">–</div>
           <div class="stat-label">Besuche bestätigt</div>
-        </div>
-        <div class="stat-tile">
+        </button>
+        <button type="button" class="stat-tile" data-stat="memberships">
           <div class="stat-value" id="stat-memberships">–</div>
           <div class="stat-label">BdSt-Mitglieder</div>
-        </div>
-        <div class="stat-tile">
+        </button>
+        <button type="button" class="stat-tile" data-stat="consultations">
           <div class="stat-value" id="stat-consultations">–</div>
           <div class="stat-label">Beratungstermine</div>
-        </div>
-        <div class="stat-tile wide">
+        </button>
+        <button type="button" class="stat-tile wide" data-stat="provision">
           <div class="stat-value" id="stat-provision">–</div>
           <div class="stat-label">Provision (netto)</div>
-        </div>
+        </button>
       </div>
+      <p class="hint">Auf einen Wert tippen für die Aufschlüsselung nach Monat.</p>
       <div id="dashboard-breakdown" class="hidden">
         <h3>Pro Person</h3>
         <div class="table-scroll">
@@ -116,108 +117,110 @@
       <p id="search-empty" class="hint hidden">Keine Treffer.</p>
     </section>
 
-    <section class="panel accent" id="add-customer-panel">
-      <div class="collapsible-header" id="add-customer-toggle">
-        <div class="collapsible-title">
-          <span class="add-icon">+</span>
-          <h2>Kunde hinzufügen</h2>
-        </div>
-        <span class="chevron">▾</span>
-      </div>
-      <form id="add-customer-form" class="hidden">
-        <div class="field">
-          <label for="nc-unternehmen">Unternehmen *</label>
-          <input type="text" id="nc-unternehmen" required>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="nc-strasse">Straße &amp; Hausnummer *</label>
-            <input type="text" id="nc-strasse" required>
+    <div class="two-col">
+      <section class="panel accent" id="add-customer-panel">
+        <div class="collapsible-header" id="add-customer-toggle">
+          <div class="collapsible-title">
+            <span class="add-icon">+</span>
+            <h2>Kunde hinzufügen</h2>
           </div>
+          <span class="chevron">▾</span>
         </div>
-        <div class="field-row">
+        <form id="add-customer-form" class="hidden">
           <div class="field">
-            <label for="nc-plz">PLZ *</label>
-            <input type="text" id="nc-plz" inputmode="numeric" required>
+            <label for="nc-unternehmen">Unternehmen *</label>
+            <input type="text" id="nc-unternehmen" required>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="nc-strasse">Straße &amp; Hausnummer *</label>
+              <input type="text" id="nc-strasse" required>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="nc-plz">PLZ *</label>
+              <input type="text" id="nc-plz" inputmode="numeric" required>
+            </div>
+            <div class="field">
+              <label for="nc-ort">Ort *</label>
+              <input type="text" id="nc-ort" required>
+            </div>
+          </div>
+          <p class="hint">Straße, PLZ und Ort werden für die Routenberechnung benötigt.</p>
+          <div class="field">
+            <label for="nc-inhaber">Inhaber / Ansprechpartner *</label>
+            <input type="text" id="nc-inhaber" required>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="nc-telefon">Telefon</label>
+              <input type="text" id="nc-telefon">
+            </div>
+            <div class="field">
+              <label for="nc-email">E-Mail</label>
+              <input type="email" id="nc-email">
+            </div>
           </div>
           <div class="field">
-            <label for="nc-ort">Ort *</label>
-            <input type="text" id="nc-ort" required>
-          </div>
-        </div>
-        <p class="hint">Straße, PLZ und Ort werden für die Routenberechnung benötigt.</p>
-        <div class="field">
-          <label for="nc-inhaber">Inhaber / Ansprechpartner *</label>
-          <input type="text" id="nc-inhaber" required>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="nc-telefon">Telefon</label>
-            <input type="text" id="nc-telefon">
+            <label for="nc-website">Website</label>
+            <input type="text" id="nc-website">
           </div>
           <div class="field">
-            <label for="nc-email">E-Mail</label>
-            <input type="email" id="nc-email">
+            <label>Tags</label>
+            <div id="nc-tags-options" class="tag-checkboxes"></div>
+            <p class="hint">„Akquise“ wird automatisch immer vergeben.</p>
           </div>
+          <button type="submit" class="primary">Kunde speichern</button>
+          <p id="add-customer-status" class="hint"></p>
+        </form>
+      </section>
+
+      <section class="panel accent hidden" id="admin-import-panel">
+        <div class="collapsible-header" id="admin-import-toggle">
+          <div class="collapsible-title">
+            <span class="add-icon">⇪</span>
+            <h2>Kunden Import</h2>
+          </div>
+          <span class="chevron">▾</span>
         </div>
-        <div class="field">
-          <label for="nc-website">Website</label>
-          <input type="text" id="nc-website">
+        <div id="admin-import-body" class="hidden">
+          <p class="hint">
+            Lädt eine North-Data-CSV-Exportdatei (Firmenname, Adresse, gesetzliche
+            Vertreter, Finanzkennzahlen) und legt die Kunden im Namen der
+            ausgewählten Person an. Diese Person muss sich vorher einmal selbst
+            angemeldet haben, damit sie hier auswählbar ist. Importierte Kunden
+            werden automatisch mit „Akquise“ und „North Data“ getaggt.
+          </p>
+          <div class="field">
+            <label for="admin-import-user">Für wen importieren?</label>
+            <select id="admin-import-user"></select>
+          </div>
+          <div class="field">
+            <label for="admin-import-file">North-Data-CSV-Datei</label>
+            <input type="file" id="admin-import-file" accept=".csv">
+          </div>
+          <button id="admin-import-btn" class="primary">Importieren</button>
+          <div id="admin-import-progress" class="hidden">
+            <div class="progress-bar"><div id="admin-import-progress-fill"></div></div>
+          </div>
+          <p id="admin-import-status" class="hint"></p>
+
+          <hr class="divider">
+          <p class="hint">
+            Bereits vor dieser Funktion importierte North-Data-Kunden tragen den
+            Tag „North Data“ eventuell noch nicht nach. Einmalig nachtragen:
+          </p>
+          <button id="backfill-btn" class="secondary">Tag „North Data“ nachtragen</button>
+          <p id="backfill-status" class="hint"></p>
         </div>
-        <div class="field">
-          <label>Tags</label>
-          <div id="nc-tags-options" class="tag-checkboxes"></div>
-          <p class="hint">„Akquise“ wird automatisch immer vergeben.</p>
-        </div>
-        <button type="submit" class="primary">Kunde speichern</button>
-        <p id="add-customer-status" class="hint"></p>
-      </form>
-    </section>
+      </section>
+    </div>
 
     <section class="panel hidden" id="import-panel">
       <p class="hint">Deine Kundenliste ist noch leer. Du kannst die ursprüngliche Excel-Liste (215 Adressen) einmalig importieren:</p>
       <button id="import-btn" class="secondary">Excel-Liste importieren</button>
       <p id="import-status" class="hint"></p>
-    </section>
-
-    <section class="panel accent hidden" id="admin-import-panel">
-      <div class="collapsible-header" id="admin-import-toggle">
-        <div class="collapsible-title">
-          <span class="add-icon">⇪</span>
-          <h2>Kunden Import</h2>
-        </div>
-        <span class="chevron">▾</span>
-      </div>
-      <div id="admin-import-body" class="hidden">
-        <p class="hint">
-          Lädt eine North-Data-CSV-Exportdatei (Firmenname, Adresse, gesetzliche
-          Vertreter, Finanzkennzahlen) und legt die Kunden im Namen der
-          ausgewählten Person an. Diese Person muss sich vorher einmal selbst
-          angemeldet haben, damit sie hier auswählbar ist. Importierte Kunden
-          werden automatisch mit „Akquise“ und „North Data“ getaggt.
-        </p>
-        <div class="field">
-          <label for="admin-import-user">Für wen importieren?</label>
-          <select id="admin-import-user"></select>
-        </div>
-        <div class="field">
-          <label for="admin-import-file">North-Data-CSV-Datei</label>
-          <input type="file" id="admin-import-file" accept=".csv">
-        </div>
-        <button id="admin-import-btn" class="primary">Importieren</button>
-        <div id="admin-import-progress" class="hidden">
-          <div class="progress-bar"><div id="admin-import-progress-fill"></div></div>
-        </div>
-        <p id="admin-import-status" class="hint"></p>
-
-        <hr class="divider">
-        <p class="hint">
-          Bereits vor dieser Funktion importierte North-Data-Kunden tragen den
-          Tag „North Data“ eventuell noch nicht nach. Einmalig nachtragen:
-        </p>
-        <button id="backfill-btn" class="secondary">Tag „North Data“ nachtragen</button>
-        <p id="backfill-status" class="hint"></p>
-      </div>
     </section>
 
     <section class="panel controls accent">
@@ -337,6 +340,17 @@
   </div>
 </div>
 
+<div id="stat-detail-overlay" class="confirm-overlay hidden">
+  <div class="confirm-box stat-detail-box">
+    <div class="stat-detail-header">
+      <h2 id="stat-detail-title"></h2>
+      <button type="button" id="stat-detail-close" class="link-btn">✕</button>
+    </div>
+    <p id="stat-detail-subtitle" class="hint"></p>
+    <div id="stat-detail-body"></div>
+  </div>
+</div>
+
 <footer>
   <p>Geokodierung: OpenStreetMap Nominatim · Routing: OSRM (project-osrm.org) · Kunden-, Besuchs- und Notizdaten: Firebase.</p>
 </footer>
@@ -344,6 +358,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20260805e"></script>
+<script type="module" src="app.js?v=20260805f"></script>
 </body>
 </html>
