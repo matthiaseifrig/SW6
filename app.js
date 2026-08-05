@@ -243,16 +243,12 @@ function subscribeToCustomers() {
   );
 }
 
-async function maybeShowImportPanel() {
-  if (state.scopeAll) {
-    els.importPanel.classList.add("hidden");
-    return;
-  }
-  if (state.customers.length === 0) {
-    els.importPanel.classList.remove("hidden");
-  } else {
-    els.importPanel.classList.add("hidden");
-  }
+function maybeShowImportPanel() {
+  // Die urspruengliche 215er-Liste soll nur "owner" selbst importieren
+  // koennen - Kolleg:innen bekommen ihre Kunden per Admin-Import oder
+  // legen sie einzeln ueber "Kunde hinzufuegen" an.
+  const show = state.role === "owner" && !state.scopeAll && state.customers.length === 0;
+  els.importPanel.classList.toggle("hidden", !show);
 }
 
 // ---------- Kunde hinzufügen ----------
