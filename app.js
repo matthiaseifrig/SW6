@@ -10,6 +10,7 @@ import {
   addVisit,
   updateVisitOutcome,
   resolveConsultation,
+  backfillPendingConsultations,
   addContact,
   removeContact,
   getVisits,
@@ -117,6 +118,9 @@ function cacheEls() {
 
   els.openConsultationsPanel = document.getElementById("open-consultations-panel");
   els.openConsultationsList = document.getElementById("open-consultations-list");
+  els.openConsultationsEmpty = document.getElementById("open-consultations-empty");
+  els.backfillConsultationsBtn = document.getElementById("backfill-consultations-btn");
+  els.backfillConsultationsStatus = document.getElementById("backfill-consultations-status");
 
   els.deeplinkPanel = document.getElementById("deeplink-panel");
   els.deeplinkBackBtn = document.getElementById("deeplink-back-btn");
@@ -207,6 +211,7 @@ function bindStaticEvents() {
 
   els.crSaveBtn.addEventListener("click", onCrSaveClick);
   els.crCancelBtn.addEventListener("click", closeConsultationResolve);
+  els.backfillConsultationsBtn.addEventListener("click", onBackfillConsultationsClick);
 
   els.deeplinkBackBtn.addEventListener("click", closeCustomerPage);
 
@@ -659,7 +664,8 @@ function buildContactsSection(meta) {
 
 function refreshOpenConsultations() {
   const pending = state.customers.filter((c) => c.pendingConsultation);
-  els.openConsultationsPanel.classList.toggle("hidden", pending.length === 0);
+  els.openConsultationsList.classList.toggle("hidden", pending.length === 0);
+  els.openConsultationsEmpty.classList.toggle("hidden", pending.length > 0);
   els.openConsultationsList.innerHTML = "";
   pending
     .sort((a, b) => new Date(a.pendingConsultation.at) - new Date(b.pendingConsultation.at))
@@ -719,6 +725,24 @@ async function onCrSaveClick() {
     alert("Konnte Ergebnis nicht speichern: " + err.message);
   } finally {
     els.crSaveBtn.disabled = false;
+  }
+}
+
+async function onBackfillConsultationsClick() {
+  els.backfillConsultationsBtn.disabled = true;
+  els.backfillConsultationsStatus.textContent = "Prüfe bestehende Termine …";
+  try {
+    const result = await backfillPendingConsultations(state.user.uid, (done, total) => {
+      els.backfillConsultationsStatus.textContent = `Prüfe … ${done}/${total}`;
+    });
+    els.backfillConsultationsStatus.textContent =
+      result.checked === 0
+        ? "Keine älteren Termine gefunden."
+        : `Fertig: ${result.updated} von ${result.checked} älteren Terminen jetzt in der Liste sichtbar.`;
+  } catch (err) {
+    els.backfillConsultationsStatus.textContent = "Fehler: " + err.message;
+  } finally {
+    els.backfillConsultationsBtn.disabled = false;
   }
 }
 

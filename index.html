@@ -87,13 +87,21 @@
       </div>
     </section>
 
-    <section class="panel accent hidden" id="open-consultations-panel">
+    <section class="panel accent" id="open-consultations-panel">
       <div class="collapsible-title">
         <span class="add-icon">📅</span>
         <h2>Offene Beratungstermine</h2>
       </div>
       <p class="hint">Termine, deren Ergebnis (Aufnahme ja/nein) noch nicht eingetragen wurde.</p>
-      <ul id="open-consultations-list" class="search-results"></ul>
+      <ul id="open-consultations-list" class="search-results hidden"></ul>
+      <p id="open-consultations-empty" class="hint">Keine offenen Beratungstermine.</p>
+      <hr class="divider">
+      <p class="hint">
+        Termine, die vor Einführung dieser Liste vereinbart wurden, tauchen
+        hier nicht automatisch auf. Einmalig einlesen:
+      </p>
+      <button type="button" id="backfill-consultations-btn" class="secondary small">Ältere Termine einmalig einlesen</button>
+      <p id="backfill-consultations-status" class="hint"></p>
     </section>
 
     <section class="panel accent hidden" id="deeplink-panel">
