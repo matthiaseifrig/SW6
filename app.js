@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260805c";
 import {
   subscribeCustomers,
   addCustomer,
@@ -22,9 +22,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js";
-import { parseNorthDataCsv } from "./js/northdata-import.js";
-import { TAG_OPTIONS } from "./js/tags.js";
+} from "./js/data-store.js?v=20260805c";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260805c";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260805c";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
