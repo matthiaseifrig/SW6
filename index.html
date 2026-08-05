@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – BdSt – Tourenplaner</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20260805d">
+<link rel="stylesheet" href="style.css?v=20260805e">
 </head>
 <body>
 <header class="topbar">
@@ -85,23 +85,14 @@
           </table>
         </div>
       </div>
-    </section>
-
-    <section class="panel accent" id="open-consultations-panel">
-      <div class="collapsible-title">
-        <span class="add-icon">📅</span>
-        <h2>Offene Beratungstermine</h2>
-      </div>
-      <p class="hint">Termine, deren Ergebnis (Aufnahme ja/nein) noch nicht eingetragen wurde.</p>
-      <ul id="open-consultations-list" class="search-results hidden"></ul>
-      <p id="open-consultations-empty" class="hint">Keine offenen Beratungstermine.</p>
       <hr class="divider">
       <p class="hint">
-        Termine, die vor Einführung dieser Liste vereinbart wurden, tauchen
-        hier nicht automatisch auf. Einmalig einlesen:
+        Falls ein Besuch mit Mitgliedschaft/Beratungstermin vor Einführung
+        der Provisionsberechnung eingetragen wurde, hier einmalig
+        nachtragen:
       </p>
-      <button type="button" id="backfill-consultations-btn" class="secondary small">Ältere Termine einmalig einlesen</button>
-      <p id="backfill-consultations-status" class="hint"></p>
+      <button type="button" id="backfill-provisions-btn" class="secondary small">Provisionen für ältere Einträge nachtragen</button>
+      <p id="backfill-provisions-status" class="hint"></p>
     </section>
 
     <section class="panel accent hidden" id="deeplink-panel">
@@ -316,11 +307,6 @@
         </div>
       </div>
 
-      <div id="membership-amount-field" class="field hidden">
-        <label for="membership-amount">Provision für diese Aufnahme (€ netto)</label>
-        <input type="number" id="membership-amount" step="0.01" min="0" value="150">
-      </div>
-
       <div class="field">
         <label>Beratungstermin gewünscht?</label>
         <div class="yesno-toggle" data-field="consultation">
@@ -340,33 +326,14 @@
         </div>
       </div>
 
+      <div id="provision-amount-field" class="field hidden">
+        <label for="provision-amount">Provision (€ netto)</label>
+        <input type="number" id="provision-amount" step="0.01" min="0">
+      </div>
+
       <button id="outcome-save-btn" class="confirm-btn">Speichern</button>
       <button id="outcome-skip-btn" class="secondary">Ohne diese Angaben speichern</button>
     </div>
-  </div>
-</div>
-
-<div id="consultation-resolve-overlay" class="confirm-overlay hidden">
-  <div class="confirm-box">
-    <p class="confirm-label">Beratungstermin bei</p>
-    <h2 id="cr-company"></h2>
-    <p class="confirm-hint" id="cr-when"></p>
-
-    <div class="field">
-      <label>Wurde eine BdSt-Mitgliedschaft abgeschlossen?</label>
-      <div class="yesno-toggle" id="cr-toggle" data-field="cr-membership">
-        <button type="button" class="yesno-btn" data-value="true">Ja</button>
-        <button type="button" class="yesno-btn active" data-value="false">Nein</button>
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="cr-amount">Provision (€ netto)</label>
-      <input type="number" id="cr-amount" step="0.01" min="0">
-    </div>
-
-    <button id="cr-save-btn" class="confirm-btn">Speichern</button>
-    <button id="cr-cancel-btn" class="secondary">Abbrechen</button>
   </div>
 </div>
 
@@ -377,6 +344,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20260805d"></script>
+<script type="module" src="app.js?v=20260805e"></script>
 </body>
 </html>

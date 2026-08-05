@@ -364,19 +364,6 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
 .visit-history-list li:last-child { border-bottom: none; }
 .visit-badges { margin-top: 0.2rem; color: var(--color-muted); font-size: 0.82rem; }
 
-.pending-consultation {
-  background: #fbf3e7;
-  border: 1px solid #f0dfc4;
-  border-radius: 8px;
-  padding: 0.6rem 0.8rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
-}
-.pending-consultation button { margin-top: 0.5rem; }
-
-#open-consultations-list .search-result { padding: 0.4rem 0.2rem; }
-#open-consultations-list button { margin: 0.4rem 0 0.6rem; }
-
 .progress-bar {
   height: 8px;
   background: #e5e7eb;
@@ -584,7 +571,7 @@ footer {
 @media print {
   .topbar, .controls, .maps-links, .map, footer, .results-actions,
   #dashboard-panel, #deeplink-panel, #search-panel, #add-customer-panel,
-  #import-panel, #admin-import-panel, #open-consultations-panel, .visit-controls { display: none !important; }
+  #import-panel, #admin-import-panel, .visit-controls { display: none !important; }
   body { background: white; }
   .panel { border: none; padding: 0; }
   .print-only { display: block; }

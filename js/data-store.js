@@ -19,8 +19,8 @@ import {
   increment,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20260805d";
-import { buildAddressMeta } from "./address-utils.js?v=20260805d";
+import { db } from "./firebase-app.js?v=20260805e";
+import { buildAddressMeta } from "./address-utils.js?v=20260805e";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -83,7 +83,6 @@ export async function addCustomer(fields, ownerUid) {
     consultationAt: null,
     contacts: [],
     totalProvision: 0,
-    pendingConsultation: null,
     source: "manual",
     ownerUid,
     createdBy: ownerUid,
@@ -132,11 +131,9 @@ export async function addVisit(customerId, { note, byUid, byName, confirmedByCus
     byName,
     confirmedByCustomer: Boolean(confirmedByCustomer),
     membershipSigned: false,
-    membershipAmount: null,
     consultationRequested: false,
     consultationAt: null,
-    consultationOutcome: null,
-    consultationAmount: null,
+    provisionAmount: null,
     visitedAt: serverTimestamp(),
   });
   await updateDoc(doc(db, CUSTOMERS, customerId), {
@@ -153,48 +150,29 @@ export async function addVisit(customerId, { note, byUid, byName, confirmedByCus
 // damit das Dashboard ohne separate Abfrage/Index direkt aus der schon
 // geladenen Kundenliste zaehlen kann.
 //
-// Provisionslogik (Stand: Absprache mit Matthias):
-// - Mitgliedschaft direkt beim Besuch (nicht ueber einen separat
-//   vereinbarten Beratungstermin) -> membershipAmount, Standard 150 EUR
-//   netto, editierbar (z.B. bei hoeherem Mitgliedsbeitrag).
-// - Ein separat vereinbarter Beratungstermin wird zunaechst nur als
-//   "offen" auf dem Kundendokument gemerkt (pendingConsultation). Das
-//   Ergebnis (Aufnahme ja/nein, 200 EUR bzw. 112,50 EUR) wird erst
-//   spaeter ueber resolveConsultation() erfasst, wenn der Termin
-//   stattgefunden hat.
-export async function updateVisitOutcome(customerId, visitId, { membershipSigned, membershipAmount, consultationRequested, consultationAt }) {
-  const amount = membershipSigned ? Number(membershipAmount) || 0 : null;
+// Provisionslogik (Stand: Absprache mit Matthias) - die Provision wird
+// sofort beim Eintragen des Besuchs fest verbucht (kein spaeterer
+// "Ergebnis nachtragen"-Schritt fuer den vereinbarten Termin):
+// - Nur Mitgliedschaft (kein Termin) -> Standard 150 EUR netto, editierbar
+//   (z.B. bei hoeherem Mitgliedsbeitrag).
+// - Nur Beratungstermin vereinbart (keine Mitgliedschaft) -> 112,50 EUR.
+// - Beratungstermin UND direkt eine Mitgliedschaft -> 200 EUR.
+// provisionAmount kommt bereits fertig berechnet (und ggf. manuell
+// angepasst) aus app.js.
+export async function updateVisitOutcome(customerId, visitId, { membershipSigned, consultationRequested, consultationAt, provisionAmount }) {
+  const amount = membershipSigned || consultationRequested ? Number(provisionAmount) || 0 : 0;
   const outcome = {
     membershipSigned: Boolean(membershipSigned),
-    membershipAmount: amount,
     consultationRequested: Boolean(consultationRequested),
     consultationAt: consultationAt || null,
+    provisionAmount: amount,
   };
   await updateDoc(doc(db, CUSTOMERS, customerId, "visits", visitId), outcome);
 
   const customerUpdate = { ...outcome };
-  if (membershipSigned && amount) {
+  if (amount) {
     customerUpdate.totalProvision = increment(amount);
   }
-  customerUpdate.pendingConsultation = consultationRequested && consultationAt ? { visitId, at: consultationAt } : null;
-  await updateDoc(doc(db, CUSTOMERS, customerId), customerUpdate);
-}
-
-// Traegt das Ergebnis eines zuvor vereinbarten Beratungstermins nach, sobald
-// er stattgefunden hat (siehe pendingConsultation auf dem Kundendokument).
-export async function resolveConsultation(customerId, visitId, { membershipSigned, amount }) {
-  const amt = Number(amount) || 0;
-  const outcome = {
-    consultationOutcome: membershipSigned ? "membership" : "none",
-    consultationAmount: amt,
-  };
-  await updateDoc(doc(db, CUSTOMERS, customerId, "visits", visitId), outcome);
-
-  const customerUpdate = {
-    pendingConsultation: null,
-    totalProvision: increment(amt),
-  };
-  if (membershipSigned) customerUpdate.membershipSigned = true;
   await updateDoc(doc(db, CUSTOMERS, customerId), customerUpdate);
 }
 
@@ -229,32 +207,39 @@ export async function backfillSourceTag(source, tag, onProgress) {
   return { updated: done, alreadyTagged: snap.size - missing.length };
 }
 
-// Migriert Beratungstermine, die vor Einfuehrung von pendingConsultation /
-// "Offene Beratungstermine" vereinbart wurden: sucht je Kunde den
-// juengsten Besuch mit consultationRequested=true ohne Ergebnis und traegt
-// ihn als pendingConsultation nach, damit er in der Liste auftaucht und
-// sein Ergebnis (und damit die Provision) nachtraeglich erfasst werden
-// kann. Bereits als "offen" bekannte oder bereits abgeschlossene Termine
-// werden nicht angefasst.
+// Traegt bei Besuchen mit Mitgliedschaft und/oder Beratungstermin, die vor
+// Einfuehrung der sofortigen Provisionsberechnung eingetragen wurden (und
+// deshalb noch kein provisionAmount haben), die Provision nachtraeglich
+// ein: nur Mitgliedschaft = 150 EUR, nur Termin = 112,50 EUR, beides
+// zusammen = 200 EUR. Bereits verbuchte Besuche (provisionAmount gesetzt)
+// werden nicht angefasst, die Funktion ist also gefahrlos mehrfach
+// ausfuehrbar.
 //
 // "customers" ist die bereits geladene, nach Scope gefilterte Kundenliste
 // (state.customers) - so deckt die Migration bei "owner" mit aktiviertem
 // "Alle Kollegen anzeigen" auch Kunden ab, die einem Kollegen gehoeren
 // (ownerUid != eigene uid), statt nur die eigenen.
-export async function backfillPendingConsultations(customers, onProgress) {
-  const candidates = customers.filter((c) => c.consultationRequested && !c.pendingConsultation);
+export async function backfillMissingProvisions(customers, onProgress) {
+  const candidates = customers.filter((c) => c.membershipSigned || c.consultationRequested);
   let updated = 0;
   let checked = 0;
   for (const cust of candidates) {
     checked++;
     if (onProgress) onProgress(checked, candidates.length);
     const visitsSnap = await getDocs(query(collection(db, CUSTOMERS, cust.id, "visits"), orderBy("visitedAt", "desc")));
-    const openVisit = visitsSnap.docs.find((v) => v.data().consultationRequested && !v.data().consultationOutcome);
-    if (!openVisit) continue;
-    const at = openVisit.data().consultationAt || cust.consultationAt;
-    if (!at) continue;
-    await updateDoc(doc(db, CUSTOMERS, cust.id), { pendingConsultation: { visitId: openVisit.id, at } });
-    updated++;
+    let customerTotal = 0;
+    for (const v of visitsSnap.docs) {
+      const data = v.data();
+      if (!data.membershipSigned && !data.consultationRequested) continue;
+      if (data.provisionAmount) continue;
+      const amount = data.membershipSigned && data.consultationRequested ? 200 : data.membershipSigned ? 150 : 112.5;
+      await updateDoc(v.ref, { provisionAmount: amount });
+      customerTotal += amount;
+    }
+    if (customerTotal > 0) {
+      await updateDoc(doc(db, CUSTOMERS, cust.id), { totalProvision: increment(customerTotal) });
+      updated++;
+    }
   }
   return { checked: candidates.length, updated };
 }
@@ -284,7 +269,6 @@ export async function importStaticAddresses(ownerUid, staticRecords, onProgress)
       consultationAt: null,
       contacts: [],
       totalProvision: 0,
-      pendingConsultation: null,
       source: "excel",
       ownerUid,
       createdBy: ownerUid,
@@ -315,7 +299,6 @@ export async function importRecordsForColleague(targetOwnerUid, createdByUid, re
       consultationAt: null,
       contacts: [],
       totalProvision: 0,
-      pendingConsultation: null,
       source: rec.source || "import",
       ownerUid: targetOwnerUid,
       createdBy: createdByUid,

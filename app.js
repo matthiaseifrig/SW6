@@ -2,15 +2,14 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260805d";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260805e";
 import {
   subscribeCustomers,
   addCustomer,
   saveGeocodeResult,
   addVisit,
   updateVisitOutcome,
-  resolveConsultation,
-  backfillPendingConsultations,
+  backfillMissingProvisions,
   addContact,
   removeContact,
   getVisits,
@@ -22,9 +21,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260805d";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260805d";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260805d";
+} from "./js/data-store.js?v=20260805e";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260805e";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260805e";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -33,11 +32,11 @@ const NOMINATIM_DELAY_MS = 1100; // Nominatim-Nutzungsrichtlinie: max. 1 Anfrage
 const MAX_MULTISTART_N = 120;
 const GOOGLE_MAPS_CHUNK = 10;
 
-// Provisions-Standardsaetze (netto, editierbar bei der Eingabe):
-// - Aufnahme direkt beim Besuch (kein separat vereinbarter Termin)
-// - separat vereinbarter Beratungstermin, der stattfindet und zu keiner
-//   Aufnahme fuehrt
-// - separat vereinbarter Beratungstermin, der direkt zu einer Aufnahme fuehrt
+// Provisions-Standardsaetze (netto, editierbar bei der Eingabe) - werden
+// sofort beim Eintragen des Besuchsergebnisses verbucht:
+// - nur Mitgliedschaft (kein Beratungstermin)
+// - nur Beratungstermin vereinbart (keine Mitgliedschaft)
+// - Beratungstermin UND direkt eine Mitgliedschaft zusammen
 const MEMBERSHIP_DEFAULT_AMOUNT = 150;
 const CONSULT_NO_AMOUNT = 112.5;
 const CONSULT_YES_AMOUNT = 200;
@@ -55,7 +54,6 @@ const state = {
   unsubscribeCustomers: null,
   gpsCoords: null,
   pendingConfirm: null, // { customerId, note, visitId, outcome }
-  pendingConsultationResolve: null, // { customerId, visitId, meta }
   openCustomerId: new URLSearchParams(location.search).get("customer") || null,
   customerPageScrolled: false,
 };
@@ -115,12 +113,8 @@ function cacheEls() {
   els.statProvision = document.getElementById("stat-provision");
   els.dashboardBreakdown = document.getElementById("dashboard-breakdown");
   els.dashboardBreakdownBody = document.getElementById("dashboard-breakdown-body");
-
-  els.openConsultationsPanel = document.getElementById("open-consultations-panel");
-  els.openConsultationsList = document.getElementById("open-consultations-list");
-  els.openConsultationsEmpty = document.getElementById("open-consultations-empty");
-  els.backfillConsultationsBtn = document.getElementById("backfill-consultations-btn");
-  els.backfillConsultationsStatus = document.getElementById("backfill-consultations-status");
+  els.backfillProvisionsBtn = document.getElementById("backfill-provisions-btn");
+  els.backfillProvisionsStatus = document.getElementById("backfill-provisions-status");
 
   els.deeplinkPanel = document.getElementById("deeplink-panel");
   els.deeplinkBackBtn = document.getElementById("deeplink-back-btn");
@@ -155,22 +149,14 @@ function cacheEls() {
   els.confirmCancel = document.getElementById("confirm-cancel");
   els.confirmStepOutcome = document.getElementById("confirm-step-outcome");
   els.confirmCompany2 = document.getElementById("confirm-company-2");
-  els.membershipAmountField = document.getElementById("membership-amount-field");
-  els.membershipAmount = document.getElementById("membership-amount");
+  els.provisionAmountField = document.getElementById("provision-amount-field");
+  els.provisionAmount = document.getElementById("provision-amount");
   els.consultationDatetime = document.getElementById("consultation-datetime");
   els.consultationDate = document.getElementById("consultation-date");
   els.consultationTime = document.getElementById("consultation-time");
   els.outcomeSaveBtn = document.getElementById("outcome-save-btn");
   els.outcomeSkipBtn = document.getElementById("outcome-skip-btn");
   els.yesnoToggles = document.querySelectorAll(".yesno-toggle");
-
-  els.consultationResolveOverlay = document.getElementById("consultation-resolve-overlay");
-  els.crCompany = document.getElementById("cr-company");
-  els.crWhen = document.getElementById("cr-when");
-  els.crToggle = document.getElementById("cr-toggle");
-  els.crAmount = document.getElementById("cr-amount");
-  els.crSaveBtn = document.getElementById("cr-save-btn");
-  els.crCancelBtn = document.getElementById("cr-cancel-btn");
 }
 
 function bindStaticEvents() {
@@ -209,9 +195,7 @@ function bindStaticEvents() {
     });
   });
 
-  els.crSaveBtn.addEventListener("click", onCrSaveClick);
-  els.crCancelBtn.addEventListener("click", closeConsultationResolve);
-  els.backfillConsultationsBtn.addEventListener("click", onBackfillConsultationsClick);
+  els.backfillProvisionsBtn.addEventListener("click", onBackfillProvisionsClick);
 
   els.deeplinkBackBtn.addEventListener("click", closeCustomerPage);
 
@@ -335,7 +319,6 @@ function subscribeToCustomers() {
       if (selectedCities().length) onCityChange();
       maybeShowImportPanel();
       refreshDashboard();
-      refreshOpenConsultations();
       refreshCustomerPage();
     },
     (err) => {
@@ -516,20 +499,6 @@ function renderVisitHistoryFull(container, meta, visits) {
   heading.textContent = "Besuche & Termine";
   container.appendChild(heading);
 
-  if (meta.pendingConsultation) {
-    const pending = document.createElement("div");
-    pending.className = "pending-consultation";
-    pending.innerHTML = "<strong>Offener Beratungstermin</strong> am " + escapeHtml(formatPlainDateTime(meta.pendingConsultation.at));
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "primary small";
-    btn.textContent = "Ergebnis eintragen";
-    btn.addEventListener("click", () => openConsultationResolve(meta));
-    pending.appendChild(document.createElement("br"));
-    pending.appendChild(btn);
-    container.appendChild(pending);
-  }
-
   if (!visits.length) {
     const p = document.createElement("p");
     p.className = "hint";
@@ -548,12 +517,9 @@ function renderVisitHistoryFull(container, meta, visits) {
     if (v.note) parts.push(": " + v.note);
 
     const badges = [];
-    if (v.membershipSigned) badges.push("Aufnahme direkt beim Besuch (" + formatEuroPrecise(v.membershipAmount) + ")");
-    if (v.consultationRequested) {
-      if (v.consultationOutcome === "membership") badges.push("Termin → Aufnahme (" + formatEuroPrecise(v.consultationAmount) + ")");
-      else if (v.consultationOutcome === "none") badges.push("Termin → keine Aufnahme (" + formatEuroPrecise(v.consultationAmount) + ")");
-      else badges.push("Termin vereinbart für " + escapeHtml(formatPlainDateTime(v.consultationAt)) + " (Ergebnis offen)");
-    }
+    if (v.membershipSigned) badges.push("Mitgliedschaft abgeschlossen");
+    if (v.consultationRequested) badges.push("Beratungstermin vereinbart" + (v.consultationAt ? " für " + formatPlainDateTime(v.consultationAt) : ""));
+    if (v.provisionAmount) badges.push("Provision: " + formatEuroPrecise(v.provisionAmount));
 
     li.innerHTML = escapeHtml(parts.join(" ")) + (badges.length ? '<div class="visit-badges">' + badges.map(escapeHtml).join(" · ") + "</div>" : "");
     ul.appendChild(li);
@@ -660,89 +626,23 @@ function buildContactsSection(meta) {
   return wrap;
 }
 
-// ---------- Offene Beratungstermine (Dashboard) ----------
+// ---------- Provisionen für ältere Einträge nachtragen (Dashboard) ----------
 
-function refreshOpenConsultations() {
-  const pending = state.customers.filter((c) => c.pendingConsultation);
-  els.openConsultationsList.classList.toggle("hidden", pending.length === 0);
-  els.openConsultationsEmpty.classList.toggle("hidden", pending.length > 0);
-  els.openConsultationsList.innerHTML = "";
-  pending
-    .sort((a, b) => new Date(a.pendingConsultation.at) - new Date(b.pendingConsultation.at))
-    .forEach((meta) => {
-      const li = document.createElement("li");
-      li.className = "search-result";
-      const summary = document.createElement("div");
-      summary.className = "search-result-summary";
-      summary.innerHTML =
-        '<div><div class="company"><a href="?customer=' +
-        encodeURIComponent(meta.id) +
-        '" class="open-customer-link" data-customer-id="' +
-        escapeHtml(meta.id) +
-        '">' +
-        escapeHtml(meta.unternehmen) +
-        '</a></div><div class="address">Termin am ' +
-        escapeHtml(formatPlainDateTime(meta.pendingConsultation.at)) +
-        "</div></div>";
-      li.appendChild(summary);
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "primary small";
-      btn.textContent = "Ergebnis eintragen";
-      btn.addEventListener("click", () => openConsultationResolve(meta));
-      li.appendChild(btn);
-      els.openConsultationsList.appendChild(li);
-    });
-}
-
-function openConsultationResolve(meta) {
-  if (!meta.pendingConsultation) return;
-  state.pendingConsultationResolve = { customerId: meta.id, visitId: meta.pendingConsultation.visitId };
-  els.crCompany.textContent = meta.unternehmen;
-  els.crWhen.textContent = "Termin am " + formatPlainDateTime(meta.pendingConsultation.at);
-  els.crToggle.querySelectorAll(".yesno-btn").forEach((b) => b.classList.toggle("active", b.dataset.value === "false"));
-  els.crAmount.value = CONSULT_NO_AMOUNT;
-  els.consultationResolveOverlay.classList.remove("hidden");
-}
-
-function closeConsultationResolve() {
-  state.pendingConsultationResolve = null;
-  els.consultationResolveOverlay.classList.add("hidden");
-}
-
-async function onCrSaveClick() {
-  if (!state.pendingConsultationResolve) return;
-  const { customerId, visitId } = state.pendingConsultationResolve;
-  const active = els.crToggle.querySelector(".yesno-btn.active");
-  const membershipSigned = active ? active.dataset.value === "true" : false;
-  const amount = parseFloat(String(els.crAmount.value).replace(",", ".")) || 0;
-  els.crSaveBtn.disabled = true;
+async function onBackfillProvisionsClick() {
+  els.backfillProvisionsBtn.disabled = true;
+  els.backfillProvisionsStatus.textContent = "Prüfe bestehende Einträge …";
   try {
-    await resolveConsultation(customerId, visitId, { membershipSigned, amount });
-    closeConsultationResolve();
-    refreshDashboard();
-  } catch (err) {
-    alert("Konnte Ergebnis nicht speichern: " + err.message);
-  } finally {
-    els.crSaveBtn.disabled = false;
-  }
-}
-
-async function onBackfillConsultationsClick() {
-  els.backfillConsultationsBtn.disabled = true;
-  els.backfillConsultationsStatus.textContent = "Prüfe bestehende Termine …";
-  try {
-    const result = await backfillPendingConsultations(state.customers, (done, total) => {
-      els.backfillConsultationsStatus.textContent = `Prüfe … ${done}/${total}`;
+    const result = await backfillMissingProvisions(state.customers, (done, total) => {
+      els.backfillProvisionsStatus.textContent = `Prüfe … ${done}/${total}`;
     });
-    els.backfillConsultationsStatus.textContent =
+    els.backfillProvisionsStatus.textContent =
       result.checked === 0
-        ? "Keine älteren Termine gefunden."
-        : `Fertig: ${result.updated} von ${result.checked} älteren Terminen jetzt in der Liste sichtbar.`;
+        ? "Keine älteren Einträge gefunden."
+        : `Fertig: ${result.updated} von ${result.checked} Kunden ergänzt.`;
   } catch (err) {
-    els.backfillConsultationsStatus.textContent = "Fehler: " + err.message;
+    els.backfillProvisionsStatus.textContent = "Fehler: " + err.message;
   } finally {
-    els.backfillConsultationsBtn.disabled = false;
+    els.backfillProvisionsBtn.disabled = false;
   }
 }
 
@@ -1847,8 +1747,8 @@ function resetYesNoToggles() {
   els.consultationDatetime.classList.add("hidden");
   els.consultationDate.value = "";
   els.consultationTime.value = "";
-  els.membershipAmountField.classList.add("hidden");
-  els.membershipAmount.value = MEMBERSHIP_DEFAULT_AMOUNT;
+  els.provisionAmountField.classList.add("hidden");
+  els.provisionAmount.value = "";
 }
 
 function openConfirmOverlay(meta, note) {
@@ -1903,12 +1803,24 @@ function onYesNoClick(toggle, btn) {
   if (toggle.dataset.field === "consultation") {
     els.consultationDatetime.classList.toggle("hidden", btn.dataset.value !== "true");
   }
-  if (toggle.dataset.field === "membership") {
-    els.membershipAmountField.classList.toggle("hidden", btn.dataset.value !== "true");
+  if (toggle.dataset.field === "membership" || toggle.dataset.field === "consultation") {
+    updateProvisionField();
   }
-  if (toggle.dataset.field === "cr-membership") {
-    els.crAmount.value = btn.dataset.value === "true" ? CONSULT_YES_AMOUNT : CONSULT_NO_AMOUNT;
+}
+
+// Provision wird direkt beim Speichern des Besuchsergebnisses verbucht -
+// kein spaeterer Schritt fuer den vereinbarten Termin noetig. Der
+// Vorschlagsbetrag richtet sich nach der Kombination aus beiden Toggles,
+// bleibt aber editierbar.
+function updateProvisionField() {
+  const membership = yesNoValue("membership");
+  const consultation = yesNoValue("consultation");
+  if (!membership && !consultation) {
+    els.provisionAmountField.classList.add("hidden");
+    return;
   }
+  els.provisionAmountField.classList.remove("hidden");
+  els.provisionAmount.value = membership && consultation ? CONSULT_YES_AMOUNT : membership ? MEMBERSHIP_DEFAULT_AMOUNT : CONSULT_NO_AMOUNT;
 }
 
 function yesNoValue(field) {
@@ -1926,13 +1838,13 @@ async function onOutcomeSaveClick() {
   if (consultationRequested && els.consultationDate.value) {
     consultationAt = els.consultationDate.value + "T" + (els.consultationTime.value || "00:00") + ":00";
   }
-  let membershipAmount = null;
-  if (membershipSigned) {
-    membershipAmount = parseFloat(String(els.membershipAmount.value).replace(",", ".")) || 0;
+  let provisionAmount = 0;
+  if (membershipSigned || consultationRequested) {
+    provisionAmount = parseFloat(String(els.provisionAmount.value).replace(",", ".")) || 0;
   }
   els.outcomeSaveBtn.disabled = true;
   try {
-    await updateVisitOutcome(customerId, visitId, { membershipSigned, membershipAmount, consultationRequested, consultationAt });
+    await updateVisitOutcome(customerId, visitId, { membershipSigned, consultationRequested, consultationAt, provisionAmount });
     closeConfirmOverlay();
     refreshDashboard();
   } catch (err) {
