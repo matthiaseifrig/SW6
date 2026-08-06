@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – BdSt – Tourenplaner</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20260805g">
+<link rel="stylesheet" href="style.css?v=20260806a">
 </head>
 <body>
 <header class="topbar">
@@ -356,6 +356,19 @@
   </div>
 </div>
 
+<div id="cancel-overlay" class="confirm-overlay hidden">
+  <div class="confirm-box">
+    <p class="confirm-label" id="cancel-label"></p>
+    <h2 id="cancel-company"></h2>
+    <div class="field">
+      <label for="cancel-amount">Neue Provision für diesen Besuch (€ netto)</label>
+      <input type="number" id="cancel-amount" step="0.01" min="0">
+    </div>
+    <button type="button" id="cancel-confirm-btn" class="confirm-btn">Stornierung bestätigen</button>
+    <button type="button" id="cancel-cancel-btn" class="secondary">Abbrechen</button>
+  </div>
+</div>
+
 <footer>
   <p>Geokodierung: OpenStreetMap Nominatim · Routing: OSRM (project-osrm.org) · Kunden-, Besuchs- und Notizdaten: Firebase.</p>
 </footer>
@@ -363,6 +376,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20260805g"></script>
+<script type="module" src="app.js?v=20260806a"></script>
 </body>
 </html>

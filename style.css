@@ -419,7 +419,20 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
 .visit-history-list { list-style: none; margin: 0; padding: 0; font-size: 0.88rem; }
 .visit-history-list li { padding: 0.5rem 0; border-bottom: 1px solid var(--color-border); }
 .visit-history-list li:last-child { border-bottom: none; }
-.visit-badges { margin-top: 0.2rem; color: var(--color-muted); font-size: 0.82rem; }
+.visit-badges { margin-top: 0.3rem; display: flex; flex-direction: column; gap: 0.2rem; }
+.visit-badge-item { color: var(--color-muted); font-size: 0.82rem; }
+.visit-badge-item.cancelled { color: #b3261e; text-decoration: line-through; }
+.cancel-link {
+  background: none;
+  border: none;
+  color: #b3261e;
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 0.4rem;
+}
 
 .progress-bar {
   height: 8px;

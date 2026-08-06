@@ -2,13 +2,14 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260805g";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260806a";
 import {
   subscribeCustomers,
   addCustomer,
   saveGeocodeResult,
   addVisit,
   updateVisitOutcome,
+  cancelVisitOutcome,
   backfillMissingProvisions,
   addContact,
   removeContact,
@@ -21,9 +22,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260805g";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260805g";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260805g";
+} from "./js/data-store.js?v=20260806a";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260806a";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260806a";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -54,6 +55,7 @@ const state = {
   unsubscribeCustomers: null,
   gpsCoords: null,
   pendingConfirm: null, // { customerId, note, visitId, outcome }
+  pendingCancel: null, // { customerId, visitId, field }
   openCustomerId: new URLSearchParams(location.search).get("customer") || null,
   customerPageScrolled: false,
 };
@@ -123,6 +125,13 @@ function cacheEls() {
   els.statDetailTitle = document.getElementById("stat-detail-title");
   els.statDetailSubtitle = document.getElementById("stat-detail-subtitle");
   els.statDetailBody = document.getElementById("stat-detail-body");
+
+  els.cancelOverlay = document.getElementById("cancel-overlay");
+  els.cancelLabel = document.getElementById("cancel-label");
+  els.cancelCompany = document.getElementById("cancel-company");
+  els.cancelAmount = document.getElementById("cancel-amount");
+  els.cancelConfirmBtn = document.getElementById("cancel-confirm-btn");
+  els.cancelCancelBtn = document.getElementById("cancel-cancel-btn");
   els.backfillProvisionsBtn = document.getElementById("backfill-provisions-btn");
   els.backfillProvisionsStatus = document.getElementById("backfill-provisions-status");
 
@@ -211,6 +220,9 @@ function bindStaticEvents() {
   els.statDetailClose.addEventListener("click", () => els.statDetailOverlay.classList.add("hidden"));
 
   els.welcomeClose.addEventListener("click", () => els.welcomeBanner.classList.add("hidden"));
+
+  els.cancelConfirmBtn.addEventListener("click", onCancelConfirmClick);
+  els.cancelCancelBtn.addEventListener("click", closeCancelOverlay);
 
   els.deeplinkBackBtn.addEventListener("click", closeCustomerPage);
 
@@ -701,16 +713,99 @@ function renderVisitHistoryFull(container, meta, visits) {
     if (v.confirmedByCustomer) parts.push("✓ vom Kunden bestätigt");
     parts.push("– " + (v.byName || "?"));
     if (v.note) parts.push(": " + v.note);
+    const line = document.createElement("div");
+    line.textContent = parts.join(" ");
+    li.appendChild(line);
 
-    const badges = [];
-    if (v.membershipSigned) badges.push("Mitgliedschaft abgeschlossen");
-    if (v.consultationRequested) badges.push("Beratungstermin vereinbart" + (v.consultationAt ? " für " + formatPlainDateTime(v.consultationAt) : ""));
-    if (v.provisionAmount) badges.push("Provision: " + formatEuroPrecise(v.provisionAmount));
+    const badgesDiv = document.createElement("div");
+    badgesDiv.className = "visit-badges";
 
-    li.innerHTML = escapeHtml(parts.join(" ")) + (badges.length ? '<div class="visit-badges">' + badges.map(escapeHtml).join(" · ") + "</div>" : "");
+    if (v.membershipSigned) {
+      const span = document.createElement("span");
+      span.className = "visit-badge-item";
+      if (v.membershipCancelled) {
+        span.classList.add("cancelled");
+        span.textContent = "Mitgliedschaft storniert";
+      } else {
+        span.textContent = "Mitgliedschaft abgeschlossen";
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "cancel-link";
+        cancelBtn.textContent = "Stornieren";
+        cancelBtn.addEventListener("click", () => openCancelOverlay(meta, v, "membership"));
+        span.appendChild(cancelBtn);
+      }
+      badgesDiv.appendChild(span);
+    }
+
+    if (v.consultationRequested) {
+      const span = document.createElement("span");
+      span.className = "visit-badge-item";
+      if (v.consultationCancelled) {
+        span.classList.add("cancelled");
+        span.textContent = "Beratungstermin storniert";
+      } else {
+        span.textContent = "Beratungstermin vereinbart" + (v.consultationAt ? " für " + formatPlainDateTime(v.consultationAt) : "");
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "cancel-link";
+        cancelBtn.textContent = "Stornieren";
+        cancelBtn.addEventListener("click", () => openCancelOverlay(meta, v, "consultation"));
+        span.appendChild(cancelBtn);
+      }
+      badgesDiv.appendChild(span);
+    }
+
+    if (v.provisionAmount) {
+      const span = document.createElement("span");
+      span.className = "visit-badge-item";
+      span.textContent = "Provision: " + formatEuroPrecise(v.provisionAmount);
+      badgesDiv.appendChild(span);
+    }
+
+    if (badgesDiv.children.length) li.appendChild(badgesDiv);
     ul.appendChild(li);
   });
   container.appendChild(ul);
+}
+
+// ---------- Aufnahme/Beratungstermin stornieren (Provisionskorrektur) ----------
+
+function openCancelOverlay(meta, visit, field) {
+  const membershipActive = visit.membershipSigned && !visit.membershipCancelled;
+  const consultationActive = visit.consultationRequested && !visit.consultationCancelled;
+  let newAmount;
+  if (field === "membership") {
+    newAmount = consultationActive ? CONSULT_NO_AMOUNT : 0;
+  } else {
+    newAmount = membershipActive ? MEMBERSHIP_DEFAULT_AMOUNT : 0;
+  }
+  state.pendingCancel = { customerId: meta.id, visitId: visit.id, field };
+  els.cancelLabel.textContent = field === "membership" ? "Mitgliedschaft stornieren bei" : "Beratungstermin stornieren bei";
+  els.cancelCompany.textContent = meta.unternehmen;
+  els.cancelAmount.value = newAmount;
+  els.cancelOverlay.classList.remove("hidden");
+}
+
+function closeCancelOverlay() {
+  state.pendingCancel = null;
+  els.cancelOverlay.classList.add("hidden");
+}
+
+async function onCancelConfirmClick() {
+  if (!state.pendingCancel) return;
+  const { customerId, visitId, field } = state.pendingCancel;
+  const newAmount = parseFloat(String(els.cancelAmount.value).replace(",", ".")) || 0;
+  els.cancelConfirmBtn.disabled = true;
+  try {
+    await cancelVisitOutcome(customerId, visitId, field, newAmount);
+    closeCancelOverlay();
+    refreshDashboard();
+  } catch (err) {
+    alert("Konnte Stornierung nicht speichern: " + err.message);
+  } finally {
+    els.cancelConfirmBtn.disabled = false;
+  }
 }
 
 function buildContactsSection(meta) {

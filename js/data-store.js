@@ -19,8 +19,8 @@ import {
   increment,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20260805g";
-import { buildAddressMeta } from "./address-utils.js?v=20260805g";
+import { db } from "./firebase-app.js?v=20260806a";
+import { buildAddressMeta } from "./address-utils.js?v=20260806a";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -131,8 +131,10 @@ export async function addVisit(customerId, { note, byUid, byName, confirmedByCus
     byName,
     confirmedByCustomer: Boolean(confirmedByCustomer),
     membershipSigned: false,
+    membershipCancelled: false,
     consultationRequested: false,
     consultationAt: null,
+    consultationCancelled: false,
     provisionAmount: null,
     visitedAt: serverTimestamp(),
   });
@@ -173,6 +175,44 @@ export async function updateVisitOutcome(customerId, visitId, { membershipSigned
   if (amount) {
     customerUpdate.totalProvision = increment(amount);
   }
+  await updateDoc(doc(db, CUSTOMERS, customerId), customerUpdate);
+}
+
+// Storniert eine Mitgliedschaft oder einen Beratungstermin, die/der bei
+// einem einzelnen Besuch eingetragen wurde (z.B. weil der Kunde die
+// Aufnahme rueckgaengig macht oder einen Termin absagt). Die
+// urspruenglichen Felder (membershipSigned/consultationRequested) bleiben
+// als historischer Fakt stehen - membershipCancelled/consultationCancelled
+// markieren nur die Stornierung, damit im Verlauf sichtbar bleibt, dass es
+// sie einmal gab. provisionAmount kommt bereits fertig (neu) berechnet aus
+// app.js (0, oder bei kombinierten Besuchen der jeweils andere
+// Standardbetrag) und ersetzt den alten Betrag; die Differenz wird von
+// totalProvision am Kunden abgezogen.
+//
+// Hinweis: aktualisiert membershipSigned/consultationRequested am
+// Kundendokument direkt (wie updateVisitOutcome) - falls es danach schon
+// einen neueren Besuch mit eigenem Stand gab, wird dessen Stand hier
+// ueberschrieben. Fuer den ueblichen Fall (Stornierung kurz nach dem
+// betroffenen Besuch) ist das korrekt.
+export async function cancelVisitOutcome(customerId, visitId, field, newAmount) {
+  const visitRef = doc(db, CUSTOMERS, customerId, "visits", visitId);
+  const snap = await getDoc(visitRef);
+  if (!snap.exists()) throw new Error("Besuch nicht gefunden.");
+  const oldAmount = Number(snap.data().provisionAmount) || 0;
+  const amount = Number(newAmount) || 0;
+  const delta = amount - oldAmount;
+
+  const visitUpdate = { provisionAmount: amount };
+  const customerUpdate = { provisionAmount: amount, totalProvision: increment(delta) };
+  if (field === "membership") {
+    visitUpdate.membershipCancelled = true;
+    customerUpdate.membershipSigned = false;
+  } else if (field === "consultation") {
+    visitUpdate.consultationCancelled = true;
+    customerUpdate.consultationRequested = false;
+  }
+
+  await updateDoc(visitRef, visitUpdate);
   await updateDoc(doc(db, CUSTOMERS, customerId), customerUpdate);
 }
 
