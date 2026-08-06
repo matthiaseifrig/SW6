@@ -19,8 +19,8 @@ import {
   increment,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20260806a";
-import { buildAddressMeta } from "./address-utils.js?v=20260806a";
+import { db } from "./firebase-app.js?v=20260806b";
+import { buildAddressMeta } from "./address-utils.js?v=20260806b";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";

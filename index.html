@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – BdSt – Tourenplaner</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20260806a">
+<link rel="stylesheet" href="style.css?v=20260806b">
 </head>
 <body>
 <header class="topbar">
@@ -117,6 +117,10 @@
           <label for="customer-search">Kunde suchen</label>
         </div>
         <input type="text" id="customer-search" placeholder="Firmenname, Ort, Straße oder Ansprechpartner …">
+      </div>
+      <div class="search-filters">
+        <button type="button" class="filter-chip" id="filter-members" data-filter="members">Nur Mitglieder</button>
+        <button type="button" class="filter-chip" id="filter-consultations" data-filter="consultations">Nur Beratungstermine</button>
       </div>
       <ul id="search-results" class="search-results hidden"></ul>
       <p id="search-empty" class="hint hidden">Keine Treffer.</p>
@@ -376,6 +380,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20260806a"></script>
+<script type="module" src="app.js?v=20260806b"></script>
 </body>
 </html>

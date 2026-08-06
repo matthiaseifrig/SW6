@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260806a";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260806b";
 import {
   subscribeCustomers,
   addCustomer,
@@ -22,9 +22,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260806a";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260806a";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260806a";
+} from "./js/data-store.js?v=20260806b";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260806b";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260806b";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -56,6 +56,7 @@ const state = {
   gpsCoords: null,
   pendingConfirm: null, // { customerId, note, visitId, outcome }
   pendingCancel: null, // { customerId, visitId, field }
+  activeSearchFilter: null, // "members" | "consultations" | null
   openCustomerId: new URLSearchParams(location.search).get("customer") || null,
   customerPageScrolled: false,
 };
@@ -86,6 +87,8 @@ function cacheEls() {
   els.searchInput = document.getElementById("customer-search");
   els.searchResults = document.getElementById("search-results");
   els.searchEmpty = document.getElementById("search-empty");
+  els.filterMembersBtn = document.getElementById("filter-members");
+  els.filterConsultationsBtn = document.getElementById("filter-consultations");
 
   els.addCustomerToggle = document.getElementById("add-customer-toggle");
   els.addCustomerForm = document.getElementById("add-customer-form");
@@ -184,6 +187,8 @@ function bindStaticEvents() {
   els.scopeToggle.addEventListener("change", onScopeToggle);
 
   els.searchInput.addEventListener("input", onSearchInput);
+  els.filterMembersBtn.addEventListener("click", () => onFilterChipClick("members"));
+  els.filterConsultationsBtn.addEventListener("click", () => onFilterChipClick("consultations"));
 
   els.addCustomerToggle.addEventListener("click", () => {
     els.addCustomerForm.classList.toggle("hidden");
@@ -231,6 +236,7 @@ function bindStaticEvents() {
     if (!link) return;
     if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;
     ev.preventDefault();
+    els.statDetailOverlay.classList.add("hidden");
     openCustomerPage(link.dataset.customerId);
   });
 
@@ -536,10 +542,48 @@ async function loadAllVisitsForCustomers(customers, onProgress) {
   for (let i = 0; i < customers.length; i += BATCH) {
     const batch = customers.slice(i, i + BATCH);
     const results = await Promise.all(batch.map((c) => getVisits(c.id).catch(() => [])));
-    results.forEach((visits) => all.push(...visits));
+    results.forEach((visits, idx) => {
+      const cust = batch[idx];
+      visits.forEach((v) => all.push({ ...v, customerId: cust.id, unternehmen: cust.unternehmen }));
+    });
     if (onProgress) onProgress(Math.min(i + BATCH, customers.length), customers.length);
   }
   return all;
+}
+
+// Klickbare Liste einzelner Kunden unter der Monatstabelle im Dashboard-
+// Drilldown, damit man direkt zur Kundenseite springen kann (z.B. um eine
+// Aufnahme/einen Termin zu korrigieren/stornieren).
+function renderCustomerLinkList(container, entries) {
+  if (!entries.length) return;
+  const heading = document.createElement("h3");
+  heading.className = "stat-detail-sub-heading";
+  heading.textContent = "Einzelne Kunden";
+  container.appendChild(heading);
+
+  const ul = document.createElement("ul");
+  ul.className = "stat-detail-customer-list";
+  entries
+    .slice()
+    .sort((a, b) => b.date - a.date)
+    .forEach((e) => {
+      const li = document.createElement("li");
+      const meta = [e.date.toLocaleDateString("de-DE")];
+      if (e.valueText) meta.push(e.valueText);
+      li.innerHTML =
+        '<a href="?customer=' +
+        encodeURIComponent(e.customerId) +
+        '" class="open-customer-link" data-customer-id="' +
+        escapeHtml(e.customerId) +
+        '">' +
+        escapeHtml(e.unternehmen) +
+        "</a>" +
+        '<span class="stat-detail-customer-meta">' +
+        escapeHtml(meta.join(" · ")) +
+        "</span>";
+      ul.appendChild(li);
+    });
+  container.appendChild(ul);
 }
 
 async function openStatDetail(stat) {
@@ -550,13 +594,16 @@ async function openStatDetail(stat) {
 
   if (stat === "customers") {
     const buckets = {};
+    const entries = [];
     state.customers.forEach((c) => {
       const d = toJsDate(c.createdAt);
       if (!d) return;
       const key = monthKeyFromDate(d);
       buckets[key] = (buckets[key] || 0) + 1;
+      entries.push({ customerId: c.id, unternehmen: c.unternehmen, date: d, valueText: "" });
     });
     renderMonthlyTable(els.statDetailBody, sortedMonthlyRows(buckets), "Kunden", false);
+    renderCustomerLinkList(els.statDetailBody, entries);
     return;
   }
 
@@ -570,6 +617,7 @@ async function openStatDetail(stat) {
       loading.textContent = `Lade Besuchsdaten … ${done}/${total} Kunden`;
     });
     const buckets = {};
+    const entries = [];
     let isEuro = false;
     let valueLabel = "Anzahl";
     visits.forEach((v) => {
@@ -578,12 +626,27 @@ async function openStatDetail(stat) {
       const key = monthKeyFromDate(d);
       if (stat === "visits") {
         buckets[key] = (buckets[key] || 0) + 1;
+        entries.push({ customerId: v.customerId, unternehmen: v.unternehmen, date: d, valueText: "" });
       } else if (stat === "memberships") {
-        if (v.membershipSigned) buckets[key] = (buckets[key] || 0) + 1;
+        if (v.membershipSigned && !v.membershipCancelled) {
+          buckets[key] = (buckets[key] || 0) + 1;
+          entries.push({ customerId: v.customerId, unternehmen: v.unternehmen, date: d, valueText: "" });
+        }
       } else if (stat === "consultations") {
-        if (v.consultationRequested) buckets[key] = (buckets[key] || 0) + 1;
+        if (v.consultationRequested && !v.consultationCancelled) {
+          buckets[key] = (buckets[key] || 0) + 1;
+          entries.push({
+            customerId: v.customerId,
+            unternehmen: v.unternehmen,
+            date: d,
+            valueText: v.consultationAt ? "Termin: " + formatPlainDateTime(v.consultationAt) : "",
+          });
+        }
       } else if (stat === "provision") {
-        if (v.provisionAmount) buckets[key] = (buckets[key] || 0) + v.provisionAmount;
+        if (v.provisionAmount) {
+          buckets[key] = (buckets[key] || 0) + v.provisionAmount;
+          entries.push({ customerId: v.customerId, unternehmen: v.unternehmen, date: d, valueText: formatEuroPrecise(v.provisionAmount) });
+        }
         isEuro = true;
         valueLabel = "Provision";
       }
@@ -596,6 +659,7 @@ async function openStatDetail(stat) {
       els.statDetailBody.appendChild(note);
     }
     renderMonthlyTable(els.statDetailBody, sortedMonthlyRows(buckets), valueLabel, isEuro);
+    renderCustomerLinkList(els.statDetailBody, entries);
   } catch (err) {
     els.statDetailBody.innerHTML = "";
     const p = document.createElement("p");
@@ -1808,6 +1872,31 @@ const SEARCH_FIELDS = ["unternehmen", "ort", "strasse", "plz", "vertreter1", "ve
 const SEARCH_RESULT_LIMIT = 30;
 
 function onSearchInput() {
+  state.activeSearchFilter = null;
+  applySearchFiltersAndRender();
+}
+
+function onFilterChipClick(filter) {
+  state.activeSearchFilter = state.activeSearchFilter === filter ? null : filter;
+  if (state.activeSearchFilter) els.searchInput.value = "";
+  applySearchFiltersAndRender();
+}
+
+function applySearchFiltersAndRender() {
+  els.filterMembersBtn.classList.toggle("active", state.activeSearchFilter === "members");
+  els.filterConsultationsBtn.classList.toggle("active", state.activeSearchFilter === "consultations");
+
+  if (state.activeSearchFilter === "members") {
+    const matches = state.customers.filter((c) => c.membershipSigned).sort((a, b) => (a.unternehmen || "").localeCompare(b.unternehmen || "", "de"));
+    renderSearchResults(matches.slice(0, SEARCH_RESULT_LIMIT), matches.length);
+    return;
+  }
+  if (state.activeSearchFilter === "consultations") {
+    const matches = state.customers.filter((c) => c.consultationRequested).sort((a, b) => (a.unternehmen || "").localeCompare(b.unternehmen || "", "de"));
+    renderSearchResults(matches.slice(0, SEARCH_RESULT_LIMIT), matches.length);
+    return;
+  }
+
   const q = els.searchInput.value.trim().toLowerCase();
   if (!q) {
     els.searchResults.classList.add("hidden");
