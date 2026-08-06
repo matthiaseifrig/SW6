@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260806b";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260806c";
 import {
   subscribeCustomers,
   addCustomer,
@@ -11,6 +11,7 @@ import {
   updateVisitOutcome,
   cancelVisitOutcome,
   backfillMissingProvisions,
+  getCustomersForOwner,
   addContact,
   removeContact,
   getVisits,
@@ -22,9 +23,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260806b";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260806b";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260806b";
+} from "./js/data-store.js?v=20260806c";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260806c";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260806c";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -109,6 +110,9 @@ function cacheEls() {
   els.adminImportStatus = document.getElementById("admin-import-status");
   els.backfillBtn = document.getElementById("backfill-btn");
   els.backfillStatus = document.getElementById("backfill-status");
+  els.printListUser = document.getElementById("print-list-user");
+  els.printListBtn = document.getElementById("print-list-btn");
+  els.printListStatus = document.getElementById("print-list-status");
 
   els.welcomeBanner = document.getElementById("welcome-banner");
   els.welcomeText = document.getElementById("welcome-text");
@@ -201,6 +205,7 @@ function bindStaticEvents() {
   });
   els.adminImportBtn.addEventListener("click", onAdminImportClick);
   els.backfillBtn.addEventListener("click", onBackfillClick);
+  els.printListBtn.addEventListener("click", onPrintListClick);
 
   els.citySelect.addEventListener("change", onCityChange);
   els.streetSelect.addEventListener("change", refreshStartAddressOptions);
@@ -301,7 +306,10 @@ async function handleAuthChange(user) {
   showWelcomeBanner(state.user.name);
 
   els.adminImportPanel.classList.toggle("hidden", state.role !== "owner");
-  if (state.role === "owner") populateAdminImportUsers();
+  if (state.role === "owner") {
+    populateAdminImportUsers();
+    populatePrintListUsers();
+  }
 
   subscribeToCustomers();
 }
@@ -334,15 +342,15 @@ function showWelcomeBanner(name) {
   els.welcomeBanner.style.animation = "";
 }
 
-async function populateAdminImportUsers() {
-  els.adminImportUser.innerHTML = "";
+async function populateUserSelect(selectEl) {
+  selectEl.innerHTML = "";
   try {
     const users = (await listUsers()).filter((u) => u.uid !== state.user.uid);
     if (!users.length) {
       const opt = document.createElement("option");
       opt.value = "";
       opt.textContent = "-- noch niemand angemeldet --";
-      els.adminImportUser.appendChild(opt);
+      selectEl.appendChild(opt);
       return;
     }
     users
@@ -351,15 +359,23 @@ async function populateAdminImportUsers() {
         const opt = document.createElement("option");
         opt.value = u.uid;
         opt.textContent = u.name || u.email || u.uid;
-        els.adminImportUser.appendChild(opt);
+        selectEl.appendChild(opt);
       });
   } catch (err) {
     const opt = document.createElement("option");
     opt.value = "";
     opt.textContent = "Fehler beim Laden der Nutzerliste";
-    els.adminImportUser.appendChild(opt);
+    selectEl.appendChild(opt);
     console.error(err);
   }
+}
+
+function populateAdminImportUsers() {
+  return populateUserSelect(els.adminImportUser);
+}
+
+function populatePrintListUsers() {
+  return populateUserSelect(els.printListUser);
 }
 
 function onScopeToggle() {
@@ -1008,6 +1024,75 @@ async function onBackfillClick() {
   }
 }
 
+// ---------- Komplette Kundenliste einer Person ausdrucken ----------
+//
+// Fuer Kollegen, die die App nicht selbst nutzen koennen: liefert eine
+// druckbare Liste ALLER Kunden dieser Person, sortiert nach Ort/PLZ/
+// Straße statt einer optimierten Route (keine Geokodierung/Karte noetig,
+// nutzt aber sonst dieselbe Kartendarstellung wie die Tourenplanung
+// inkl. QR-Code). Enthaelt bewusst keine Finanzkennzahlen, auch wenn
+// "owner" die Liste erstellt - die Zielgruppe ist die/der Kollege/Kollegin.
+async function onPrintListClick() {
+  const targetUid = els.printListUser.value;
+  if (!targetUid) {
+    els.printListStatus.textContent = "Bitte eine Person auswählen.";
+    return;
+  }
+  els.printListBtn.disabled = true;
+  els.printListStatus.textContent = "Lade Kundenliste …";
+  try {
+    const customers = await getCustomersForOwner(targetUid);
+    if (!customers.length) {
+      els.printListStatus.textContent = "Diese Person hat noch keine Kunden.";
+      return;
+    }
+    customers.sort((a, b) => {
+      const ort = (a.ort || "").localeCompare(b.ort || "", "de");
+      if (ort) return ort;
+      const plz = (a.plz || "").localeCompare(b.plz || "", "de");
+      if (plz) return plz;
+      return (a.strasse || "").localeCompare(b.strasse || "", "de");
+    });
+    const label = els.printListUser.options[els.printListUser.selectedIndex].textContent;
+    renderCustomerListForPrint(customers, label);
+    els.printListStatus.textContent = `Fertig: ${customers.length} Kunden. Weiter unten über "Drucken / PDF" ausdrucken.`;
+  } catch (err) {
+    els.printListStatus.textContent = "Fehler: " + err.message;
+  } finally {
+    els.printListBtn.disabled = false;
+  }
+}
+
+function renderCustomerListForPrint(customers, label) {
+  els.resultsPanel.classList.remove("hidden");
+  els.mapDiv.classList.add("hidden");
+  els.mapsLinksToggle.classList.add("hidden");
+  els.mapsLinks.classList.add("hidden");
+  els.resultsTitle.textContent = "Kundenliste " + label + ": " + customers.length + " Kunden (nach Ort, PLZ, Straße)";
+
+  els.stopList.innerHTML = "";
+  customers.forEach((meta, i) => {
+    const li = document.createElement("li");
+    const idxSpan = document.createElement("span");
+    idxSpan.className = "stop-index" + (meta.lastVisitedAt ? " visited" : "");
+    idxSpan.textContent = String(i + 1);
+    li.appendChild(idxSpan);
+
+    const body = document.createElement("div");
+    body.className = "stop-body";
+    body.innerHTML = buildCustomerDetailsHtml(meta);
+    body.appendChild(buildTagsSection(meta));
+    body.appendChild(buildVisitControls(meta));
+    body.appendChild(buildCustomerQrCode(meta));
+    li.appendChild(body);
+
+    els.stopList.appendChild(li);
+  });
+
+  els.unresolved.classList.add("hidden");
+  els.resultsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 // ---------- Kunde hinzufügen ----------
 
 function populateTagCheckboxes() {
@@ -1143,19 +1228,22 @@ function populateCitySelect() {
   const cities = Object.keys(state.byCity).sort((a, b) => a.localeCompare(b, "de"));
   const frag = document.createDocumentFragment();
   cities.forEach((city) => {
-    const opt = document.createElement("option");
-    opt.value = city;
     const n = state.byCity[city].length;
-    opt.textContent = `${city} (${n} ${n === 1 ? "Adresse" : "Adressen"})`;
-    if (previous.has(city)) opt.selected = true;
-    frag.appendChild(opt);
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.value = city;
+    if (previous.has(city)) input.checked = true;
+    label.appendChild(input);
+    label.appendChild(document.createTextNode(` ${city} (${n} ${n === 1 ? "Adresse" : "Adressen"})`));
+    frag.appendChild(label);
   });
   els.citySelect.innerHTML = "";
   els.citySelect.appendChild(frag);
 }
 
 function selectedCities() {
-  return Array.from(els.citySelect.selectedOptions).map((o) => o.value);
+  return Array.from(els.citySelect.querySelectorAll("input[type=checkbox]:checked")).map((cb) => cb.value);
 }
 
 function currentStartMode() {
@@ -1184,15 +1272,18 @@ function populateStreetSelect() {
   const entries = Array.from(byKey.entries()).sort((a, b) => a[1].strasse.localeCompare(b[1].strasse, "de"));
   els.streetSelect.innerHTML = "";
   entries.forEach(([key, info]) => {
-    const opt = document.createElement("option");
-    opt.value = key;
-    opt.textContent = `${info.strasse} (${info.plz}) – ${info.count} ${info.count === 1 ? "Kunde" : "Kunden"}`;
-    els.streetSelect.appendChild(opt);
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.value = key;
+    label.appendChild(input);
+    label.appendChild(document.createTextNode(` ${info.strasse} (${info.plz}) – ${info.count} ${info.count === 1 ? "Kunde" : "Kunden"}`));
+    els.streetSelect.appendChild(label);
   });
 }
 
 function selectedStreetKeys() {
-  return Array.from(els.streetSelect.selectedOptions).map((o) => o.value);
+  return Array.from(els.streetSelect.querySelectorAll("input[type=checkbox]:checked")).map((cb) => cb.value);
 }
 
 // Adressen des gewaehlten Orts, optional weiter eingeschraenkt auf die

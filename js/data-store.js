@@ -19,8 +19,8 @@ import {
   increment,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20260806b";
-import { buildAddressMeta } from "./address-utils.js?v=20260806b";
+import { db } from "./firebase-app.js?v=20260806c";
+import { buildAddressMeta } from "./address-utils.js?v=20260806c";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -362,6 +362,15 @@ export async function countOwnCustomers(ownerUid) {
   const q = query(collection(db, CUSTOMERS), where("ownerUid", "==", ownerUid));
   const snap = await getDocs(q);
   return snap.size;
+}
+
+// Einmaliger (nicht live) Abruf aller Kunden einer Person - z.B. fuer
+// einen Komplett-Ausdruck fuer Kollegen, die die App nicht selbst
+// nutzen koennen.
+export async function getCustomersForOwner(ownerUid) {
+  const q = query(collection(db, CUSTOMERS), where("ownerUid", "==", ownerUid));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
 // Liste aller registrierten Nutzer - Sicherheitsregeln erlauben das

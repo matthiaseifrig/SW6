@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – BdSt – Tourenplaner</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20260806b">
+<link rel="stylesheet" href="style.css?v=20260806c">
 </head>
 <body>
 <header class="topbar">
@@ -222,6 +222,21 @@
           </p>
           <button id="backfill-btn" class="secondary">Tag „North Data“ nachtragen</button>
           <p id="backfill-status" class="hint"></p>
+
+          <hr class="divider">
+          <p class="hint">
+            Komplette Kundenliste einer Person ausdrucken – z. B. für
+            Kollegen, die die App nicht selbst nutzen können. Sortiert nach
+            Ort, PLZ und Straße, im gleichen Format wie die Tourenplanung
+            (Adresse, Kontakt, gesetzliche Vertreter, QR-Code). Enthält
+            keine Finanzkennzahlen.
+          </p>
+          <div class="field">
+            <label for="print-list-user">Für wen drucken?</label>
+            <select id="print-list-user"></select>
+          </div>
+          <button type="button" id="print-list-btn" class="secondary">Kundenliste erstellen</button>
+          <p id="print-list-status" class="hint"></p>
         </div>
       </section>
     </div>
@@ -238,14 +253,14 @@
         <h2>Tourenplanung</h2>
       </div>
       <div class="field">
-        <label for="city-select">1. Ort(e) wählen (mehrfach möglich)</label>
-        <select id="city-select" multiple size="6"></select>
+        <label>1. Ort(e) wählen (mehrfach möglich)</label>
+        <div id="city-select" class="checkbox-list" role="group" aria-label="Ort(e) wählen"></div>
         <p class="hint">Mehrere Orte lassen sich zu einer gemeinsamen Route kombinieren – praktisch bei kleinen Orten mit wenig Adressen.</p>
       </div>
 
       <div class="field">
-        <label for="street-select">2. Straße (optional, mehrfach wählbar)</label>
-        <select id="street-select" multiple size="5"></select>
+        <label>2. Straße (optional, mehrfach wählbar)</label>
+        <div id="street-select" class="checkbox-list" role="group" aria-label="Straße(n) wählen"></div>
         <p class="hint">Nichts ausgewählt = alle Straßen in diesem Ort. Bei großen Orten (z. B. München) empfohlen, damit die Route nicht zu groß wird.</p>
       </div>
 
@@ -380,6 +395,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20260806b"></script>
+<script type="module" src="app.js?v=20260806c"></script>
 </body>
 </html>
