@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260806c";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260806d";
 import {
   subscribeCustomers,
   addCustomer,
@@ -23,9 +23,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260806c";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260806c";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260806c";
+} from "./js/data-store.js?v=20260806d";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260806d";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260806d";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -1055,6 +1055,7 @@ async function onPrintListClick() {
     });
     const label = els.printListUser.options[els.printListUser.selectedIndex].textContent;
     renderCustomerListForPrint(customers, label);
+    showWelcomeBanner(label);
     els.printListStatus.textContent = `Fertig: ${customers.length} Kunden. Weiter unten über "Drucken / PDF" ausdrucken.`;
   } catch (err) {
     els.printListStatus.textContent = "Fehler: " + err.message;
