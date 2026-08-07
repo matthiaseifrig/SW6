@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – BdSt – Tourenplaner</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20260806d">
+<link rel="stylesheet" href="style.css?v=20260807a">
 </head>
 <body>
 <header class="topbar">
@@ -269,13 +269,28 @@
         <div class="radio-group">
           <label class="radio"><input type="radio" name="start-mode" value="first" checked> Beliebig (App wählt)</label>
           <label class="radio"><input type="radio" name="start-mode" value="address"> Bestimmte Adresse</label>
+          <label class="radio"><input type="radio" name="start-mode" value="frei"> Freie Adresse (PLZ + Straße)</label>
           <label class="radio"><input type="radio" name="start-mode" value="gps"> Mein aktueller Standort (GPS)</label>
         </div>
         <select id="start-address-select" class="hidden"></select>
+        <input type="text" id="start-free-address" class="hidden" placeholder="z. B. 80331 München, Marienplatz 1">
         <p id="gps-status" class="hint hidden"></p>
       </div>
 
       <div class="field">
+        <label class="checkbox"><input type="checkbox" id="destination-enabled"> 4. Festes Ziel angeben (z. B. nächster Termin)</label>
+        <input type="text" id="destination-address" class="hidden" placeholder="z. B. 82031 Grünwald, Nördliche Münchner Str. 20">
+        <p id="destination-hint" class="hint hidden">
+          Die Route führt dann vom Startpunkt zu dieser Ziel-Adresse; Kunden aus
+          den oben gewählten Orten/Straßen werden unterwegs eingeplant. Bei
+          jedem Stopp wird der Umweg gegenüber der direkten Strecke angezeigt,
+          damit klar wird, wer wirklich „auf dem Weg“ liegt. Dafür zuerst oben
+          einen Startpunkt wählen (nicht „Beliebig“). Eine Rundtour zum Start
+          ist mit festem Ziel nicht möglich.
+        </p>
+      </div>
+
+      <div class="field" id="return-to-start-field">
         <label class="checkbox"><input type="checkbox" id="return-to-start"> Am Ende zum Start zurückkehren</label>
       </div>
 
@@ -294,6 +309,7 @@
       </p>
       <div class="results-header">
         <h2 id="results-title"></h2>
+        <p id="results-direct-hint" class="hint hidden"></p>
         <div class="results-actions">
           <button id="maps-links-toggle" class="secondary">In Google Maps öffnen</button>
           <button id="print-btn" class="secondary">Drucken / PDF</button>
@@ -395,6 +411,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20260806d"></script>
+<script type="module" src="app.js?v=20260807a"></script>
 </body>
 </html>

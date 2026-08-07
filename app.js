@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260806d";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260807a";
 import {
   subscribeCustomers,
   addCustomer,
@@ -23,9 +23,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260806d";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260806d";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260806d";
+} from "./js/data-store.js?v=20260807a";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260807a";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260807a";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -152,7 +152,12 @@ function cacheEls() {
   els.streetSelect = document.getElementById("street-select");
   els.startModeRadios = document.querySelectorAll('input[name="start-mode"]');
   els.startAddressSelect = document.getElementById("start-address-select");
+  els.startFreeAddress = document.getElementById("start-free-address");
   els.gpsStatus = document.getElementById("gps-status");
+  els.destinationEnabled = document.getElementById("destination-enabled");
+  els.destinationAddress = document.getElementById("destination-address");
+  els.destinationHint = document.getElementById("destination-hint");
+  els.returnToStartField = document.getElementById("return-to-start-field");
   els.returnToStart = document.getElementById("return-to-start");
   els.computeBtn = document.getElementById("compute-btn");
   els.progress = document.getElementById("progress");
@@ -160,6 +165,7 @@ function cacheEls() {
   els.progressLabel = document.getElementById("progress-label");
   els.resultsPanel = document.getElementById("results-panel");
   els.resultsTitle = document.getElementById("results-title");
+  els.resultsDirectHint = document.getElementById("results-direct-hint");
   els.mapsLinksToggle = document.getElementById("maps-links-toggle");
   els.mapsLinks = document.getElementById("maps-links");
   els.printBtn = document.getElementById("print-btn");
@@ -210,6 +216,7 @@ function bindStaticEvents() {
   els.citySelect.addEventListener("change", onCityChange);
   els.streetSelect.addEventListener("change", refreshStartAddressOptions);
   els.startModeRadios.forEach((r) => r.addEventListener("change", onStartModeChange));
+  els.destinationEnabled.addEventListener("change", onDestinationToggle);
   els.computeBtn.addEventListener("click", onComputeClick);
   els.mapsLinksToggle.addEventListener("click", () => els.mapsLinks.classList.toggle("hidden"));
   els.printBtn.addEventListener("click", () => window.print());
@@ -1314,8 +1321,17 @@ function refreshStartAddressOptions() {
 function onStartModeChange() {
   const mode = currentStartMode();
   els.startAddressSelect.classList.toggle("hidden", mode !== "address");
+  els.startFreeAddress.classList.toggle("hidden", mode !== "frei");
   els.gpsStatus.classList.toggle("hidden", mode !== "gps");
   if (mode === "gps") requestGpsLocation();
+}
+
+function onDestinationToggle() {
+  const enabled = els.destinationEnabled.checked;
+  els.destinationAddress.classList.toggle("hidden", !enabled);
+  els.destinationHint.classList.toggle("hidden", !enabled);
+  els.returnToStartField.classList.toggle("hidden", enabled);
+  if (enabled) els.returnToStart.checked = false;
 }
 
 function requestGpsLocation() {
@@ -1363,6 +1379,24 @@ async function geocodeOne(addr) {
   }
 }
 
+// Freie Adresse (Start Punkt A oder Ziel Punkt B), nicht an einen Kunden
+// gebunden - daher kein Firestore-Cache wie bei geocodeOne.
+async function geocodeFreeText(query) {
+  const url = NOMINATIM_URL + "?format=jsonv2&limit=1&countrycodes=de&q=" + encodeURIComponent(query);
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const json = await res.json();
+  if (!json || !json.length) return null;
+  return { lat: parseFloat(json[0].lat), lon: parseFloat(json[0].lon) };
+}
+
+// Platzhalter-"Kunde" fuer Start-/Zielpunkte, die keine echten Kunden sind
+// (GPS-Standort, frei eingegebene Start-Adresse, festes Ziel). `waypoint`
+// unterscheidet sie in der Ergebnisliste/Karte von echten Kundenstopps.
+function makeWaypointMeta(label, role) {
+  return { waypoint: true, role, label };
+}
+
 async function geocodeAll(addresses, onProgress) {
   const results = [];
   for (let i = 0; i < addresses.length; i++) {
@@ -1399,11 +1433,18 @@ function fetchRouteGeometry(pointsInOrder) {
 
 // ---------- TSP: nearest-neighbour + 2-opt ----------
 
-function nearestNeighborTour(cost, n, start) {
+// `end` (optional): Index, der als letzter Stopp reserviert wird (festes
+// Ziel Punkt B). Wird beim Aufbau der Tour ausgeklammert und erst ganz zum
+// Schluss angehängt; twoOptImprove laesst Anfang und Ende einer offenen
+// Tour ohnehin unangetastet, dadurch bleibt das Ziel fixiert.
+function nearestNeighborTour(cost, n, start, end) {
   const visited = new Array(n).fill(false);
   const tour = [start];
   visited[start] = true;
-  for (let step = 1; step < n; step++) {
+  const hasFixedEnd = end !== null && end !== undefined;
+  if (hasFixedEnd) visited[end] = true;
+  const stepsBeforeEnd = n - 1 - (hasFixedEnd ? 1 : 0);
+  for (let step = 0; step < stepsBeforeEnd; step++) {
     const last = tour[tour.length - 1];
     let best = -1;
     let bestCost = Infinity;
@@ -1416,6 +1457,7 @@ function nearestNeighborTour(cost, n, start) {
     tour.push(best);
     visited[best] = true;
   }
+  if (hasFixedEnd) tour.push(end);
   return tour;
 }
 
@@ -1458,19 +1500,20 @@ function twoOptImprove(cost, tour, closed) {
   return tour;
 }
 
-function solveTour(cost, n, fixedStart, closed) {
+function solveTour(cost, n, fixedStart, closed, fixedEnd) {
+  const end = fixedEnd === undefined ? null : fixedEnd;
   let starts;
   if (fixedStart !== null) {
     starts = [fixedStart];
   } else if (n <= MAX_MULTISTART_N) {
-    starts = Array.from({ length: n }, (_, i) => i);
+    starts = Array.from({ length: n }, (_, i) => i).filter((i) => i !== end);
   } else {
-    starts = [0];
+    starts = [end === 0 ? 1 : 0];
   }
   let bestTour = null;
   let bestCost = Infinity;
   starts.forEach((s) => {
-    let tour = nearestNeighborTour(cost, n, s);
+    let tour = nearestNeighborTour(cost, n, s, end);
     tour = twoOptImprove(cost, tour, closed);
     const c = tourCost(cost, tour, closed);
     if (c < bestCost) {
@@ -1549,6 +1592,23 @@ async function onComputeClick() {
     alert("Standort noch nicht verfügbar. Bitte GPS-Freigabe im Browser erlauben und erneut versuchen.");
     return;
   }
+  const startFreeText = els.startFreeAddress.value.trim();
+  if (mode === "frei" && !startFreeText) {
+    alert("Bitte eine Start-Adresse eingeben (z. B. PLZ + Ort + Straße).");
+    return;
+  }
+  const destinationOn = els.destinationEnabled.checked;
+  const destinationText = els.destinationAddress.value.trim();
+  if (destinationOn) {
+    if (mode === "first") {
+      alert('Für ein festes Ziel bitte zuerst oben einen Startpunkt wählen (nicht "Beliebig").');
+      return;
+    }
+    if (!destinationText) {
+      alert("Bitte eine Ziel-Adresse eingeben.");
+      return;
+    }
+  }
 
   els.computeBtn.disabled = true;
   els.resultsPanel.classList.add("hidden");
@@ -1561,6 +1621,20 @@ async function onComputeClick() {
     if (withAddress.length === 0) {
       hideProgress();
       renderNoRoute(city, withoutAddress);
+      return;
+    }
+
+    setProgress(0, "Start-/Zieladresse werden geokodiert …");
+    const startFreeCoords = mode === "frei" ? await geocodeFreeText(startFreeText) : null;
+    if (mode === "frei" && !startFreeCoords) {
+      hideProgress();
+      alert("Die Start-Adresse konnte nicht gefunden werden. Bitte präzisieren (PLZ, Ort, Straße).");
+      return;
+    }
+    const destinationCoords = destinationOn ? await geocodeFreeText(destinationText) : null;
+    if (destinationOn && !destinationCoords) {
+      hideProgress();
+      alert("Die Ziel-Adresse konnte nicht gefunden werden. Bitte präzisieren (PLZ, Ort, Straße).");
       return;
     }
 
@@ -1586,7 +1660,11 @@ async function onComputeClick() {
 
     if (mode === "gps") {
       points.push(state.gpsCoords);
-      stopMeta.push(null);
+      stopMeta.push(makeWaypointMeta("Mein Standort (Startpunkt)", "start"));
+      fixedStartIndex = 0;
+    } else if (mode === "frei") {
+      points.push(startFreeCoords);
+      stopMeta.push(makeWaypointMeta("Start: " + startFreeText, "start"));
       fixedStartIndex = 0;
     } else if (mode === "address") {
       const chosenId = els.startAddressSelect.value;
@@ -1602,11 +1680,18 @@ async function onComputeClick() {
       stopMeta.push(g.addr);
     });
 
+    let fixedEndIndex = null;
+    if (destinationOn) {
+      points.push(destinationCoords);
+      stopMeta.push(makeWaypointMeta("Ziel: " + destinationText, "end"));
+      fixedEndIndex = points.length - 1;
+    }
+
     const n = points.length;
     const matrix = await fetchDurationMatrix(points);
 
-    const closed = els.returnToStart.checked;
-    const result = solveTour(matrix.durations, n, fixedStartIndex, closed);
+    const closed = destinationOn ? false : els.returnToStart.checked;
+    const result = solveTour(matrix.durations, n, fixedStartIndex, closed, fixedEndIndex);
     const orderIdx = result.tour;
 
     const orderedPoints = orderIdx.map((i) => points[i]);
@@ -1627,6 +1712,24 @@ async function onComputeClick() {
       totalDistance += matrix.distances[lastIdx][firstIdx];
     }
 
+    // Umweg je Zwischenstopp ggue. dem direkten Weg vom vorherigen zum
+    // naechsten Punkt - zeigt, wer wirklich "auf dem Weg" liegt, wenn ein
+    // festes Ziel vorgegeben ist.
+    let detours = null;
+    let directDuration = null;
+    let directDistance = null;
+    if (fixedEndIndex !== null) {
+      directDuration = matrix.durations[fixedStartIndex][fixedEndIndex];
+      directDistance = matrix.distances[fixedStartIndex][fixedEndIndex];
+      detours = new Array(orderIdx.length).fill(null);
+      for (let k = 1; k < orderIdx.length - 1; k++) {
+        const prev = orderIdx[k - 1];
+        const cur = orderIdx[k];
+        const next = orderIdx[k + 1];
+        detours[k] = matrix.durations[prev][cur] + matrix.durations[cur][next] - matrix.durations[prev][next];
+      }
+    }
+
     let routeGeometry = null;
     try {
       const routePoints = closed ? orderedPoints.concat([orderedPoints[0]]) : orderedPoints;
@@ -1640,7 +1743,7 @@ async function onComputeClick() {
       setProgress(1, "Lade Finanzkennzahlen …");
       await Promise.all(
         orderedMeta.map(async (meta) => {
-          if (!meta) return;
+          if (!meta || meta.waypoint) return;
           try {
             meta.financials = await getFinancials(meta.id);
           } catch (e) {
@@ -1662,6 +1765,9 @@ async function onComputeClick() {
       closed,
       routeGeometry,
       unresolved: withoutAddress.concat(failed),
+      detours,
+      directDuration,
+      directDistance,
     });
   } catch (err) {
     hideProgress();
@@ -1675,6 +1781,7 @@ async function onComputeClick() {
 function renderNoRoute(city, unresolved) {
   els.resultsPanel.classList.remove("hidden");
   els.resultsTitle.textContent = city + ": keine Route berechenbar";
+  els.resultsDirectHint.classList.add("hidden");
   els.mapsLinks.classList.add("hidden");
   els.mapsLinksToggle.classList.add("hidden");
   els.mapDiv.classList.add("hidden");
@@ -1704,9 +1811,23 @@ function renderResults(r) {
   els.mapDiv.classList.remove("hidden");
   els.mapsLinksToggle.classList.remove("hidden");
 
-  const stopCount = r.orderedMeta.filter(Boolean).length;
+  const stopCount = r.orderedMeta.filter((m) => m && !m.waypoint).length;
   els.resultsTitle.textContent =
     r.city + ": " + stopCount + " Stopps – " + formatDistance(r.totalDistance) + " · " + formatDuration(r.totalDuration) + (r.closed ? " (Rundtour)" : "");
+
+  if (typeof r.directDuration === "number") {
+    const extra = r.totalDuration - r.directDuration;
+    els.resultsDirectHint.textContent =
+      "Direkt vom Start zum Ziel (ohne Zwischenstopps): " +
+      formatDistance(r.directDistance) +
+      " · " +
+      formatDuration(r.directDuration) +
+      " – mit allen Stopps dazwischen " +
+      (extra > 1 ? "+" + formatDuration(extra) + " Umweg" : "praktisch kein Umweg");
+    els.resultsDirectHint.classList.remove("hidden");
+  } else {
+    els.resultsDirectHint.classList.add("hidden");
+  }
 
   renderMap(r);
   renderStopList(r);
@@ -1728,9 +1849,10 @@ function renderMap(r) {
   r.orderedPoints.forEach((p, i) => {
     const meta = r.orderedMeta[i];
     const isStart = i === 0;
-    const isVisited = Boolean(meta && meta.lastVisitedAt);
-    const label = isStart ? "Start" : String(i);
-    const color = isStart ? "#2c9e6b" : isVisited ? "#b45309" : "#1a5fb4";
+    const isEnd = Boolean(meta && meta.waypoint && meta.role === "end");
+    const isVisited = Boolean(meta && !meta.waypoint && meta.lastVisitedAt);
+    const label = isStart ? "Start" : isEnd ? "Ziel" : String(i);
+    const color = isStart ? "#2c9e6b" : isEnd ? "#b6316c" : isVisited ? "#b45309" : "#1a5fb4";
     const icon = L.divIcon({
       className: "",
       html:
@@ -1743,7 +1865,12 @@ function renderMap(r) {
       iconAnchor: [13, 13],
     });
     const marker = L.marker([p.lat, p.lon], { icon }).addTo(mapLayer);
-    const popupText = meta ? "<strong>" + escapeHtml(meta.unternehmen) + "</strong><br>" + escapeHtml(meta.strasse) : "Mein Standort";
+    const popupText =
+      meta && meta.waypoint
+        ? escapeHtml(meta.label)
+        : meta
+        ? "<strong>" + escapeHtml(meta.unternehmen) + "</strong><br>" + escapeHtml(meta.strasse)
+        : "Mein Standort";
     marker.bindPopup(popupText);
   });
 
@@ -1765,18 +1892,19 @@ function renderStopList(r) {
   r.orderedMeta.forEach((meta, i) => {
     const li = document.createElement("li");
     const isStart = i === 0;
-    const isVisited = Boolean(meta && meta.lastVisitedAt);
+    const isEnd = Boolean(meta && meta.waypoint && meta.role === "end");
+    const isVisited = Boolean(meta && !meta.waypoint && meta.lastVisitedAt);
 
     const idxSpan = document.createElement("span");
-    idxSpan.className = "stop-index" + (isStart ? " start" : isVisited ? " visited" : "");
-    idxSpan.textContent = isStart ? "S" : String(i);
+    idxSpan.className = "stop-index" + (isStart ? " start" : isEnd ? " end" : isVisited ? " visited" : "");
+    idxSpan.textContent = isStart ? "S" : isEnd ? "Z" : String(i);
     li.appendChild(idxSpan);
 
     const body = document.createElement("div");
     body.className = "stop-body";
 
-    if (!meta) {
-      body.innerHTML = '<div class="company">Mein Standort (Startpunkt)</div>';
+    if (meta && meta.waypoint) {
+      body.innerHTML = '<div class="company">' + escapeHtml(meta.label) + "</div>";
     } else {
       body.innerHTML = buildCustomerDetailsHtml(meta);
       body.appendChild(buildTagsSection(meta));
@@ -1787,7 +1915,11 @@ function renderStopList(r) {
     if (i > 0) {
       const leg = document.createElement("div");
       leg.className = "leg";
-      leg.textContent = "→ " + formatDistance(r.legDistances[i - 1]) + ", " + formatDuration(r.legDurations[i - 1]) + " ab vorherigem Stopp";
+      let legText = "→ " + formatDistance(r.legDistances[i - 1]) + ", " + formatDuration(r.legDurations[i - 1]) + " ab vorherigem Stopp";
+      if (r.detours && typeof r.detours[i] === "number" && r.detours[i] > 1) {
+        legText += " · Umweg ggü. direkter Strecke: +" + formatDuration(r.detours[i]);
+      }
+      leg.textContent = legText;
       body.appendChild(leg);
     }
 
@@ -2151,7 +2283,12 @@ function renderMapsLinks(r) {
   const stops = r.orderedPoints.map((p, i) => {
     const meta = r.orderedMeta[i];
     return {
-      label: meta ? meta.unternehmen + ", " + meta.strasse + ", " + [meta.plz, meta.ort].filter(Boolean).join(" ") : "Mein Standort",
+      label:
+        meta && meta.waypoint
+          ? meta.label
+          : meta
+          ? meta.unternehmen + ", " + meta.strasse + ", " + [meta.plz, meta.ort].filter(Boolean).join(" ")
+          : "Mein Standort",
       lat: p.lat,
       lon: p.lon,
     };

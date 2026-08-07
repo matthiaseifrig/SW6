@@ -8,6 +8,7 @@
   --color-primary-dark: #103d78;
   --color-accent: #2c9e6b;
   --color-visited: #b45309;
+  --color-end: #b6316c;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -538,6 +539,7 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
   font-size: 0.85rem;
 }
 .stop-index.start { background: var(--color-accent); }
+.stop-index.end { background: var(--color-end); }
 .stop-index.visited { background: var(--color-visited); }
 .stop-body { flex: 1; }
 .stop-body .company { font-weight: 700; }
