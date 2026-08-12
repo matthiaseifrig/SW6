@@ -595,15 +595,21 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
   color: var(--color-todo);
   font-weight: 600;
 }
-.todo-section {
-  margin-top: 0.5rem;
+.todo-section { margin-top: 0.5rem; }
+.todo-display {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-.todo-section:empty { display: none; }
 .todo-text { color: var(--color-todo); font-weight: 600; font-size: 0.9rem; }
+.todo-edit-form {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 320px;
+}
 
 .unresolved {
   margin-top: 1.25rem;

@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260812a";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260812b";
 import {
   subscribeCustomers,
   addCustomer,
@@ -11,6 +11,7 @@ import {
   updateVisitOutcome,
   cancelVisitOutcome,
   completeTodo,
+  setOpenTodo,
   setPensionsrueckstellungen,
   backfillMissingProvisions,
   getCustomersForOwner,
@@ -25,9 +26,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260812a";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260812a";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260812a";
+} from "./js/data-store.js?v=20260812b";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260812b";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260812b";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -969,34 +970,109 @@ async function onCancelConfirmClick() {
 
 // Offenes ToDo (Wiedervorlage) auf der Kundenseite - Info kommt aus der
 // Spiegelung meta.openTodo (siehe addVisit in data-store.js), daher ohne
-// zusaetzlichen Firestore-Zugriff. "erledigt" räumt das ToDo per
-// completeTodo() ab; die Kundenliste ist live abonniert, die Seite baut
-// sich danach automatisch neu auf (siehe subscribeToCustomers).
+// zusaetzlichen Firestore-Zugriff. Laesst sich hier auch unabhaengig von
+// einem Besuch neu setzen/ändern (setOpenTodo) - nicht nur beim Eintragen
+// eines Besuchs. "erledigt" räumt das ToDo per completeTodo() ab; die
+// Kundenliste ist live abonniert, die Seite baut sich danach automatisch
+// neu auf (siehe subscribeToCustomers).
 function buildTodoSection(meta) {
   const wrap = document.createElement("div");
   wrap.className = "todo-section";
-  if (!meta.openTodo || !meta.openTodo.text) return wrap;
 
-  const text = document.createElement("span");
-  text.className = "todo-text";
-  text.textContent = "ToDo" + (meta.openTodo.dueDate ? " (Wiedervorlage " + formatPlainDate(meta.openTodo.dueDate) + ")" : "") + ": " + meta.openTodo.text;
-  wrap.appendChild(text);
+  const display = document.createElement("div");
+  display.className = "todo-display";
+  wrap.appendChild(display);
 
-  const doneBtn = document.createElement("button");
-  doneBtn.type = "button";
-  doneBtn.className = "link-btn";
-  doneBtn.textContent = "✓ erledigt";
-  doneBtn.addEventListener("click", async () => {
-    doneBtn.disabled = true;
+  const form = document.createElement("div");
+  form.className = "todo-edit-form hidden";
+  const todoField = buildLabeledField("ToDo", "text", "z. B. Unterlagen nachreichen");
+  const dueField = buildLabeledField("Wiedervorlage am", "date");
+  form.appendChild(todoField.wrap);
+  form.appendChild(dueField.wrap);
+  const formActions = document.createElement("div");
+  formActions.className = "visit-form-actions";
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.className = "secondary small";
+  saveBtn.textContent = "Speichern";
+  formActions.appendChild(saveBtn);
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "link-btn";
+  cancelBtn.textContent = "Abbrechen";
+  formActions.appendChild(cancelBtn);
+  form.appendChild(formActions);
+  wrap.appendChild(form);
+
+  function openForm() {
+    todoField.input.value = meta.openTodo ? meta.openTodo.text : "";
+    dueField.input.value = (meta.openTodo && meta.openTodo.dueDate) || "";
+    form.classList.remove("hidden");
+    todoField.input.focus();
+  }
+
+  function renderDisplay() {
+    display.innerHTML = "";
+    form.classList.add("hidden");
+    if (meta.openTodo && meta.openTodo.text) {
+      const text = document.createElement("span");
+      text.className = "todo-text";
+      text.textContent = "ToDo" + (meta.openTodo.dueDate ? " (Wiedervorlage " + formatPlainDate(meta.openTodo.dueDate) + ")" : "") + ": " + meta.openTodo.text;
+      display.appendChild(text);
+
+      const doneBtn = document.createElement("button");
+      doneBtn.type = "button";
+      doneBtn.className = "link-btn";
+      doneBtn.textContent = "✓ erledigt";
+      doneBtn.addEventListener("click", async () => {
+        doneBtn.disabled = true;
+        try {
+          await completeTodo(meta.id, meta.openTodo.visitId || null);
+        } catch (err) {
+          alert("Konnte ToDo nicht als erledigt markieren: " + err.message);
+          doneBtn.disabled = false;
+        }
+      });
+      display.appendChild(doneBtn);
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "link-btn";
+      editBtn.textContent = "ändern";
+      editBtn.addEventListener("click", openForm);
+      display.appendChild(editBtn);
+    } else {
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "link-btn";
+      addBtn.textContent = "+ ToDo hinzufügen";
+      addBtn.addEventListener("click", openForm);
+      display.appendChild(addBtn);
+    }
+  }
+
+  saveBtn.addEventListener("click", async () => {
+    const text = todoField.input.value.trim();
+    if (!text) {
+      todoField.input.focus();
+      return;
+    }
+    saveBtn.disabled = true;
     try {
-      await completeTodo(meta.id, meta.openTodo.visitId);
+      const dueDate = dueField.input.value || null;
+      await setOpenTodo(meta.id, { text, dueDate });
+      meta.openTodo = { text, dueDate, visitId: null };
+      renderDisplay();
     } catch (err) {
-      alert("Konnte ToDo nicht als erledigt markieren: " + err.message);
-      doneBtn.disabled = false;
+      alert("Konnte ToDo nicht speichern: " + err.message);
+    } finally {
+      saveBtn.disabled = false;
     }
   });
-  wrap.appendChild(doneBtn);
 
+  cancelBtn.addEventListener("click", () => form.classList.add("hidden"));
+
+  renderDisplay();
   return wrap;
 }
 

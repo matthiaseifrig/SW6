@@ -20,8 +20,8 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20260812a";
-import { buildAddressMeta } from "./address-utils.js?v=20260812a";
+import { db } from "./firebase-app.js?v=20260812b";
+import { buildAddressMeta } from "./address-utils.js?v=20260812b";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -162,17 +162,32 @@ export async function addVisit(customerId, { note, visitedWith, visitedAt, todoT
   return visitRef.id;
 }
 
-// Markiert das ToDo eines Besuchs als erledigt. Loescht die Spiegelung
+// Markiert das ToDo eines Besuchs als erledigt (visitId null bei einem
+// freien ToDo ohne Besuch, siehe setOpenTodo). Loescht die Spiegelung
 // "openTodo" am Kundendokument nur, wenn sie noch auf genau dieses ToDo
 // zeigt (sonst gibt es inzwischen ein neueres offenes ToDo, das bestehen
 // bleiben soll).
 export async function completeTodo(customerId, visitId) {
-  await updateDoc(doc(db, CUSTOMERS, customerId, "visits", visitId), { todoDone: true });
+  if (visitId) {
+    await updateDoc(doc(db, CUSTOMERS, customerId, "visits", visitId), { todoDone: true });
+  }
   const snap = await getDoc(doc(db, CUSTOMERS, customerId));
   const openTodo = snap.exists() ? snap.data().openTodo : null;
-  if (openTodo && openTodo.visitId === visitId) {
+  if (openTodo && (openTodo.visitId || null) === (visitId || null)) {
     await updateDoc(doc(db, CUSTOMERS, customerId), { openTodo: null });
   }
+}
+
+// Freies ToDo direkt am Kunden setzen/aendern/loeschen (value.text leer =
+// loeschen) - unabhaengig von einem Besuch, damit sich eine Wiedervorlage
+// auch nachtraeglich eintragen laesst, ohne dass gleichzeitig ein Besuch
+// protokolliert werden muss. visitId bleibt dabei immer null, siehe
+// completeTodo() zum Abschliessen.
+export async function setOpenTodo(customerId, { text, dueDate }) {
+  const clean = String(text || "").trim();
+  await updateDoc(doc(db, CUSTOMERS, customerId), {
+    openTodo: clean ? { text: clean, dueDate: dueDate || null, visitId: null } : null,
+  });
 }
 
 // Pensionsrückstellungen sind (anders als die per North-Data-Import
