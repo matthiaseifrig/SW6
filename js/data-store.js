@@ -17,10 +17,11 @@ import {
   arrayUnion,
   arrayRemove,
   increment,
+  Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20260807a";
-import { buildAddressMeta } from "./address-utils.js?v=20260807a";
+import { db } from "./firebase-app.js?v=20260812a";
+import { buildAddressMeta } from "./address-utils.js?v=20260812a";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -124,9 +125,17 @@ export async function saveGeocodeResult(customerId, coords) {
   });
 }
 
-export async function addVisit(customerId, { note, byUid, byName, confirmedByCustomer }) {
+// visitedAt: optionales Datum "YYYY-MM-DD" (Besuch nachtraeglich erfasst) -
+// ohne Angabe zaehlt der aktuelle Zeitpunkt. todoText/todoDueDate landen
+// zusaetzlich (nur wenn todoText gesetzt ist) als "offenes ToDo" auf dem
+// Kundendokument (openTodo), damit das Dashboard sie ohne Extra-Abfrage
+// über alle Besuchs-Unterdokumente hinweg auflisten kann - siehe
+// completeTodo() zum Abschliessen.
+export async function addVisit(customerId, { note, visitedWith, visitedAt, todoText, todoDueDate, byUid, byName, confirmedByCustomer }) {
+  const visitTimestamp = visitedAt ? Timestamp.fromDate(new Date(visitedAt + "T12:00:00")) : serverTimestamp();
   const visitRef = await addDoc(collection(db, CUSTOMERS, customerId, "visits"), {
     note: note || "",
+    visitedWith: visitedWith || "",
     byUid,
     byName,
     confirmedByCustomer: Boolean(confirmedByCustomer),
@@ -136,14 +145,41 @@ export async function addVisit(customerId, { note, byUid, byName, confirmedByCus
     consultationAt: null,
     consultationCancelled: false,
     provisionAmount: null,
-    visitedAt: serverTimestamp(),
+    todoText: todoText || "",
+    todoDueDate: todoDueDate || null,
+    todoDone: false,
+    visitedAt: visitTimestamp,
   });
-  await updateDoc(doc(db, CUSTOMERS, customerId), {
-    lastVisitedAt: serverTimestamp(),
+  const customerUpdate = {
+    lastVisitedAt: visitTimestamp,
     lastVisitNote: note || "",
     lastVisitConfirmed: Boolean(confirmedByCustomer),
-  });
+  };
+  if (todoText) {
+    customerUpdate.openTodo = { text: todoText, dueDate: todoDueDate || null, visitId: visitRef.id };
+  }
+  await updateDoc(doc(db, CUSTOMERS, customerId), customerUpdate);
   return visitRef.id;
+}
+
+// Markiert das ToDo eines Besuchs als erledigt. Loescht die Spiegelung
+// "openTodo" am Kundendokument nur, wenn sie noch auf genau dieses ToDo
+// zeigt (sonst gibt es inzwischen ein neueres offenes ToDo, das bestehen
+// bleiben soll).
+export async function completeTodo(customerId, visitId) {
+  await updateDoc(doc(db, CUSTOMERS, customerId, "visits", visitId), { todoDone: true });
+  const snap = await getDoc(doc(db, CUSTOMERS, customerId));
+  const openTodo = snap.exists() ? snap.data().openTodo : null;
+  if (openTodo && openTodo.visitId === visitId) {
+    await updateDoc(doc(db, CUSTOMERS, customerId), { openTodo: null });
+  }
+}
+
+// Pensionsrückstellungen sind (anders als die per North-Data-Import
+// gesetzten Kennzahlen) manuell erfasst, da North Data dieses Feld nicht
+// liefert. Nur "owner" darf schreiben (siehe firestore.rules).
+export async function setPensionsrueckstellungen(customerId, value) {
+  await setDoc(doc(db, CUSTOMERS, customerId, "financials", FINANCIALS_DOC), { pensionsrueckstellungen: Boolean(value) }, { merge: true });
 }
 
 // Ergaenzt einen bestehenden Besuch nachtraeglich um Mitgliedsaufnahme /

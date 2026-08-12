@@ -12,6 +12,16 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
     }
 
+    // Einzelnen Kolleg:innen kann "owner" zusaetzlich Lesezugriff auf die
+    // Finanzkennzahlen ihrer eigenen Kunden geben (Feld financialsAccess auf
+    // dem eigenen users/{uid}-Dokument, manuell in der Firebase-Konsole
+    // gesetzt - genau wie die Rolle "owner" selbst).
+    function hasFinancialsAccess() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.financialsAccess == true;
+    }
+
     // Jede/r Angemeldete darf das eigene Profil lesen/anlegen.
     // Die Rolle darf man sich nicht selbst setzen - das darf nur "owner".
     match /users/{uid} {
@@ -44,11 +54,16 @@ service cloud.firestore {
           (resource.data.byUid == request.auth.uid || isOwnerRole());
       }
 
-      // Finanzkennzahlen (Umsatz, Gewinn, CAGR, Mitarbeiterzahl, ...) sind
-      // vertraulich - nur "owner" darf sie lesen/schreiben, nicht die/der
-      // Kolleg:in, der/dem der Kunde zugeordnet ist.
+      // Finanzkennzahlen (Umsatz, Gewinn, CAGR, Mitarbeiterzahl,
+      // Pensionsrückstellungen, ...) sind vertraulich - grundsaetzlich nur
+      // "owner". Einzelne Kolleg:innen mit financialsAccess=true duerfen sie
+      // zusaetzlich lesen, aber nur fuer ihre eigenen Kunden. Schreiben
+      // bleibt in jedem Fall "owner" vorbehalten.
       match /financials/{docId} {
-        allow read, write: if isOwnerRole();
+        allow read: if isOwnerRole() ||
+          (hasFinancialsAccess() &&
+            get(/databases/$(database)/documents/customers/$(customerId)).data.ownerUid == request.auth.uid);
+        allow write: if isOwnerRole();
       }
     }
   }

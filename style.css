@@ -9,10 +9,18 @@
   --color-accent: #2c9e6b;
   --color-visited: #b45309;
   --color-end: #b6316c;
+  --color-todo: #6d28d9;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }
+
+/* Etwas größere Schrift auf Handy/Tablet (Kollegen tun sich mit der
+   Standardgröße schwer) - da fast alles in rem gesetzt ist, skaliert eine
+   höhere Root-Schriftgröße die ganze App gleichmäßig mit. */
+@media (max-width: 600px) {
+  html { font-size: 17px; }
+}
 
 body {
   margin: 0;
@@ -407,6 +415,14 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
   font-family: inherit;
   font-size: 0.9rem;
 }
+.visit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-weight: 600;
+}
+.visit-field > span { font-size: 0.8rem; color: var(--color-muted); }
+.visit-field input, .visit-field textarea { font-weight: 400; }
 .visit-form-actions {
   display: flex;
   flex-wrap: wrap;
@@ -457,6 +473,8 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
 .visit-badges { margin-top: 0.3rem; display: flex; flex-direction: column; gap: 0.2rem; }
 .visit-badge-item { color: var(--color-muted); font-size: 0.82rem; }
 .visit-badge-item.cancelled { color: #b3261e; text-decoration: line-through; }
+.visit-todo-line { margin-top: 0.25rem; font-size: 0.82rem; color: var(--color-todo); }
+.visit-todo-line.done { color: var(--color-muted); text-decoration: line-through; }
 .cancel-link {
   background: none;
   border: none;
@@ -542,23 +560,50 @@ button.small { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
 .stop-index.end { background: var(--color-end); }
 .stop-index.visited { background: var(--color-visited); }
 .stop-body { flex: 1; }
-.stop-body .company { font-weight: 700; }
-.stop-body .address { color: var(--color-muted); font-size: 0.9rem; }
 .stop-body .leg { color: var(--color-muted); font-size: 0.82rem; margin-top: 0.15rem; }
-.stop-body .contact { font-size: 0.82rem; margin-top: 0.15rem; }
-.stop-body .contact a { color: var(--color-primary); }
-.stop-body .vertreter { font-size: 0.82rem; margin-top: 0.15rem; }
-.stop-body .financials {
-  margin-top: 0.35rem;
-  font-size: 0.78rem;
+
+/* Kundenkarte: gilt sowohl kompakt im Tourenplaner (.stop-body) als auch
+   auf der einzelnen Kundenseite (#deeplink-body), deshalb allgemeine
+   Klassen statt an .stop-body gebunden. Reihenfolge/Abstand siehe
+   buildCustomerDetailsHtml: Adresse, [Abstand] Kontakt, [Abstand]
+   Geschäftsführer. */
+.company { font-weight: 700; }
+.address { color: var(--color-muted); font-size: 0.9rem; }
+.contact { font-size: 0.85rem; margin-top: 0.7rem; }
+.contact a { color: var(--color-primary); }
+.geschaeftsfuehrer { font-size: 0.85rem; margin-top: 0.7rem; }
+.financials {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
   color: var(--color-muted);
   background: #fbf3e7;
   border: 1px solid #f0dfc4;
   border-radius: 6px;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.7rem;
   display: inline-block;
 }
-.stop-body .financials .label { font-weight: 600; color: #92610c; }
+.financials .label { font-weight: 600; color: #92610c; }
+.financials-list { list-style: disc; margin: 0.3rem 0 0; padding-left: 1.2rem; }
+.financials-list li { margin-bottom: 0.15rem; }
+.financials-list li:last-child { margin-bottom: 0; }
+
+.pension-toggle { margin-top: 0.5rem; font-size: 0.85rem; }
+
+.todo-badge {
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--color-todo);
+  font-weight: 600;
+}
+.todo-section {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.todo-section:empty { display: none; }
+.todo-text { color: var(--color-todo); font-weight: 600; font-size: 0.9rem; }
 
 .unresolved {
   margin-top: 1.25rem;

@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260807a";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260812a";
 import {
   subscribeCustomers,
   addCustomer,
@@ -10,6 +10,8 @@ import {
   addVisit,
   updateVisitOutcome,
   cancelVisitOutcome,
+  completeTodo,
+  setPensionsrueckstellungen,
   backfillMissingProvisions,
   getCustomersForOwner,
   addContact,
@@ -23,9 +25,9 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260807a";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260807a";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260807a";
+} from "./js/data-store.js?v=20260812a";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260812a";
+import { TAG_OPTIONS } from "./js/tags.js?v=20260812a";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -50,12 +52,13 @@ let mapLayer = null;
 const state = {
   user: null, // { uid, email }
   role: "colleague",
+  canSeeFinancials: false,
   customers: [], // aktuelle Firestore-Kundenliste (je nach scope)
   byCity: {},
   scopeAll: false,
   unsubscribeCustomers: null,
   gpsCoords: null,
-  pendingConfirm: null, // { customerId, note, visitId, outcome }
+  pendingConfirm: null, // { customerId, meta, details, visitId }
   pendingCancel: null, // { customerId, visitId, field }
   activeSearchFilter: null, // "members" | "consultations" | null
   openCustomerId: new URLSearchParams(location.search).get("customer") || null,
@@ -123,6 +126,7 @@ function cacheEls() {
   els.statVisits = document.getElementById("stat-visits");
   els.statMemberships = document.getElementById("stat-memberships");
   els.statConsultations = document.getElementById("stat-consultations");
+  els.statTodos = document.getElementById("stat-todos");
   els.statProvision = document.getElementById("stat-provision");
   els.dashboardBreakdown = document.getElementById("dashboard-breakdown");
   els.dashboardBreakdownBody = document.getElementById("dashboard-breakdown-body");
@@ -301,6 +305,7 @@ async function handleAuthChange(user) {
   const profile = await ensureUserDoc(user);
   state.user = { uid: user.uid, email: user.email, name: profile.name || user.email };
   state.role = profile.role || "colleague";
+  state.canSeeFinancials = state.role === "owner" || Boolean(profile.financialsAccess);
 
   els.loginPanel.classList.add("hidden");
   els.appRoot.classList.remove("hidden");
@@ -435,6 +440,7 @@ function refreshDashboard() {
   els.statVisits.textContent = String(customers.filter((c) => c.lastVisitedAt).length);
   els.statMemberships.textContent = String(customers.filter((c) => c.membershipSigned).length);
   els.statConsultations.textContent = String(customers.filter((c) => c.consultationRequested).length);
+  els.statTodos.textContent = String(customers.filter((c) => c.openTodo && c.openTodo.text).length);
   els.statProvision.textContent = formatEuroPrecise(customers.reduce((sum, c) => sum + (c.totalProvision || 0), 0));
 
   if (state.role === "owner" && state.scopeAll) {
@@ -506,6 +512,7 @@ const STAT_LABELS = {
   visits: "Besuche",
   memberships: "BdSt-Mitgliedschaften",
   consultations: "Beratungstermine",
+  todos: "Wiedervorlagen",
   provision: "Provision (netto)",
 };
 
@@ -609,6 +616,47 @@ function renderCustomerLinkList(container, entries) {
   container.appendChild(ul);
 }
 
+// Wiedervorlagen-Übersicht: komplett aus state.customers (openTodo ist am
+// Kundendokument gespiegelt, siehe addVisit in data-store.js) - kein
+// Extra-Fetch der Besuchs-Unterdokumente noetig, anders als bei den
+// anderen Dashboard-Kacheln. "erledigt" gibt es hier bewusst nicht direkt
+// (nur read-only Übersicht) - dafür auf die Kundenseite durchklicken.
+function renderTodoOverview(container) {
+  const withTodo = state.customers.filter((c) => c.openTodo && c.openTodo.text);
+  if (!withTodo.length) {
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "Keine offenen ToDos.";
+    container.appendChild(p);
+    return;
+  }
+  withTodo.sort((a, b) => {
+    const da = a.openTodo.dueDate || "9999-99-99";
+    const db = b.openTodo.dueDate || "9999-99-99";
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
+
+  const ul = document.createElement("ul");
+  ul.className = "stat-detail-customer-list";
+  withTodo.forEach((c) => {
+    const li = document.createElement("li");
+    const dueLabel = c.openTodo.dueDate ? formatPlainDate(c.openTodo.dueDate) : "ohne Datum";
+    li.innerHTML =
+      '<a href="?customer=' +
+      encodeURIComponent(c.id) +
+      '" class="open-customer-link" data-customer-id="' +
+      escapeHtml(c.id) +
+      '">' +
+      escapeHtml(c.unternehmen) +
+      "</a>" +
+      '<span class="stat-detail-customer-meta">' +
+      escapeHtml(dueLabel + " · " + c.openTodo.text) +
+      "</span>";
+    ul.appendChild(li);
+  });
+  container.appendChild(ul);
+}
+
 async function openStatDetail(stat) {
   els.statDetailTitle.textContent = STAT_LABELS[stat] || stat;
   els.statDetailSubtitle.textContent = state.role === "owner" && state.scopeAll ? "Alle Kollegen · aktueller Stand" : "Eigene Kunden · aktueller Stand";
@@ -627,6 +675,11 @@ async function openStatDetail(stat) {
     });
     renderMonthlyTable(els.statDetailBody, sortedMonthlyRows(buckets), "Kunden", false);
     renderCustomerLinkList(els.statDetailBody, entries);
+    return;
+  }
+
+  if (stat === "todos") {
+    renderTodoOverview(els.statDetailBody);
     return;
   }
 
@@ -729,25 +782,24 @@ function refreshCustomerPage() {
 }
 
 async function renderCustomerPage(meta) {
+  if (state.canSeeFinancials && meta.financials === undefined) {
+    try {
+      meta.financials = (await getFinancials(meta.id)) || null;
+    } catch (e) {
+      meta.financials = null; // Finanzkennzahlen optional - Fehler ignorieren
+    }
+  }
+
   els.deeplinkBody.innerHTML = "";
   const detailsDiv = document.createElement("div");
   detailsDiv.innerHTML = buildCustomerDetailsHtml(meta);
   els.deeplinkBody.appendChild(detailsDiv);
 
-  if (state.role === "owner" && !meta.financials) {
-    try {
-      const fin = await getFinancials(meta.id);
-      if (fin) {
-        const finDiv = document.createElement("div");
-        finDiv.className = "financials";
-        finDiv.innerHTML = buildFinancialsText(fin);
-        detailsDiv.appendChild(finDiv);
-      }
-    } catch (e) {
-      /* Finanzkennzahlen optional - Fehler ignorieren */
-    }
+  if (state.role === "owner") {
+    detailsDiv.appendChild(buildPensionToggle(meta));
   }
 
+  els.deeplinkBody.appendChild(buildTodoSection(meta));
   els.deeplinkBody.appendChild(buildTagsSection(meta));
   els.deeplinkBody.appendChild(buildContactsSection(meta));
   els.deeplinkBody.appendChild(buildVisitControls(meta));
@@ -778,6 +830,17 @@ function formatPlainDateTime(s) {
   return d.toLocaleDateString("de-DE") + " " + d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 }
 
+// Fuer reine Datums-Strings ("YYYY-MM-DD", z.B. todoDueDate) - baut das
+// Datum aus den Teilen statt ueber new Date(s), damit es unabhaengig von
+// der Zeitzone des Browsers immer der eingegebene Tag bleibt.
+function formatPlainDate(s) {
+  if (!s) return "";
+  const parts = String(s).split("-").map(Number);
+  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return s;
+  const [y, m, d] = parts;
+  return new Date(y, m - 1, d).toLocaleDateString("de-DE");
+}
+
 function renderVisitHistoryFull(container, meta, visits) {
   container.innerHTML = "";
   const heading = document.createElement("h3");
@@ -799,10 +862,19 @@ function renderVisitHistoryFull(container, meta, visits) {
     const parts = [formatDate(v.visitedAt)];
     if (v.confirmedByCustomer) parts.push("✓ vom Kunden bestätigt");
     parts.push("– " + (v.byName || "?"));
+    if (v.visitedWith) parts.push("(mit " + v.visitedWith + ")");
     if (v.note) parts.push(": " + v.note);
     const line = document.createElement("div");
     line.textContent = parts.join(" ");
     li.appendChild(line);
+
+    if (v.todoText) {
+      const todoLine = document.createElement("div");
+      todoLine.className = "visit-todo-line" + (v.todoDone ? " done" : "");
+      todoLine.textContent =
+        (v.todoDone ? "✓ ToDo erledigt: " : "ToDo offen: ") + v.todoText + (v.todoDueDate ? " (Wiedervorlage " + formatPlainDate(v.todoDueDate) + ")" : "");
+      li.appendChild(todoLine);
+    }
 
     const badgesDiv = document.createElement("div");
     badgesDiv.className = "visit-badges";
@@ -895,6 +967,39 @@ async function onCancelConfirmClick() {
   }
 }
 
+// Offenes ToDo (Wiedervorlage) auf der Kundenseite - Info kommt aus der
+// Spiegelung meta.openTodo (siehe addVisit in data-store.js), daher ohne
+// zusaetzlichen Firestore-Zugriff. "erledigt" räumt das ToDo per
+// completeTodo() ab; die Kundenliste ist live abonniert, die Seite baut
+// sich danach automatisch neu auf (siehe subscribeToCustomers).
+function buildTodoSection(meta) {
+  const wrap = document.createElement("div");
+  wrap.className = "todo-section";
+  if (!meta.openTodo || !meta.openTodo.text) return wrap;
+
+  const text = document.createElement("span");
+  text.className = "todo-text";
+  text.textContent = "ToDo" + (meta.openTodo.dueDate ? " (Wiedervorlage " + formatPlainDate(meta.openTodo.dueDate) + ")" : "") + ": " + meta.openTodo.text;
+  wrap.appendChild(text);
+
+  const doneBtn = document.createElement("button");
+  doneBtn.type = "button";
+  doneBtn.className = "link-btn";
+  doneBtn.textContent = "✓ erledigt";
+  doneBtn.addEventListener("click", async () => {
+    doneBtn.disabled = true;
+    try {
+      await completeTodo(meta.id, meta.openTodo.visitId);
+    } catch (err) {
+      alert("Konnte ToDo nicht als erledigt markieren: " + err.message);
+      doneBtn.disabled = false;
+    }
+  });
+  wrap.appendChild(doneBtn);
+
+  return wrap;
+}
+
 function buildContactsSection(meta) {
   const wrap = document.createElement("div");
   wrap.className = "contacts-section";
@@ -907,7 +1012,7 @@ function buildContactsSection(meta) {
 
   const fixed = [];
   if (meta.inhaber) fixed.push(meta.inhaber + " (Inhaber)");
-  [meta.vertreter1, meta.vertreter2, meta.vertreter3].filter(Boolean).forEach((v) => fixed.push(v + " (Vertretung)"));
+  [meta.vertreter1, meta.vertreter2, meta.vertreter3].filter(Boolean).forEach((v) => fixed.push(v + " (Geschäftsführer)"));
   fixed.forEach((label) => {
     const li = document.createElement("li");
     li.textContent = label;
@@ -1558,8 +1663,37 @@ function buildFinancialsText(f) {
   const gewinn = formatEuro(f.gewinn);
   if (gewinn) bits.push("Gewinn " + gewinn + (typeof f.gewinnCagr === "number" ? " (CAGR " + formatPercent(f.gewinnCagr) + ")" : ""));
   if (typeof f.mitarbeiterzahl === "number") bits.push("Mitarbeiter " + f.mitarbeiterzahl);
+  if (f.pensionsrueckstellungen) bits.push("Pensionsrückstellungen vorhanden");
   if (!bits.length) return "";
-  return '<span class="label">Nur für dich:</span> ' + bits.map(escapeHtml).join(" · ");
+  return '<span class="label">Nur für dich:</span><ul class="financials-list">' + bits.map((b) => "<li>" + escapeHtml(b) + "</li>").join("") + "</ul>";
+}
+
+// Pensionsrückstellungen kommen nicht aus dem North-Data-Import und
+// muessen manuell erfasst werden - deshalb eigenes, "owner"-only
+// editierbares Kontrollkaestchen auf der Kundenseite (Lesen ist über
+// buildFinancialsText/financialsAccess auch für freigegebene Kolleg:innen
+// möglich, Schreiben bleibt "owner" vorbehalten, siehe firestore.rules).
+function buildPensionToggle(meta) {
+  const wrap = document.createElement("label");
+  wrap.className = "checkbox pension-toggle";
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.checked = Boolean(meta.financials && meta.financials.pensionsrueckstellungen);
+  input.addEventListener("change", async () => {
+    input.disabled = true;
+    try {
+      await setPensionsrueckstellungen(meta.id, input.checked);
+      meta.financials = { ...(meta.financials || {}), pensionsrueckstellungen: input.checked };
+      renderCustomerPage(meta);
+    } catch (err) {
+      alert("Konnte nicht gespeichert werden: " + err.message);
+      input.checked = !input.checked;
+      input.disabled = false;
+    }
+  });
+  wrap.appendChild(input);
+  wrap.appendChild(document.createTextNode(" Pensionsrückstellungen vorhanden (nur für dich sichtbar/änderbar)"));
+  return wrap;
 }
 
 function formatDate(ts) {
@@ -1739,7 +1873,7 @@ async function onComputeClick() {
       routeGeometry = null;
     }
 
-    if (state.role === "owner") {
+    if (state.canSeeFinancials) {
       setProgress(1, "Lade Finanzkennzahlen …");
       await Promise.all(
         orderedMeta.map(async (meta) => {
@@ -1971,17 +2105,25 @@ function buildCustomerDetailsHtml(meta) {
     "</a></div>";
   html += '<div class="address">' + escapeHtml(addrLine) + "</div>";
 
-  const vertreter = [meta.vertreter1, meta.vertreter2, meta.vertreter3].filter(Boolean);
-  if (vertreter.length) {
-    html += '<div class="vertreter">Vertretung: ' + escapeHtml(vertreter.join(", ")) + "</div>";
-  } else if (meta.inhaber) {
-    html += '<div class="vertreter">' + escapeHtml(meta.inhaber) + "</div>";
-  }
-
+  // Reihenfolge (Absprache mit Matthias): Adresse, Kontaktdaten,
+  // Geschäftsführer - jeweils mit sichtbarem Abstand dazwischen (siehe CSS
+  // .contact/.geschaeftsfuehrer margin-top).
   const contactBits = [];
   if (meta.telefon) contactBits.push(escapeHtml(meta.telefon));
+  if (meta.email) contactBits.push(escapeHtml(meta.email));
   if (meta.website) contactBits.push(escapeHtml(meta.website));
   if (contactBits.length) html += '<div class="contact">' + contactBits.join(" · ") + "</div>";
+
+  // "Ges. Vertreter" aus North Data sind i.d.R. die Geschäftsführer -
+  // deshalb einheitlich so benannt statt "Vertretung". Pipe als Trenner
+  // (statt Komma), damit mehrere Namen klar auseinanderzuhalten sind.
+  const vertreter = [meta.vertreter1, meta.vertreter2, meta.vertreter3].filter(Boolean);
+  if (vertreter.length) {
+    html += '<div class="geschaeftsfuehrer">Geschäftsführer: ' + vertreter.map(escapeHtml).join(" | ") + "</div>";
+  } else if (meta.inhaber) {
+    html += '<div class="geschaeftsfuehrer">Inhaber: ' + escapeHtml(meta.inhaber) + "</div>";
+  }
+
   if (isVisited) {
     html +=
       '<div class="visited-badge">✓ ' +
@@ -1991,8 +2133,17 @@ function buildCustomerDetailsHtml(meta) {
       (meta.lastVisitNote ? ": " + escapeHtml(meta.lastVisitNote) : "") +
       "</div>";
   }
+  if (meta.openTodo && meta.openTodo.text) {
+    html +=
+      '<div class="todo-badge">ToDo' +
+      (meta.openTodo.dueDate ? " (Wiedervorlage " + escapeHtml(formatPlainDate(meta.openTodo.dueDate)) + ")" : "") +
+      ": " +
+      escapeHtml(meta.openTodo.text) +
+      "</div>";
+  }
   if (meta.financials) {
-    html += '<div class="financials">' + buildFinancialsText(meta.financials) + "</div>";
+    const financialsHtml = buildFinancialsText(meta.financials);
+    if (financialsHtml) html += '<div class="financials">' + financialsHtml + "</div>";
   }
   return html;
 }
@@ -2179,6 +2330,30 @@ function renderSearchResults(results, totalCount) {
   }
 }
 
+// Kleines Label+Eingabefeld-Paar fuer das Besuchsformular (Besuch am /
+// Gesprochen mit / Gesprächsnotizen / ToDo / Wiedervorlage am).
+function buildLabeledField(labelText, type, placeholder) {
+  const wrap = document.createElement("label");
+  wrap.className = "visit-field";
+  const span = document.createElement("span");
+  span.textContent = labelText;
+  wrap.appendChild(span);
+  const input = type === "textarea" ? document.createElement("textarea") : document.createElement("input");
+  if (type === "textarea") {
+    input.rows = 2;
+  } else {
+    input.type = type;
+  }
+  if (placeholder) input.placeholder = placeholder;
+  wrap.appendChild(input);
+  return { wrap, input };
+}
+
+function todayIsoDate() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
 function buildVisitControls(meta) {
   const wrap = document.createElement("div");
   wrap.className = "visit-controls";
@@ -2197,9 +2372,18 @@ function buildVisitControls(meta) {
 
   const form = document.createElement("div");
   form.className = "visit-form hidden";
-  const textarea = document.createElement("textarea");
-  textarea.placeholder = "Notiz (optional, z. B. Gesprächsinhalt)";
-  textarea.rows = 2;
+
+  const dateField = buildLabeledField("Besuch am", "date");
+  const withField = buildLabeledField("Gesprochen mit", "text", "Name der Ansprechperson");
+  const noteField = buildLabeledField("Gesprächsnotizen", "textarea", "z. B. Gesprächsinhalt");
+  const todoField = buildLabeledField("ToDo", "text", "z. B. Unterlagen nachreichen (optional)");
+  const todoDateField = buildLabeledField("Wiedervorlage am", "date");
+  form.appendChild(dateField.wrap);
+  form.appendChild(withField.wrap);
+  form.appendChild(noteField.wrap);
+  form.appendChild(todoField.wrap);
+  form.appendChild(todoDateField.wrap);
+
   const actions = document.createElement("div");
   actions.className = "visit-form-actions";
 
@@ -2215,11 +2399,10 @@ function buildVisitControls(meta) {
   confirmOpenBtn.textContent = "Vom Kunden bestätigen lassen";
   actions.appendChild(confirmOpenBtn);
 
-  form.appendChild(textarea);
   form.appendChild(actions);
   const formHint = document.createElement("p");
   formHint.className = "hint";
-  formHint.textContent = "„Besuch selbst eintragen“ reicht als Notiz. „Vom Kunden bestätigen lassen“ ist optional, wenn der Kunde den Besuch zusätzlich direkt auf deinem Handy bestätigen soll.";
+  formHint.textContent = "„Besuch selbst eintragen“ reicht. „Vom Kunden bestätigen lassen“ zusätzlich, wenn der Kunde den Besuch direkt auf deinem Handy bestätigen soll.";
   form.appendChild(formHint);
   wrap.appendChild(form);
 
@@ -2227,18 +2410,39 @@ function buildVisitControls(meta) {
   historyBox.className = "visit-history hidden";
   wrap.appendChild(historyBox);
 
-  toggleBtn.addEventListener("click", () => form.classList.toggle("hidden"));
+  function resetForm() {
+    dateField.input.value = "";
+    withField.input.value = "";
+    noteField.input.value = "";
+    todoField.input.value = "";
+    todoDateField.input.value = "";
+  }
+
+  function collectDetails() {
+    return {
+      visitedAt: dateField.input.value || todayIsoDate(),
+      visitedWith: withField.input.value.trim(),
+      note: noteField.input.value.trim(),
+      todoText: todoField.input.value.trim(),
+      todoDueDate: todoDateField.input.value || null,
+    };
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    if (form.classList.contains("hidden") && !dateField.input.value) dateField.input.value = todayIsoDate();
+    form.classList.toggle("hidden");
+  });
 
   confirmOpenBtn.addEventListener("click", () => {
-    openConfirmOverlay(meta, textarea.value.trim());
+    openConfirmOverlay(meta, collectDetails());
     form.classList.add("hidden");
-    textarea.value = "";
+    resetForm();
   });
 
   selfReportBtn.addEventListener("click", () => {
-    startSelfReportVisit(meta, textarea.value.trim());
+    startSelfReportVisit(meta, collectDetails());
     form.classList.add("hidden");
-    textarea.value = "";
+    resetForm();
   });
 
   historyBtn.addEventListener("click", async () => {
@@ -2259,12 +2463,11 @@ function buildVisitControls(meta) {
       const ul = document.createElement("ul");
       visits.forEach((v) => {
         const li = document.createElement("li");
-        li.textContent =
-          formatDate(v.visitedAt) +
-          (v.confirmedByCustomer ? " ✓ vom Kunden bestätigt" : "") +
-          " – " +
-          (v.byName || "?") +
-          (v.note ? ": " + v.note : "");
+        const bits = [formatDate(v.visitedAt)];
+        if (v.confirmedByCustomer) bits.push("✓ vom Kunden bestätigt");
+        bits.push("– " + (v.byName || "?"));
+        if (v.visitedWith) bits.push("(mit " + v.visitedWith + ")");
+        li.textContent = bits.join(" ") + (v.note ? ": " + v.note : "");
         ul.appendChild(li);
       });
       historyBox.appendChild(ul);
@@ -2350,8 +2553,8 @@ function resetYesNoToggles() {
   els.provisionAmount.value = "";
 }
 
-function openConfirmOverlay(meta, note) {
-  state.pendingConfirm = { customerId: meta.id, meta, note, visitId: null };
+function openConfirmOverlay(meta, details) {
+  state.pendingConfirm = { customerId: meta.id, meta, details, visitId: null };
   els.confirmCompany.textContent = meta.unternehmen;
   els.confirmStepVisit.classList.remove("hidden");
   els.confirmStepOutcome.classList.add("hidden");
@@ -2364,10 +2567,10 @@ function closeConfirmOverlay() {
   els.confirmOverlay.classList.add("hidden");
 }
 
-async function startSelfReportVisit(meta, note) {
-  state.pendingConfirm = { customerId: meta.id, meta, note, visitId: null };
+async function startSelfReportVisit(meta, details) {
+  state.pendingConfirm = { customerId: meta.id, meta, details, visitId: null };
   try {
-    const visitId = await addVisit(meta.id, { note, byUid: state.user.uid, byName: state.user.email, confirmedByCustomer: false });
+    const visitId = await addVisit(meta.id, { ...details, byUid: state.user.uid, byName: state.user.email, confirmedByCustomer: false });
     state.pendingConfirm.visitId = visitId;
     els.confirmCompany2.textContent = meta.unternehmen;
     resetYesNoToggles();
@@ -2382,10 +2585,10 @@ async function startSelfReportVisit(meta, note) {
 
 async function onConfirmVisitClick() {
   if (!state.pendingConfirm) return;
-  const { customerId, note } = state.pendingConfirm;
+  const { customerId, details } = state.pendingConfirm;
   els.confirmBtn.disabled = true;
   try {
-    const visitId = await addVisit(customerId, { note, byUid: state.user.uid, byName: state.user.email, confirmedByCustomer: true });
+    const visitId = await addVisit(customerId, { ...details, byUid: state.user.uid, byName: state.user.email, confirmedByCustomer: true });
     state.pendingConfirm.visitId = visitId;
     els.confirmCompany2.textContent = state.pendingConfirm.meta.unternehmen;
     els.confirmStepVisit.classList.add("hidden");

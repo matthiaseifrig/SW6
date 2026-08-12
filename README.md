@@ -38,6 +38,15 @@ Login und alle Kunden-/Besuchsdaten laufen über ein Firebase-Projekt
   den Regeltext, der in der Firebase-Konsole unter **Firestore Database →
   Regeln** eingefügt und veröffentlicht werden muss, damit jeder Nutzer nur
   die eigenen Daten sieht (bzw. „owner“ alle).
+- **Finanzkennzahlen für einzelne Kolleg:innen freigeben**: Umsatz, Gewinn,
+  Mitarbeiterzahl und Pensionsrückstellungen sind standardmäßig nur für
+  „owner“ sichtbar. Um sie zusätzlich für eine bestimmte Person freizugeben
+  (z. B. Peter Günther), genauso wie die Rolle **einmalig manuell**: Firebase-
+  Konsole → **Firestore Database → Daten** → Sammlung `users` → deren
+  Dokument öffnen → Feld `financialsAccess` (Typ boolean) hinzufügen und auf
+  `true` setzen. Die Person sieht damit die Kennzahlen nur für ihre eigenen
+  Kunden, nie für die anderer Kolleg:innen. Bearbeiten (z. B.
+  Pensionsrückstellungen setzen) bleibt weiterhin „owner“ vorbehalten.
 
 ## Nutzung
 
