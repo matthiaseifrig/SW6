@@ -8,8 +8,10 @@
    separaten Chorsatz, oder ist Nr. 9 im Konzert ein Orchesterstück? Der Auftaktplan
    ist derzeit auf die zweite Annahme gebaut.
 
-2. **Fehlende Partitur: nur noch Nr. 3 (Our Father, Kedrov).** A cappella, längste
-   Laufzeit von allen — bitte als nächstes.
+2. **Nr. 3 (Our Father, Kedrov) — angekündigt für „in ein paar Wochen".**
+   Für den 12.09. ohne Bedeutung, das Stück kommt dort nicht vor.
+   **Schwelle: 09.10.2026.** Liegt die Partitur bis dahin vor, hält der geplante
+   Erstkontakt am 23.10. Kommt sie später, greift die Ausweichregel unten.
 
 3. **Chorausgabe zu Nr. 1 „Ave verum".** In der Orchesterpartitur nicht enthalten.
    Ohne sie kann die Balance nicht geplant werden.
@@ -75,7 +77,10 @@
 15. **Nr. 11: „Half Chorus (optional)" ab T. 35 nutzen?** Bei 220 Stimmen würde ich
     ja sagen. Wenn ja: Welche Hälfte, und wie ausgewählt? Entscheidung bis Januar.
 
-16. **Nr. 3 „Our Father": volle oder reduzierte Besetzung?** Entscheidung bis Dezember.
+16. **Nr. 3 „Our Father": volle oder reduzierte Besetzung?** Entscheidung bis Dezember —
+    setzt voraus, dass die Partitur im Oktober vorliegt. Kommt sie erst im November,
+    verschiebt sich die Entscheidung in den Januar, und das Stück verliert genau die
+    Anlaufzeit, die es von allen am dringendsten braucht.
 
 17. **Nr. 6 „By our Love": Kinderbeteiligung geplant?** Der Text legt es nahe.
     Entscheidung bis Ende Oktober.

@@ -30,6 +30,21 @@ Reifegrade 0–5 (Legende: `../README.md`). Nach jeder Probe aktualisieren.
 Damit sind alle zwölf bis Mitte November mindestens einmal gesungen und es bleibt noch
 der 11.12. als Puffer, bevor die Weihnachtspause kommt.
 
+### Ausweichregel für Nr. 3
+
+Die Partitur zu Nr. 3 ist für „in ein paar Wochen" angekündigt. **Stichtag ist der
+09.10.2026.**
+
+- **Liegt sie bis dahin vor:** Erstkontakt wie geplant am 23.10.
+- **Kommt sie später:** Erstkontakt rückt auf den 13.11. Die frei werdende Zeit am
+  23.10. geht an **Nr. 10 und Nr. 8** — das ist ohnehin die beste Verwendung, weil
+  beide dann sechs Wochen ohne Probe hinter sich haben und Wiederholung brauchen.
+  Nr. 11 und Nr. 12 bleiben am 23.10., sie dürfen nicht rutschen.
+- **Folge im zweiten Fall:** Nr. 3 hat vor Weihnachten nur noch zwei Kontakte
+  (13.11. und 11.12.) statt drei. Bei einem a-cappella-Stück, das ausschließlich von
+  Wiederholung über Monate lebt, ist das der Punkt, an dem die Frage nach reduzierter
+  Besetzung von einer Option zu einer Notwendigkeit wird.
+
 ## Meilensteine (am tatsächlichen Kalender)
 
 | Termin | Anforderung |
