@@ -23,12 +23,16 @@ Reifegrade 0–5 (Legende: `../README.md`). Nach jeder Probe aktualisieren.
 
 | Termin | Stücke | Warum |
 |---|---|---|
-| **12.09.2026** (PT) | Chor: 1, 5, 7, 8, 10 · Orchester zusätzlich: 9 | Ein bekanntes Stück als Anker, das Titelstück und die beiden klanglich anspruchsvollsten Neuen — alles, was die Sechs-Wochen-Lücke überstehen muss. Nr. 9 erarbeitet das Orchester allein |
-| **23.10.2026** | 3, 11, 12 | Die drei verbleibenden Neuen. Nr. 11 und 12 stehen im Programm hinten und dürfen deshalb in der Probenplanung **nicht** hinten stehen. Nr. 3 braucht die längste Laufzeit von allen |
-| **13.11.2026** | 2, 4, 6 | Die drei bekannten Werke — spät, weil sie am wenigsten Anlaufzeit brauchen |
+| **12.09.2026** (PT) | Chor: 1, 2, 4, 6, 10, 11 · Orchester zusätzlich: 9 | Nach Vorgabe des Dirigenten. Drei bekannte Werke als schneller Zugriff (6, 4, 1), das Titelstück Nr. 10 substanziell, Nr. 11 als Erstkontakt, Nr. 2 als Verfahrensarbeit am a-cappella-Grave |
+| **23.10.2026** | 7, 8, 12 (+ 3, falls die Partitur vorliegt) | Die verbliebenen Neuen. Nr. 12 steht im Programm hinten und darf deshalb in der Probenplanung **nicht** hinten stehen |
+| **13.11.2026** | 3, 5 | Nr. 5 spät, weil es nach Einschätzung des Dirigenten läuft. Nr. 3 spätestens hier |
 
 Damit sind alle zwölf bis Mitte November mindestens einmal gesungen und es bleibt noch
 der 11.12. als Puffer, bevor die Weihnachtspause kommt.
+
+> **Beobachten:** Nr. 8 „The Ground" rückt durch die neue Auswahl auf den 23.10. Nach
+> Nr. 3 hat es den längsten Reifebedarf im Programm — lange Bögen, hohe Sopranlage,
+> Akkorde, die nur rein wirken. Es verträgt keinen weiteren Aufschub.
 
 ### Ausweichregel für Nr. 3
 
