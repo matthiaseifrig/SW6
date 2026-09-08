@@ -1,6 +1,6 @@
 # Nr. 1 — Ave verum corpus
 
-**Wolfgang Amadeus Mozart (KV 618)** · Programmblock: FUNDAMENT (1–4)
+**Wolfgang Amadeus Mozart (KV 618), Bearbeitung: Nicola A. Montani / Joshua Choe** · Programmblock: FUNDAMENT (1–4)
 
 ## Ort im Programm
 
@@ -11,51 +11,65 @@
 
 | Feld | Wert |
 |---|---|
-| Status im Ensemble | **bekannt** — aufgeführt 2017 (mit 110 Mitwirkenden), damals **ohne Bläser** |
+| Status im Ensemble | **bekannt** — aufgeführt 2017 (110 Mitwirkende), damals ohne Bläser |
 | Erster Kontakt geplant | 12.09.2026 |
-| Ausgabe / Verlag | *(offen — kommt mit der Partitur)* |
-| Dauer | *(offen)* |
-| Tonart / Taktart / Tempo | *(offen)* |
-| Besetzung Chor | *(offen)* |
-| Besetzung Orchester | *(offen)* |
-| Solo | *(offen)* |
-| Schwierigkeit Chor (1–5) | *(offen)* |
-| Schwierigkeit Orchester (1–5) | *(offen)* |
+| Ausgabe | SheetMusicDirect, © 2026 Joshua Choe · Quelle: The St. Gregory Hymnal (1922), Nr. 233c · **Einzelplatz-Lizenz** |
+| Umfang | 46 Takte, 7 Partiturseiten (ein System je Seite) |
+| Dauer (gerechnet) | ca. 3:30 |
+| Tempo / Taktart / Tonart | Adagio · 4/4 · D-Dur |
+| Chor in der Partitur | **nein — die Partitur enthält kein Vokalsystem** |
+| Begleitung | 2 Fl · 2 Ob · 2 Kl **in A** · 2 Fg · 2 Hn in F · 2 Trp **in D** · Pauken · Streicher |
+| Solo | — |
+| Sprache | Latein |
+
+## Formverlauf
+
+| Takte | Was |
+|---|---|
+| 1–6 | Hörner und Streicher, pp mit cresc. |
+| 7–12 | Holz tritt hinzu, pp |
+| 13–19 | cresc., a 2 in den Bläsern |
+| 20–26 | |
+| 27–33 | durchgehendes cresc. in allen Stimmen |
+| 34–39 | cresc., volle Besetzung |
+| 40–46 | dim. bis zum Schluss |
+
+*(Systemanfänge der Partiturseiten — Taktzahlen stehen dort jeweils oben links.)*
 
 ## Einschätzung
 
-> Vorläufig — aus Werkkenntnis und der Programmerläuterung, **nicht aus der Partitur**.
-> Wird konkretisiert, sobald die Noten vorliegen.
+Die Partitur ist eine **Orchesterbearbeitung ohne Chorsystem**. Zwei Folgen:
 
-Kurz, in D-Dur, im Notentext für einen geübten Chor unproblematisch — und
-musikalisch trotzdem eines der unbarmherzigsten Stücke des Programms. Es liegt alles
-offen: das Legato, die Intonation der chromatischen Rückung in der Mitte, das
-Diminuendo am Schluss. Es gibt nichts, hinter dem man sich verstecken kann.
+1. Du dirigierst ohne den Chorsatz vor Augen. Bei Mozart machbar — aber du kannst
+   nicht nachsehen, wo die Bearbeitung den Chor verdoppelt, und genau das entscheidet
+   über die Balance. Eine Chorausgabe fehlt noch.
+2. **Trompeten in D und Pauken in einem 46-taktigen Adagio, dazu 220 Stimmen.**
+   Mozart schrieb Streicher und Orgel. Das ist ein sehr großer Apparat für ein sehr
+   intimes Stück.
 
-Mit 220 Stimmen ist die Gefahr nicht, dass es nicht klingt, sondern dass es **schwer
-und breiig** klingt. Was mit 110 noch schwebte, wird mit 220 leicht zur Masse. Das ist
-eine Balance- und Atemfrage, keine Notenfrage.
+Das Problem wird nicht Lautstärke sein, sondern **Schwere**. Was mit 110 Stimmen und
+Streichern schwebte, wird mit 220 Stimmen und vollem Blech schnell zäh. Die Partitur
+setzt fast durchgehend cresc. — dem muss man aktiv entgegenarbeiten, sonst wächst das
+Stück linear ins Laute statt in Wellen zu atmen.
 
-**Neu gegenüber 2017: die Bläser.** Klärungsbedarf, bevor geprobt wird — welches
-Arrangement, ersetzen oder ergänzen die Bläser die Streicher, und wie ist die Balance
-gegen 220 Stimmen gedacht?
-
-## Probenstrategie
-
-- Wenig Notenzeit, viel Klangzeit.
-- Gehört an die **Probentage** (Raumklang, volle Besetzung), nicht an Abendproben.
-- Früh eine Tempoentscheidung treffen und dabei bleiben; das Stück verträgt kein Suchen.
-- Atemversetzung in den langen Bögen frühzeitig festlegen und in die Noten schreiben lassen.
+Praktisch: Die Fußzeile weist eine Einzelplatz-Lizenz aus. Für Orchestermaterial in
+dieser Größe braucht es reguläres Aufführungsmaterial — vor dem 09.10. klären.
 
 ## Knackpunkte
 
-*Mit Taktzahlen zu füllen, sobald die Partitur vorliegt.*
+| # | Takte | Wer | Problem | Probenmittel |
+|---:|---|---|---|---|
+| 1 | 27–39 | alle | zwei lange cresc.-Ketten hintereinander; die Steigerung verpufft, wenn sie zu früh beginnt | Zielpunkt festlegen und **rückwärts** dynamisch planen |
+| 2 | 1–12 | Streicher, Hörner | pp mit 42 Streichern und 220 Sängern gegenüber — die Balance entscheidet sich hier | Bläser ausdünnen, Streicher solistisch prüfen |
+| 3 | 40–46 | alle | dim. bis zum Schluss; mit 220 Stimmen schwer kontrollierbar | Atemversetzung, Endkonsonant gemeinsam |
+| 4 | Trp/Pk | Orchester | Trompeten in D und Pauken sind bei Mozart Fremdkörper | Prüfen: erst ab der Steigerung einsetzen lassen |
 
-| # | Takte | Register | Problem | Ursache | Probenmittel |
-|---:|---|---|---|---|---|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
+## Probenstrategie
+
+- Wenig Notenzeit, viel Klangzeit. Gehört an die **Probentage**, nicht an Abendproben.
+- **Chorausgabe beschaffen** — ohne sie ist die Balance nicht planbar.
+- Lateinische Aussprache gemeinsam mit Nr. 8 entscheiden (siehe `../00_Rahmen/Besetzung_und_Material.md`).
+- Frühe Tempoentscheidung; das Stück verträgt kein Suchen.
 
 ## Aufgaben für die Registerarbeit
 
@@ -64,7 +78,7 @@ gegen 220 Stimmen gedacht?
 
 ## Eigenübung
 
-- Material: *(Stimmtrainer-Dateien — siehe `../00_Rahmen/Probenkalender.md`, Hebel 1)*
+- Material:
 - Auftrag:
 
 ## Stand

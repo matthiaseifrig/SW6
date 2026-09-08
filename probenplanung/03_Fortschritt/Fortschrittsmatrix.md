@@ -14,7 +14,7 @@ Reifegrade 0–5 (Legende: `../README.md`). Nach jeder Probe aktualisieren.
 | 6 | By our Love | bekannt 2025 (60 %) | 0 | 0 | 0 | 0 | 0 | 0 | 13.11.26 |
 | 7 | Victoria, my Jesus lives | **neu** | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
 | 8 | The Ground | **neu** | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
-| 9 | Forever with the Lord | Melodie bekannt, Satz neu | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
+| 9 | Auf ewig bei dem Herrn | **Orchesterwerk — Chorsatz offen** | – | – | – | – | 0 | – | 12.09.26 (Orch.) |
 | 10 | **I will make all Things new** | **neu · Titelstück** | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
 | 11 | When I survey the wondrous Cross | **neu** | 0 | 0 | 0 | 0 | 0 | 0 | 23.10.26 |
 | 12 | Der Herr ist in seinem heiligen Tempel | **neu** | 0 | 0 | 0 | 0 | 0 | 0 | 23.10.26 |
@@ -23,7 +23,7 @@ Reifegrade 0–5 (Legende: `../README.md`). Nach jeder Probe aktualisieren.
 
 | Termin | Stücke | Warum |
 |---|---|---|
-| **12.09.2026** (PT) | 1, 5, 7, 8, 9, 10 | Zwei bekannte als Anker, das Titelstück und die beiden klanglich anspruchsvollsten Neuen — alles, was die Sechs-Wochen-Lücke überstehen muss |
+| **12.09.2026** (PT) | Chor: 1, 5, 7, 8, 10 · Orchester zusätzlich: 9 | Ein bekanntes Stück als Anker, das Titelstück und die beiden klanglich anspruchsvollsten Neuen — alles, was die Sechs-Wochen-Lücke überstehen muss. Nr. 9 erarbeitet das Orchester allein |
 | **23.10.2026** | 3, 11, 12 | Die drei verbleibenden Neuen. Nr. 11 und 12 stehen im Programm hinten und dürfen deshalb in der Probenplanung **nicht** hinten stehen. Nr. 3 braucht die längste Laufzeit von allen |
 | **13.11.2026** | 2, 4, 6 | Die drei bekannten Werke — spät, weil sie am wenigsten Anlaufzeit brauchen |
 
@@ -50,6 +50,20 @@ der 11.12. als Puffer, bevor die Weihnachtspause kommt.
 - 🔴 zwei Grad Rückstand — Sondermaßnahme: zusätzliche Registerprobe, reduzierte
   Besetzung, Kürzung oder Streichung. **Nicht** „beim nächsten Mal etwas mehr Zeit"
 
+## Was die Partituren geändert haben
+
+- **Nr. 9** ist nach vorliegender Partitur ein **reines Orchesterwerk** ohne Vokalsystem.
+  Bis das geklärt ist, zählt es nicht als Chorstück — die Chor-Zeilen stehen auf „–".
+  Falls doch ein Chorsatz existiert, verschiebt das die Rechnung spürbar.
+- **Nr. 7** ist **♩ = 62**, also getragen, nicht flott. Es ist damit kein Energiestück
+  für den späten Nachmittag, sondern Anker-Material für den Vormittag.
+- **Nr. 8** ist mit **optionalen** Streichern gesetzt — Klavier genügt. Das entlastet
+  die Orchesterplanung.
+- **Nr. 11** enthält ab T. 35 einen **„Half Chorus (optional)"**. Bei 220 Stimmen ist
+  das nicht optional, sondern die richtige Entscheidung.
+- **Nr. 12** ist **a cappella**, ♩ = 56, mehrfach geteilt, rund eine Minute — und der
+  letzte Klang des Konzerts.
+
 ## Beobachtungsliste
 
 Stücke, bei denen die Ensemblegröße gegen die Musik arbeitet und die deshalb
@@ -59,7 +73,14 @@ früher als andere in die Ampel geraten:
   Entscheidung über reduzierte Besetzung bis Dezember 2026.
 - **Nr. 8 The Ground** — lange Bögen, hohe Sopranlage. Atemversetzung und
   Sopranaufteilung bis Januar 2027 festlegen.
-- **Nr. 2, Allegro-Teile** — Achtelläufe mit 220 Stimmen.
+- **Nr. 12** — a cappella, ♩ = 56, mehrfach geteilt, Schluss des Konzerts.
+  Zusammen mit Nr. 3 und den beiden Grave-Teilen von Nr. 2 ergibt das **vier
+  a-cappella-Situationen** im Programm. Alle vier gehören in die Kategorie
+  „häufig und kurz proben", nie in Blöcke.
+- **Nr. 2, Allegro-Teile** — Achtelläufe mit 220 Stimmen (die Grave-Teile sind laut
+  Partitur tatsächlich unbegleitet, T. 1–7 und vor „Even so in Christ").
+- **Nr. 10** — Tonartwechsel B-Dur → C-Dur bei ca. T. 39; die zweite Hälfte liegt
+  einen Ganzton höher.
 - **Nr. 11 und 12** — neu, eigene Orchestrierungen, Position am Programmende.
   Orchesterstimmen bis 09.10.2026.
 

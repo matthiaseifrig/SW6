@@ -1,6 +1,6 @@
 # Nr. 12 — Der Herr ist in seinem heiligen Tempel / The Lord is in his holy temple
 
-**Jörg Nonnweiler, arr. M. Eifrig (Habakuk 2,20)** · Programmblock: AUSRICHTUNG (10–12)
+**Jörg Nonnweiler (Männerchor) · Matthias Eifrig (gemischter Chor) — Habakuk 2,20** · Programmblock: AUSRICHTUNG (10–12)
 
 ## Ort im Programm
 
@@ -11,50 +11,74 @@
 
 | Feld | Wert |
 |---|---|
-| Status im Ensemble | **neu** · Arrangement entsteht im Haus |
+| Status im Ensemble | **neu** · Satz für gemischten Chor von M. Eifrig |
 | Erster Kontakt geplant | 23.10.2026 |
-| Ausgabe / Verlag | *(offen — kommt mit der Partitur)* |
-| Dauer | *(offen)* |
-| Tonart / Taktart / Tempo | *(offen)* |
-| Besetzung Chor | *(offen)* |
-| Besetzung Orchester | *(offen)* |
-| Solo | *(offen)* |
-| Schwierigkeit Chor (1–5) | *(offen)* |
-| Schwierigkeit Orchester (1–5) | *(offen)* |
+| Ausgabe | Chorausgabe, 1 Seite |
+| Umfang | ca. 12 Takte (Taktzahlen 4, 7, 10 eingetragen) |
+| Dauer (gerechnet) | ca. 1:00 |
+| Tempo / Taktart / Tonart | ♩ = 56 |
+| Chor in der Partitur | ja — **Frauen und Männer getrennt notiert, mehrfach geteilt** (je 3–4 Systeme) |
+| Begleitung | **a cappella** |
+| Solo | — |
+| Sprache | **Deutsch und Englisch parallel unterlegt — Entscheidung nötig** |
+
+## Formverlauf
+
+| Takte | Text |
+|---|---|
+| 1–3 | „Der Herr ist in seinem heiligen Tempel“ / „The Lord is in his holy temple“ |
+| 4–6 | „es sei vor ihm stille alle Welt“ / „let all the earth keep silence 'fore him“ |
+| 7–9 | Wiederholung, versetzt zwischen Frauen und Männern |
+| 10–12 | Schluss — „vor ihm … alle Welt“ / „'fore him … all the earth“ |
+
+Die Fußnote erklärt „'fore“ als Kurzform von „before“. In der Partitur steht
+bereits deine Eintragung „gebunden“.
 
 ## Einschätzung
 
-> Vorläufig — aus Werkkenntnis und der Programmerläuterung, **nicht aus der Partitur**.
-> Wird konkretisiert, sobald die Noten vorliegen.
+Ein Stück von rund einer Minute — und trotzdem eines der beiden riskantesten
+im Programm.
 
-Der Zielpunkt des Programms — „Impuls der Stille zum Sonntag hin“ — und der
-Schluss des Bogens, der bei Nr. 4 begonnen hat.
+Die Partitur zeigt drei Dinge auf einmal: **a cappella**, **♩ = 56** und **mehrfach
+geteilte Frauen- und Männerstimmen**. Es gibt also keine Stütze, kein Tempo, das über
+Unschärfen hinweghilft, und einen Satz, dessen Wirkung ausschließlich von der Reinheit
+der Akkorde abhängt. Und es steht **am Schluss des Konzerts** — der Klang, den das
+Publikum mit nach Hause nimmt.
 
-Damit gilt: **Das letzte Stück eines Konzerts wird am längsten erinnert.** Wenn es ein
-Stück der Stille ist, lebt es vollständig von Klangkultur, gemeinsamem Atem und
-Intonation — dieselben Anforderungen wie Nr. 3 und Nr. 8, nur an der exponiertesten
-Stelle des Abends.
+Kürze ist hier kein Vorteil. Ein einminütiges a-cappella-Stück braucht nicht weniger
+Probenzeit als ein vierminütiges mit Orchester; es braucht sie nur anders verteilt:
+**häufig und kurz, über die ganze Saison**, nie als Block. Intonation entsteht durch
+Wiederholung über Monate.
 
-**Doppeltes Risiko:** neu, eigene Orchestrierung mit Liefertermin 09.10.2026 — und
-durch die Position am Programmende in Gefahr, auch in der Probenplanung hinten zu
-landen. Genau das darf nicht passieren.
+Eine Entscheidung ist offen: **deutsch oder englisch?** Beide Texte sind unterlegt.
+Für Deutsch spricht die Verständlichkeit ausgerechnet in dem Moment, in dem das
+Konzert zur Stille kommt; für Englisch der Zusammenhang mit Nr. 10 und Nr. 11
+unmittelbar davor. Ich würde für den Schlusspunkt **Deutsch** wählen — der
+Programmtext nennt ihn „Impuls der Stille zum Sonntag hin“, und Stille wirkt in der
+Muttersprache stärker. Deine Entscheidung.
 
-## Probenstrategie
-
-- Früh anfassen (23.10.), danach regelmäßig kurz.
-- Muss am Probentag **08.05.2027 bereits sicher** sein, nicht erst zur Generalprobe.
-- Am Ende der Saison mehrfach zusammen mit Nr. 11 proben — der Übergang trägt die Schlussdramaturgie.
-- Orchesterstimmen: Liefertermin 09.10.2026.
+Praktisch für die Aufstellung: Da Frauen und Männer getrennt geführt werden, lohnt
+ein Test, ob eine gemischte Aufstellung (statt Registerblöcken) die Intonation
+stabilisiert — bei homophonen a-cappella-Sätzen mit großer Besetzung hilft das oft
+deutlich.
 
 ## Knackpunkte
 
-*Mit Taktzahlen zu füllen, sobald die Partitur vorliegt.*
+| # | Takte | Wer | Problem | Probenmittel |
+|---:|---|---|---|---|
+| 1 | 1–12 | alle | a cappella über eine Minute bei ♩ = 56 — Intonation sinkt | Stimmgabel: Anfangs- und Schlusston jedes Mal vergleichen |
+| 2 | 1–12 | alle | mehrfache Teilung mit 220 Stimmen | Aufteilung schriftlich festlegen, immer dieselben Personen |
+| 3 | 7–9 | F / M | versetzte Wiederholung zwischen Frauen und Männern | Einsätze isoliert |
+| 4 | 10–12 | alle | Schlussakkord — der letzte Klang des Konzerts | Abschlag und Nachhall verabreden, im Raum testen |
+| 5 | durchgehend | alle | Vokalausgleich; „stille“ / „silence“ sind heikle Vokale | auf einem Vokal üben, dann Text |
 
-| # | Takte | Register | Problem | Ursache | Probenmittel |
-|---:|---|---|---|---|---|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
+## Probenstrategie
+
+- **Häufig und kurz:** 5 Minuten in möglichst vielen Terminen, ab 23.10.2026.
+- Sprachentscheidung bis Ende Oktober.
+- Aufstellung testen: gemischt gegen Registerblöcke.
+- Am Probentag **08.05.2027 bereits sicher**, nicht erst zur Generalprobe.
+- In den letzten Terminen mehrfach zusammen mit Nr. 11 proben — der Übergang trägt die Schlussdramaturgie.
 
 ## Aufgaben für die Registerarbeit
 
@@ -63,7 +87,7 @@ landen. Genau das darf nicht passieren.
 
 ## Eigenübung
 
-- Material: *(Stimmtrainer-Dateien — siehe `../00_Rahmen/Probenkalender.md`, Hebel 1)*
+- Material:
 - Auftrag:
 
 ## Stand

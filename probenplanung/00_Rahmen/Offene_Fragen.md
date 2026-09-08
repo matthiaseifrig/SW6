@@ -1,58 +1,94 @@
 # Offene Punkte
 
-## A — Blockiert die weitere Arbeit
+## A — Dringend, blockiert die Planung
 
-1. **Die Partituren.** Der Nextcloud-Link ist aus meiner Arbeitsumgebung nicht
-   erreichbar (die Netzwerk-Policy blockiert die Domäne). Bitte die PDFs direkt in den
-   Chat hochladen — gern in Etappen. Priorität in dieser Reihenfolge:
-   **Nr. 10, Nr. 8, Nr. 9, Nr. 5, Nr. 1, Nr. 7** (die sechs Stücke des Auftakttags),
-   danach Nr. 3, 11, 12, dann 2, 4, 6.
-   Wichtig: **mit Taktzahlen oder Studierbuchstaben.** Ohne die kann ich keine
-   Probenstellen benennen. Falls eine Ausgabe keine hat, sag mir, welche Referenz gilt.
-2. **Enden die Abendproben um 21:30?** Das gesamte Zeitbudget (28 h) hängt an dieser
-   Annahme. Bei 21:00 fallen rund 4 Stunden weg — das verändert die Planung spürbar.
-3. **Registerleiter benannt?** Für den 12.09. brauche ich mindestens eine verlässliche
-   Leitung für die Männergruppe, besser zwei Leitungen insgesamt. Davon hängt ab, wie
-   ich Block 2 baue.
+1. **Singt der Chor Nr. 9 „Auf ewig bei dem Herrn"?**
+   Die gelieferte Partitur ist eine Orchesterbearbeitung von **Reinhard** Ober
+   (Verlag Bischoff, Best.-Nr. 1278) und enthält **kein Vokalsystem**. Gibt es einen
+   separaten Chorsatz, oder ist Nr. 9 im Konzert ein Orchesterstück? Der Auftaktplan
+   ist derzeit auf die zweite Annahme gebaut.
+
+2. **Fehlende Partituren: Nr. 3 (Our Father), Nr. 4 (Einen anderen Grund),
+   Nr. 6 (By our Love).** Nr. 3 ist am dringendsten — a cappella, längste Laufzeit.
+
+3. **Chorausgabe zu Nr. 1 „Ave verum".** In der Orchesterpartitur nicht enthalten.
+   Ohne sie kann die Balance nicht geplant werden.
+
+4. **Chorheft Lorenz 10/4953L zu Nr. 10.** Die Partitur (30/3533L) führt den Chor nur
+   als ein zusammengefasstes System. Liegt das Chorheft für 220 Personen vor?
+
+5. **Enden die Abendproben um 21:30?** Das gesamte Zeitbudget (28 h) hängt daran.
+
+6. **Registerleiter benannt?** Für den 12.09. brauche ich mindestens eine verlässliche
+   Leitung für die Männergruppe, besser zwei insgesamt.
 
 ## B — Entscheidungen mit Terminfolgen
 
-4. **Übe-Material (Stimmtrainer-Dateien).** Größter Hebel im ganzen Projekt und
-   gleichzeitig der dringendste: Es muss **am 12.09. existieren**, sonst sind die
-   sechs Wochen bis zum 23.10. verloren. Gibt es das schon? Wer erstellt es?
-5. **Orchesterstimmen Nr. 11 und Nr. 12** (deine eigenen Orchestrierungen) — Liefertermin
-   ist der **09.10.2026**, die erste von nur drei reinen Orchesterproben.
-6. **Nr. 3 „Our Father": volle oder reduzierte Besetzung?** Mit 220 Laienstimmen
-   a cappella ist das Stück das größte Einzelrisiko des Programms. Entscheidung bis
-   Dezember 2026 — Begründung in der Stück-Datei.
-7. **Nr. 6 „By our Love": Kinderbeteiligung geplant?** Der Text legt es nahe. Wenn ja,
-   braucht das eigene Probenlogistik; Entscheidung bis Ende Oktober 2026.
-8. **Nr. 1 „Ave verum": welches Bläser-Arrangement?** 2017 ohne Bläser gesungen.
+7. **Übe-Material (Stimmtrainer-Dateien).** Muss **am 12.09. existieren**, sonst sind
+   die sechs Wochen bis zum 23.10. verloren. Konkret gebraucht: Nr. 10 T. 6–33 und
+   Nr. 8 T. 1–27, je Stimme.
+
+8. **Orchesterstimmen Nr. 11 und Nr. 12** (deine Orchestrierungen) — Liefertermin
+   **09.10.2026**, die erste von nur drei reinen Orchesterproben.
+
+9. **Harfe und Orgel besetzen.** Harfe in Nr. 7 und Nr. 10, Pfeifenorgel in Nr. 11,
+   Orgel in Nr. 5. Beides ist nicht kurzfristig zu lösen.
+
+10. **Schlagwerk für Nr. 10:** Bells, Chimes, Mark Tree, Triangel, Cabasa, Finger
+    Cymbals, Shaker, Tamburin, Suspended Cymbal, Piatti, Pauken. Zwei bis drei Spieler
+    plus Instrumentarium.
+
+11. **Klarinetten in A und B, Trompeten in D und B.** Nr. 1 verlangt A-Klarinetten und
+    D-Trompeten, alle übrigen Werke B-Instrumente. Haben die Spieler beide, oder
+    braucht es transponierte Stimmen?
+
+12. **Solisten in Nr. 10.** Die Partitur weist Solo-Einsätze in Vers 1 aus (T. 4, T. 9).
+    Aus dem Chor oder extern? Ab wann mitprobend?
+
+13. **Nr. 12 deutsch oder englisch?** Beide Texte sind unterlegt. Mein Vorschlag:
+    Deutsch — es ist der Schlusspunkt, „Impuls der Stille", und Stille wirkt in der
+    Muttersprache stärker. Entscheidung bis Ende Oktober.
+
+14. **Lateinische Aussprache für Nr. 1 und Nr. 8** — italienisch oder deutsch geprägt?
+    Beide Werke müssen gleich behandelt werden.
+
+15. **Nr. 11: „Half Chorus (optional)" ab T. 35 nutzen?** Bei 220 Stimmen würde ich
+    ja sagen. Wenn ja: Welche Hälfte, und wie ausgewählt? Entscheidung bis Januar.
+
+16. **Nr. 3 „Our Father": volle oder reduzierte Besetzung?** Entscheidung bis Dezember.
+
+17. **Nr. 6 „By our Love": Kinderbeteiligung geplant?** Der Text legt es nahe.
+    Entscheidung bis Ende Oktober.
+
+18. **Aufführungsmaterial und Lizenzen.** Nr. 10 weist ausdrücklich darauf hin, dass
+    eine CCLI-Lizenz das Kopieren nicht abdeckt; die Ave-verum-Partitur ist als
+    Einzelplatz-Lizenz erworben. Für 220 Sänger und ~60 Instrumentalisten ist das ein
+    Budget- und Vorlaufposten.
 
 ## C — Für die Gesamtplanung
 
-9. **Aufteilung der 280:** wie viele Chor, wie viele Orchester? Stimmverteilung
-   S / A / T / B? Orchesterbesetzung (Streicher, Bläser, Profis/Laien)?
-10. **Konzertdauer und Pause** — ein Block oder zwei?
-11. **Auswendig?** Alles, ausgewählte Stücke, oder mit Noten?
-12. **Moderation / Wortbeiträge** zwischen den vier Programmblöcken?
-13. **Solisten** — Nr. 6, 9 und 10 kommen typischerweise dafür in Frage.
-14. **Aufnahme oder Livestream?**
-15. **Verpflegung an den Probentagen vor Ort?** Entscheidet, ob die gestaffelte
+19. **Aufteilung der 280:** wie viele Chor, wie viele Orchester? Stimmverteilung
+    S / A / T / B? Erreicht die Streicherbesetzung die Vorgabe 12/12/8/6/4 aus Nr. 9?
+20. **Konzertdauer.** Aus den neun vorliegenden Partituren gerechnet: rund 31 Minuten
+    reine Musik, mit Nr. 3, 4 und 6 vermutlich ~42 Minuten, also **55–65 Minuten
+    Konzert**. Das trägt einen Abend ohne Pause — passt das zu deiner Vorstellung?
+21. **Auswendig?** Alles, ausgewählte Stücke, oder mit Noten?
+22. **Moderation / Wortbeiträge** zwischen den vier Programmblöcken?
+23. **Aufnahme oder Livestream?**
+24. **Verpflegung an den Probentagen vor Ort?** Entscheidet, ob die gestaffelte
     Mittagspause am 12.09. funktioniert.
 
 ## D — Format
 
-16. Was ist dir am Probentag am meisten wert?
+25. Was ist dir am Probentag am meisten wert?
     ☐ Minutengenaues Ablaufskript mit Taktzahlen
     ☐ Knackpunkt-Analyse pro Stück
     ☐ Fertige Ansagen, Bilder, Formulierungen für den Chor
     ☐ Aufgabenzettel für die Registerleiter
     ☐ Einsing-Konzepte, die auf das jeweilige Stück zulaufen
-17. In welcher Form am Pult — A4-Ausdruck, Handy, eine Seite pro Tag?
+26. In welcher Form am Pult — A4-Ausdruck, Handy, eine Seite pro Tag?
 
 ## Notiz
 
-Der Projektname lautet „one spirit" (Logo), der Programmtitel „I will make all Things
-new" (Programmerläuterung). Falls das vereinheitlicht werden soll, sag Bescheid — ich
-habe beides parallel geführt.
+Projektname „one spirit" (Logo), Programmtitel „I will make all Things new"
+(Programmerläuterung). Ich führe beides parallel.
