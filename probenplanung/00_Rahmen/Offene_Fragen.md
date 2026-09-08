@@ -32,9 +32,15 @@
 8. **Orchesterstimmen Nr. 11 und Nr. 12** (deine Orchestrierungen) — Liefertermin
    **09.10.2026**, die erste von nur drei reinen Orchesterproben.
 
-9. **Harfe besetzen.** Sie kommt in **vier** Werken vor (Nr. 4, 6, 7, 10) — damit ist
-   sie Pflicht, nicht Option. Ebenso **Orgel** (Nr. 4 ad lib., Nr. 5, Nr. 11 —
-   ausdrücklich Pfeifenorgel) und **Klavier** (Nr. 6, 7, 8, 10).
+9. **Zwei Tasteninstrumente statt einem.** Die Harfe wird im Haus vom Klavier
+   gespielt — geklärt. Aber in Nr. 6, 7 und 10 spielen Harfe und Klavier
+   **gleichzeitig** (geprüft: Nr. 6 T. 3–4, Nr. 7 T. 37–41, Nr. 10 T. 21–22), in
+   Nr. 4 zusätzlich Harfenstimme und Orgel ad lib. Höchster gleichzeitiger Bedarf:
+   zwei Spieler. Steht in Laim ein zweites Instrument, und wer spielt?
+
+9a. **Harfen-Glissandi ausschreiben.** Nr. 7 T. 38–41 (zwei Glissandi über je zwei
+   Takte, cresc. ins f, in G-Dur) und Nr. 6 T. 64–65. Auf dem Klavier nicht eins zu
+   eins spielbar. Entscheidung **vor dem 09.10.**, damit die Stimme stimmt.
 
 9b. **Rhythmusgruppe für Nr. 6: Gitarre, Bass, Schlagzeug.** Camp Kirklands
    Orchestrierung verlangt sie mit Akkordsymbolen und Angaben wie „Rim on 4" und

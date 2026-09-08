@@ -18,7 +18,7 @@
 | Dauer (geschätzt) | ca. 2:45 |
 | Tempo / Taktart / Tonart | **Grave** · alla breve (¢) · F-Dur |
 | Chor in der Partitur | ja — zu Beginn S/A und T/B auf je einem System, **am Schluss vier getrennte Systeme** |
-| Begleitung | Flöten · Oboen (**2. ad lib., auch Englischhorn**) · Klarinetten in B · Fagotte · Hörner in F · **Harfe** · **Orgel ad libitum** · Violinen I/II · Viola · Violoncelli / Kontrabässe |
+| Begleitung | Flöten · Oboen (**2. ad lib., auch Englischhorn**) · Klarinetten in B · Fagotte · Hörner in F · **Harfe (im Haus vom Klavier gespielt)** · **Orgel ad libitum** · Violinen I/II · Viola · Violoncelli / Kontrabässe |
 | Solo | **Fagott 1 solo** (T. 4) |
 | Sprache | Deutsch |
 
@@ -77,6 +77,8 @@ Stücke enden in der Ruhe.
 - Gut geeignet als **Anker** in Blöcken mit viel neuem Material: schneller Erfolg, hebt die Stimmung.
 - Orgel ad libitum: bewusst entscheiden. Mit der Laimer Orgel gewinnt das Stück Fundament, verliert aber Transparenz.
 - Englischhorn (2. Oboe ad lib.) klären — es färbt den Satz deutlich.
+- Wenn die Orgel mitspielt, braucht es hier zwei Tastenspieler: Orgel **und** die
+  Harfenstimme am Klavier.
 
 ## Aufgaben für die Registerarbeit
 

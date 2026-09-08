@@ -17,8 +17,8 @@
 | Umfang | **65 Takte**, 18 Partiturseiten, jeder Takt nummeriert |
 | Dauer (gerechnet) | ca. 4:00 |
 | Tempo / Taktart / Tonart | „Confidently" ♩ = ca. 69 · 4/4 · **A-Dur → B-Dur gegen Ende** |
-| Chor in der Partitur | ja, als **ein** zusammengefasstes System (am Schluss zwei); die Sänger brauchen das Chorheft |
-| Begleitung | 2 Fl · Ob · 2 Kl in B · Fg (B-Kl) · 2 Hn · Trp 1 · Trp 2&3 · Pos 1&2 · Pos 3/Tuba · Pauken · **Perkussion 1 und 2** · Harfe · **Gitarre** · **Bass / Schlagzeug** · Klavier · Streicher |
+| Chor in der Partitur | ja, als geschlossenes Partitursystem (am Schluss zweisystemig geteilt); die Sänger brauchen das Chorheft |
+| Begleitung | 2 Fl · Ob · 2 Kl in B · Fg (B-Kl) · 2 Hn · Trp 1 · Trp 2&3 · Pos 1&2 · Pos 3/Tuba · Pauken · **Perkussion 1 und 2** · Harfe **(im Haus vom Klavier gespielt)** · **Gitarre** · **Bass / Schlagzeug** · Klavier · Streicher |
 | Solo | — (aber Registereinsatz: **Tenor/Bass allein** ab T. 3) |
 | Sprache | Englisch |
 
@@ -69,6 +69,7 @@ Kinderbeteiligung geplant ist, gehört das früh geklärt.
 | 2 | ca. 60–62 | Chor | Tonartwechsel A → B im ff | Übergang als eigene Einheit üben |
 | 3 | 63–65 | alle | molto rit. ins Schlussfermate, Chor geteilt | Dehnung und Abschlag festlegen, Balance gegen Schlagzeug |
 | 4 | durchgehend | Rhythmusgruppe | Gitarre, Bass, Schlagzeug sind für dieses Programm eine Sonderbesetzung | früh besetzen, eigene Probe vor dem ersten Tutti |
+| 4b | 3–4, 64–65 | Harfe / Klavier | beide spielen gleichzeitig; am Schluss steht in der Harfe eine aufsteigende Figur mit B-Pedalangabe (glissandoartig) | zweites Tasteninstrument; Schlussfigur ausschreiben |
 | 5 | durchgehend | Chor | „wir kennen das schon" | beim ersten Kontakt bewusst prüfen, wie viele es wirklich kennen |
 
 ## Probenstrategie

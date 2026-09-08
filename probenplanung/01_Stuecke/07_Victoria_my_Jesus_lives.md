@@ -18,7 +18,7 @@
 | Dauer (gerechnet) | ca. 3:25 |
 | Tempo / Taktart / Tonart | ♩ = 62 · 4/4 · G-Dur |
 | Chor in der Partitur | ja — SATB, mit Registerpassagen und Divisi |
-| Begleitung | Oboe · **4 Hörner in F** · 2 Trompeten in B · 3 Posaunen · Pauken · Beckenspiel · **Harfe** · Klavier · Streicher |
+| Begleitung | Oboe · **4 Hörner in F** · 2 Trompeten in B · 3 Posaunen · Pauken · Beckenspiel · **Harfe (im Haus vom Klavier gespielt)** · Klavier · Streicher |
 | Solo | keine Soli, aber Registerpassagen: Soprane T. 5, Tenöre T. 8, Alt und Bass unisono im Refrain |
 | Sprache | Englisch |
 
@@ -71,12 +71,16 @@ Praktisch: **Harfe.** Die ist nicht kurzfristig zu besetzen.
 | 3 | 50–53 | alle | rall. und rit. am Schluss | Dehnung festlegen, mit Orchester koppeln |
 | 4 | 17–21 | Streicher | pizz. → arco | Wechsel markieren |
 | 5 | durchgehend | Chor | ♩ = 62 — bei 220 Stimmen schleppt ein langsames Tempo leicht ab | Puls in der Halben denken, nicht in Vierteln |
+| 6 | **38–41** | Harfe / Klavier | **zwei Harfen-Glissandi**, cresc. zum f — auf dem Klavier nicht 1:1 spielbar (G-Dur mit fis). Zugleich spielt das Klavier durchgehend seine eigene Stimme | Lösung ausschreiben und in die Stimme eintragen; zweites Tasteninstrument nötig |
 
 ## Probenstrategie
 
 - Erstkontakt am 12.09. im Tutti, als zweites Stück nach Nr. 5.
 - Registerpassagen (T. 5, 8, 9) früh separat üben — sie entscheiden über den Eindruck.
-- Harfe früh besetzen.
+- **Zwei Tasteninstrumente:** Harfe und Klavier haben in T. 37–41 gleichzeitig Material.
+  Wer die Harfenstimme auf dem Klavier übernimmt, kann nicht auch die Klavierstimme spielen.
+- **Glissandi T. 38–41 vor dem 09.10. lösen** — als ausgeschriebener Lauf, als
+  Tastatur-Glissando, oder gestrichen zugunsten von Streichern und Becken.
 - Später gut geeignet, um mit wenig Zeit viel Wirkung zu erhalten.
 
 ## Aufgaben für die Registerarbeit

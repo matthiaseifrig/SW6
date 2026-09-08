@@ -72,9 +72,8 @@ Für Orchestermaterial in dieser Größe braucht es reguläres Aufführungsmater
 | Pauken | 1 Spieler | Nr. 1, 6, 7, 9, 10, 11 |
 | Schlagwerk | **2–3 zusätzliche Spieler** | Nr. 6 (Perc. 1 und 2), Nr. 10 |
 | **Rhythmusgruppe** | **Gitarre · Bass · Schlagzeug** | **nur Nr. 6** |
-| Harfe | 1 | **Nr. 4, 6, 7, 10** |
-| Klavier | 1 | Nr. 6, 7, 8, 10 |
-| Orgel | 1 (Nr. 11 ausdrücklich Pfeifenorgel; Nr. 4 ad libitum) | Nr. 4, 5, 11 |
+| Harfe | — · **wird im Haus vom Klavier gespielt** | Nr. 4, 6, 7, 10 |
+| Tasten | **2 Pianisten + 1 Organist** — siehe unten | Nr. 2, 4, 5, 6, 7, 8, 10, 11 |
 | Streicher | **12 / 12 / 8 / 6 / 4 = 42** | Nr. 9 (Verlagsvorgabe) |
 
 Zusammen rund **60–65 Mitwirkende** im Orchester — das passt zu 280 Angemeldeten bei
@@ -82,17 +81,80 @@ etwa 220 Sängern.
 
 ### Fünf Punkte mit Vorlauf
 
-1. **Harfe** — in vier Werken. Damit ist sie keine Option mehr, sondern Pflicht.
-   Nicht kurzfristig zu besetzen.
-2. **Rhythmusgruppe für Nr. 6** — Gitarre mit Akkordsymbolen, Bass, Schlagzeug
+1. **Rhythmusgruppe für Nr. 6** — Gitarre mit Akkordsymbolen, Bass, Schlagzeug
    („Rim on 4", „Fill", „crash"). Kein anderes Werk braucht das; die Leute kommen
    nicht automatisch aus dem Orchester und brauchen eine eigene Vorprobe.
-3. **Klarinetten in A und in B.** Nr. 1 verlangt A-Klarinetten, Nr. 4, 6, 7 und 11
+2. **Klarinetten in A und in B.** Nr. 1 verlangt A-Klarinetten, Nr. 4, 6, 7 und 11
    B-Klarinetten. Entweder beide Instrumente oder transponierte Stimmen.
-4. **Trompeten in D und in B.** Nr. 1 in D, alle übrigen in B. Dasselbe Problem.
-5. **Schlagwerk in Nr. 10:** Bells, Chimes, Mark Tree, Triangel, Cabasa, Finger
+3. **Trompeten in D und in B.** Nr. 1 in D, alle übrigen in B. Dasselbe Problem.
+4. **Schlagwerk in Nr. 10:** Bells, Chimes, Mark Tree, Triangel, Cabasa, Finger
    Cymbals, Shaker, Tamburin, Sus. Cymbal, Piatti, Pauken — dazu Perc. 1 und 2 in
    Nr. 6. Instrumentarium und Spieler gehören auf die Beschaffungsliste.
+
+---
+
+## Die Harfe wird vom Klavier gespielt — was daraus folgt
+
+Das nimmt den schwierigsten Beschaffungsposten von der Liste. Zwei Punkte brauchen
+trotzdem eine Entscheidung, und beide sollten vor dem 09.10. fallen.
+
+### 1. Es braucht zwei Tasteninstrumente, nicht eines
+
+In **Nr. 6, Nr. 7 und Nr. 10** sind Harfe und Klavier getrennt gesetzt und spielen
+gleichzeitig — geprüft an konkreten Stellen:
+
+| Werk | Stelle | Befund |
+|---|---|---|
+| Nr. 6 | T. 3–4 | Harfe setzt ein, während das Klavier durchgehend begleitet |
+| Nr. 7 | T. 37–41 | Harfe mit Akkorden und Glissandi, Klavier mit voller zweihändiger Begleitung |
+| Nr. 10 | T. 21–22 | Harfe mit Akkorden und einem Zweiunddreißigstel-Lauf, Klavier durchgehend |
+
+Wer die Harfenstimme auf dem Klavier übernimmt, kann in diesen Stücken nicht auch die
+Klavierstimme spielen. In **Nr. 4** kommt derselbe Fall dazu, falls die Orgel
+ad libitum mitspielt: Orgel **und** Harfenstimme gleichzeitig.
+
+Daraus ergibt sich das Tastenteam für das Programm:
+
+| Werk | Tasten |
+|---|---|
+| Nr. 2 | Continuo |
+| Nr. 4 | Harfenstimme + Orgel *(falls ad lib. genutzt)* |
+| Nr. 5 | Orgel |
+| Nr. 6 | Harfenstimme + Klavier |
+| Nr. 7 | Harfenstimme + Klavier |
+| Nr. 8 | Klavier |
+| Nr. 10 | Harfenstimme + Klavier |
+| Nr. 11 | Pfeifenorgel |
+
+**Höchster gleichzeitiger Bedarf: zwei Spieler.** Also zwei Pianisten und ein Organist,
+oder zwei Personen, die sich Klavier, Harfenstimme und Orgel über die Stücke aufteilen.
+Praktisch zu klären: Steht in Laim ein zweites Instrument, und wo?
+
+### 2. Die Glissandi brauchen eine ausgeschriebene Lösung
+
+Harfenstimmen enthalten Gesten, die auf dem Klavier nicht eins zu eins gehen. Zwei
+Stellen sind konkret betroffen:
+
+- **Nr. 7, T. 38–41: zwei Glissandi**, jeweils über zwei Takte aufsteigend, mit cresc.
+  ins f. Das Stück steht in G-Dur — ein Tastenglissando über weiße Tasten trifft das
+  fis nicht. Optionen: als schnellen Lauf ausschreiben, als chromatisches Glissando
+  ausführen, oder streichen und die Geste den Streichern und dem Becken überlassen
+  (die an dieser Stelle ohnehin einen Wirbel und einen Schlägelschlag haben).
+- **Nr. 6, T. 64–65:** aufsteigende Harfenfigur mit B-Pedalangabe im Schlusstakt,
+  ebenfalls glissandoartig.
+
+Beides gehört **vor** der ersten Orchesterprobe entschieden und in die Stimme
+geschrieben — sonst steht der Spieler am 09.10. vor einer Notation, die er nicht
+umsetzen kann.
+
+### 3. Balance
+
+Die Harfe ist in diesen Sätzen als Farbe mit perkussivem Anschlag gedacht, oft im
+cresc. gegen volles Blech. Ein Klavier deckt das anders ab. Bei den betroffenen Stellen
+lohnt der Blick, ob die Stimme im Tutti überhaupt trägt — oder ob sie dort besser
+weggelassen und an den exponierten Stellen (Nr. 10, T. 21–22) verstärkt wird.
+
+---
 
 **Erfreulich:** Nr. 4 ist die schlankste Orchestrierung des Programms — kein Blech
 außer Hörnern, kein Schlagwerk. Und Nr. 8 braucht nur Klavier. Zwei Werke, die den

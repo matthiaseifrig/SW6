@@ -17,8 +17,8 @@
 | Umfang | 84 Takte, **jeder Takt nummeriert** |
 | Dauer (gerechnet) | ca. 4:25 |
 | Tempo / Taktart / Tonart | „Dramatic, expressive“ ♩ = ca. 76 · 4/4 · B-Dur → **C-Dur ab ca. T. 39** |
-| Chor in der Partitur | ja — als **ein** zusammengefasstes System (Dirigierpartitur); die Sänger brauchen das Chorheft 10/4953L |
-| Begleitung | 2 Fl · Ob (S-Sax/Kl) · 2 Kl · Fg (B-Kl) · 2 Hn (A-Sax/Kl) · **3 Trp** · 2 Pos · Tuba · **Harfe** · Klavier · **Schlagwerk** · 2 Vl · Vla · Vc · Kb · Streicherreduktion |
+| Chor in der Partitur | ja — als geschlossenes **Zwei-System-Partitursystem** (S/A und T/B); die Sänger brauchen das Chorheft 10/4953L |
+| Begleitung | 2 Fl · Ob (S-Sax/Kl) · 2 Kl · Fg (B-Kl) · 2 Hn (A-Sax/Kl) · **3 Trp** · 2 Pos · Tuba · **Harfe (im Haus vom Klavier gespielt)** · Klavier · **Schlagwerk** · 2 Vl · Vla · Vc · Kb · Streicherreduktion |
 | Solo | **ja** — Solo-Einsätze im Vers 1 (ab T. 4 / T. 9) |
 | Sprache | Englisch |
 
@@ -84,6 +84,8 @@ im Frühjahr zum Kraftakt.
 - **Chorheft 10/4953L beschaffen** — Vorlaufzeit einplanen.
 - Solistenfrage bis Ende Oktober entscheiden.
 - Schlagzeuger und Instrumentarium bis 09.10. klären.
+- **Zwei Tasteninstrumente:** Harfe und Klavier spielen z. B. in T. 21–22 gleichzeitig
+  (Harfe: Akkorde und ein Zweiunddreißigstel-Lauf, Klavier: durchgehende Begleitung).
 
 ## Aufgaben für die Registerarbeit
 
