@@ -1,41 +1,35 @@
-# Pfingstkonzert 2027 — Probenplanung
+# Pfingstkonzert München 2027 — Probenplanung
 
-Arbeitsablage für die Vorbereitung des Pfingstkonzerts der Neuapostolischen Kirche München
-am **Sa, 15. Mai 2027**. Großer Chor (~220) + Orchester, Gesamtensemble ~250–260.
+Arbeitsablage für die Vorbereitung des Pfingstkonzerts **„one spirit"** der
+Neuapostolischen Kirche München am **Sa, 15.05.2027, 18:00 Uhr** in München-Laim.
+Programmtitel: **„I will make all Things new"**. 12 Werke, 280 Angemeldete.
 
-## Wie diese Ablage funktioniert
+## Ablage
 
-Drei Ebenen, die sich gegenseitig füttern:
-
-| Ebene | Ordner | Ändert sich |
+| Ordner | Inhalt | Ändert sich |
 |---|---|---|
-| **Rahmen** — Konzertdaten, Kalender, Ensemble, Räume | `00_Rahmen/` | selten |
-| **Stück** — je Werk eine Datei: Analyse, Knackpunkte, Lernpfad, Stand | `01_Stuecke/` | nach jeder Probe (Stand) |
-| **Probentag** — je Termin ein Ablaufskript, davor Plan / danach Protokoll | `02_Probentage/` | pro Termin neu |
-| **Fortschritt** — Matrix über alle 12 Stücke × Register | `03_Fortschritt/` | nach jeder Probe |
+| `00_Rahmen/` | Konzertdaten, Probenkalender mit Zeitbudget, offene Fragen | selten |
+| `01_Stuecke/` | je Werk eine Datei: Einordnung, Einschätzung, Knackpunkte, Strategie, Stand | nach jeder Probe |
+| `02_Probentage/` | je Termin ein Plan, danach ein Protokoll | pro Termin neu |
+| `03_Fortschritt/` | Matrix über alle 12 Stücke × Register, Meilensteine | nach jeder Probe |
+| `04_Material/` | Partituren, Übe-Dateien, Programmheft | — |
 
 Der Kreislauf:
 
 ```
-Stück-Dateien (Was ist zu tun?)
-        +
-Fortschrittsmatrix (Wo stehen wir?)
+Stück-Dateien (Was ist zu tun?)  +  Matrix (Wo stehen wir?)
         ↓
-Probentag-Plan (Was machen wir am 12.09.?)
+Probentag-Plan  →  Probe  →  Kurzprotokoll (5 Min.)
         ↓
-        Probe
-        ↓
-Probenprotokoll (5 Min. ausfüllen)
-        ↓
-Matrix + Stück-Dateien aktualisiert  →  nächster Probentag-Plan
+Matrix + Stück-Dateien aktualisiert  →  nächster Plan
 ```
 
-Entscheidend ist nur **ein** Schritt Disziplin: nach jeder Probe das Kurzprotokoll
-(`02_Probentage/_Vorlage_Probenprotokoll.md`). Daraus wird der nächste Plan
-gerechnet — welches Stück wie viel Zeit bekommt, ergibt sich dann aus Rückstand,
-Restterminen und Schwierigkeit statt aus Bauchgefühl.
+Es braucht genau **einen** Schritt Disziplin: nach jeder Probe das Kurzprotokoll
+(`02_Probentage/_Vorlage_Probenprotokoll.md`). Daraus ergibt sich, welches Stück beim
+nächsten Termin wie viel Zeit bekommt — aus Rückstand, Restterminen und Schwierigkeit
+statt aus Bauchgefühl.
 
-## Reifegrade (die gemeinsame Sprache)
+## Reifegrade — die gemeinsame Sprache
 
 Jedes Stück bekommt je Register (S / A / T / B / Orchester) einen Stand von 0–5:
 
@@ -43,23 +37,24 @@ Jedes Stück bekommt je Register (S / A / T / B / Orchester) einen Stand von 0�
 |---|---|---|
 | **0** | noch nicht angefasst | — |
 | **1** | gelesen | einmal durchgesungen, Ablauf grob bekannt |
-| **2** | notensicher | Töne + Rhythmus sitzen, Tempo noch langsam möglich |
+| **2** | notensicher | Töne und Rhythmus sitzen, Tempo noch langsam möglich |
 | **3** | zusammen | im Tutti stabil, Einsätze sitzen, Text sicher |
 | **4** | musikalisch | Dynamik, Phrasierung, Artikulation, Klangbalance |
 | **5** | konzertreif | trägt auch unter Stress, Blickkontakt statt Notenlesen |
 
-Ziel-Korridor: **alle Stücke ≥ 3 bis Ende Februar 2027**, ≥ 4 bis Ostern,
-5 in den letzten drei Terminen. Wer bei einem Stück Anfang März noch auf 2 steht,
-hat ein Problem, das man nur mit Streichung oder Sonderprobe löst — nicht mit Hoffnung.
+Meilensteine am tatsächlichen Kalender: `03_Fortschritt/Fortschrittsmatrix.md`.
+Die harte Grenze ist der Probentag **06.03.2027 — alle zwölf auf ≥ 3.**
 
-## Zeitrechnung
+## Das Zeitbudget in einem Satz
 
-- 12.09.2026 → 15.05.2027 = **ca. 35 Wochen**
-- Bei 12 Stücken und begrenzten Terminen ist die knappste Ressource nicht die
-  Gesamtzeit, sondern die **Anzahl der Kontakte pro Stück**. Ein Stück, das
-  zwischen zwei Begegnungen 10 Wochen Pause hat, fällt um mindestens einen
-  Reifegrad zurück. Deshalb plant die Matrix „Wochen seit letztem Kontakt" mit.
+**28 Stunden Netto-Probenzeit für den Chor, verteilt auf 12 Termine — 140 Minuten
+pro Stück für die gesamte Saison.** Für die sechs bekannten Werke reicht das gut, für
+die sechs neuen ist es knapp. Die Rechnung samt Engstellen und Gegenmaßnahmen steht in
+`00_Rahmen/Probenkalender.md`; sie ist die Grundlage jeder Planungsentscheidung.
 
 ## Status
 
-Gerüst steht. Es fehlen noch die Inhalte — siehe `00_Rahmen/Offene_Fragen.md`.
+Rahmen, Kalenderanalyse, alle zwölf Stück-Dateien und der Plan für den Probenauftakt
+am 12.09.2026 stehen. **Es fehlen die Partituren** — damit fehlen Taktzahlen,
+Knackpunkt-Analysen und alles, was auf konkrete Stellen zeigt.
+Siehe `00_Rahmen/Offene_Fragen.md`.

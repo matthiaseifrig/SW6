@@ -1,58 +1,58 @@
-# Was ich von dir brauche
+# Offene Punkte
 
-Sortiert nach Dringlichkeit. **Block A** brauche ich, um den 12.09. wirklich zu planen —
-alles andere kann nachkommen.
+## A — Blockiert die weitere Arbeit
 
----
+1. **Die Partituren.** Der Nextcloud-Link ist aus meiner Arbeitsumgebung nicht
+   erreichbar (die Netzwerk-Policy blockiert die Domäne). Bitte die PDFs direkt in den
+   Chat hochladen — gern in Etappen. Priorität in dieser Reihenfolge:
+   **Nr. 10, Nr. 8, Nr. 9, Nr. 5, Nr. 1, Nr. 7** (die sechs Stücke des Auftakttags),
+   danach Nr. 3, 11, 12, dann 2, 4, 6.
+   Wichtig: **mit Taktzahlen oder Studierbuchstaben.** Ohne die kann ich keine
+   Probenstellen benennen. Falls eine Ausgabe keine hat, sag mir, welche Referenz gilt.
+2. **Enden die Abendproben um 21:30?** Das gesamte Zeitbudget (28 h) hängt an dieser
+   Annahme. Bei 21:00 fallen rund 4 Stunden weg — das verändert die Planung spürbar.
+3. **Registerleiter benannt?** Für den 12.09. brauche ich mindestens eine verlässliche
+   Leitung für die Männergruppe, besser zwei Leitungen insgesamt. Davon hängt ab, wie
+   ich Block 2 baue.
 
-## A — Für den Probenauftakt am 12.09.2026 (dringend)
+## B — Entscheidungen mit Terminfolgen
 
-1. **Die 12 Stücke.** Pro Stück: Titel, Komponist/Arrangeur, Ausgabe/Verlag,
-   ungefähre Dauer, Besetzung (SATB? divisi? Soli? a cappella oder mit Orchester?),
-   Sprache. Eine schnelle Liste reicht — Details ziehe ich aus den Partituren.
-2. **Partituren als PDF.** Wichtig: **mit Taktzahlen oder Studierbuchstaben.**
-   Ohne die kann ich keine Probenstellen benennen und du bekommst unbrauchbare
-   Ablaufskripte. Falls die Ausgabe keine hat: sag mir, welche Referenz gilt
-   (Seitenzahl + System, Textstelle …).
-3. **Dein Zeitfenster pro Stück für den 12.09.** — so wie du es dir vorstellst.
-   Ich rechne dann gegen den Tag und sage dir, wo es nicht aufgeht.
-4. **Welche Stücke sind dem Chor schon bekannt?** Repertoire aus früheren Jahren
-   verhält sich völlig anders als Erstkontakt und gehört an andere Stellen im Tag.
-5. **Der Probenkalender** (alle Termine bis Mai 2027).
-6. **Räume in Laim:** ein großer Raum? Wie viele Nebenräume für Registerproben,
-   und für wie viele Personen? Instrument in jedem Raum (Flügel / Klavier / Keyboard)?
-7. **Wer ist am 12.09. im Team?** Registerleiter, Stimmbildner, Korrepetitor,
-   zweiter Dirigent, Orchesterwart — mit Namen, damit ich Aufgaben zuordnen kann.
+4. **Übe-Material (Stimmtrainer-Dateien).** Größter Hebel im ganzen Projekt und
+   gleichzeitig der dringendste: Es muss **am 12.09. existieren**, sonst sind die
+   sechs Wochen bis zum 23.10. verloren. Gibt es das schon? Wer erstellt es?
+5. **Orchesterstimmen Nr. 11 und Nr. 12** (deine eigenen Orchestrierungen) — Liefertermin
+   ist der **09.10.2026**, die erste von nur drei reinen Orchesterproben.
+6. **Nr. 3 „Our Father": volle oder reduzierte Besetzung?** Mit 220 Laienstimmen
+   a cappella ist das Stück das größte Einzelrisiko des Programms. Entscheidung bis
+   Dezember 2026 — Begründung in der Stück-Datei.
+7. **Nr. 6 „By our Love": Kinderbeteiligung geplant?** Der Text legt es nahe. Wenn ja,
+   braucht das eigene Probenlogistik; Entscheidung bis Ende Oktober 2026.
+8. **Nr. 1 „Ave verum": welches Bläser-Arrangement?** 2017 ohne Bläser gesungen.
 
----
+## C — Für die Gesamtplanung
 
-## B — Für die Gesamtdramaturgie (in den nächsten Wochen)
+9. **Aufteilung der 280:** wie viele Chor, wie viele Orchester? Stimmverteilung
+   S / A / T / B? Orchesterbesetzung (Streicher, Bläser, Profis/Laien)?
+10. **Konzertdauer und Pause** — ein Block oder zwei?
+11. **Auswendig?** Alles, ausgewählte Stücke, oder mit Noten?
+12. **Moderation / Wortbeiträge** zwischen den vier Programmblöcken?
+13. **Solisten** — Nr. 6, 9 und 10 kommen typischerweise dafür in Frage.
+14. **Aufnahme oder Livestream?**
+15. **Verpflegung an den Probentagen vor Ort?** Entscheidet, ob die gestaffelte
+    Mittagspause am 12.09. funktioniert.
 
-8. **Konzertreihenfolge / Programmidee** — steht sie schon, oder soll ich einen
-   Vorschlag machen? Falls es ein inhaltliches Thema gibt (Pfingsten, Geist, Sprache,
-   Feuer …), sag es mir; das ändert die Reihenfolge und die Übergänge.
-9. **Ensemble-Struktur:** Stimmverteilung (wie viele S / A / T / B), Altersstruktur,
-   Anteil Blattleser, Anteil Neuzugänge, Fluktuation über die Saison.
-10. **Orchester:** Besetzungsliste, Profis oder Laien oder gemischt, bei **wie vielen**
-    Terminen dabei, ab wann. Das ist der größte Hebel im ganzen Plan.
-11. **Ziele und Nebenbedingungen:** auswendig? Aufnahme? Livestream?
-    Kleidung? Aufstellung? Zweitaufführung?
-12. **Lernmaterial:** Gibt es Übe-Dateien / Stimmtrainer-MP3s / eine App?
-    Wenn nicht, plane ich Eigenübung anders — das verschiebt Zeit im Probenplan.
+## D — Format
 
----
-
-## C — Wie du arbeiten willst (Format)
-
-13. Was ist dir am Probentag am meisten wert?
+16. Was ist dir am Probentag am meisten wert?
     ☐ Minutengenaues Ablaufskript mit Taktzahlen
-    ☐ Technische Knackpunkt-Analyse pro Stück
-    ☐ Fertige Ansagen / Bilder / Formulierungen für den Chor
+    ☐ Knackpunkt-Analyse pro Stück
+    ☐ Fertige Ansagen, Bilder, Formulierungen für den Chor
     ☐ Aufgabenzettel für die Registerleiter
-    ☐ Einsing-/Warm-up-Konzepte, die auf das jeweilige Stück zulaufen
-    (gern mehrfach — ich priorisiere danach)
-14. In welcher Form willst du das am Pult haben? Ausdruck A4, Handy-tauglich,
-    eine Seite pro Tag?
-15. Wie meldest du mir Fortschritt zurück? Vorschlag: das Kurzprotokoll
-    (`../02_Probentage/_Vorlage_Probenprotokoll.md`) — Diktat oder Stichpunkte
-    genügen, ich pflege daraus die Matrix.
+    ☐ Einsing-Konzepte, die auf das jeweilige Stück zulaufen
+17. In welcher Form am Pult — A4-Ausdruck, Handy, eine Seite pro Tag?
+
+## Notiz
+
+Der Projektname lautet „one spirit" (Logo), der Programmtitel „I will make all Things
+new" (Programmerläuterung). Falls das vereinheitlicht werden soll, sag Bescheid — ich
+habe beides parallel geführt.

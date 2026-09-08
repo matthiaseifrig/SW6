@@ -1,127 +1,195 @@
-# Probenauftakt — Sa, 12.09.2026, 10:00–16:00, Laim
+# Probenauftakt — Sa, 12.09.2026, 10:00–16:00, NAK München-Laim
 
-> **Status: Gerüst.** Die Zeitstruktur steht, die Stück-Zuordnung fehlt.
-> Sobald Repertoireliste, Partituren und dein Zeitfenster pro Stück da sind,
-> wird aus jedem Block ein Ablauf mit Taktzahlen.
+**Erwartet:** ~250–260 von 280 Angemeldeten · **Wochen bis Konzert: 35**
+**Nächster Chortermin: 23.10.2026 — sechs Wochen später.**
 
-## Ziel des Tages
-
-Zwei Dinge gleichzeitig, in dieser Reihenfolge der Wichtigkeit:
-
-1. **Bindung.** 250 Menschen entscheiden heute, ob sie die nächsten acht Monate
-   verlässlich kommen. Sie entscheiden das nicht rational, sondern danach, ob
-   sich der Tag gelohnt hat und ob etwas geklungen hat.
-2. **Substanz.** In dieser Besetzung bekommst du Tutti-Klang, den du in
-   Abendproben so nie hast. Diese Zeit gehört den Stücken, die **nur** im
-   Gesamtensemble erarbeitbar sind — Balance, Tempo, Übergänge, Orchesterkoordination.
-   Alles, was auch eine Registerprobe kann, ist hier Zeitverschwendung.
-
-**Nicht das Ziel:** alle zwölf Stücke anzuspielen. Zwölf Erstkontakte an einem Tag
-erzeugen zwölfmal das Gefühl „das können wir nicht" und keinen einzigen Erfolg.
-Den Eindruck vom Gesamtkonzert stiftest du mit **Worten** (Programmbogen erzählen)
-und mit **einem** überzeugenden Klangmoment — nicht mit Vollständigkeit.
-
-Realistische Ausbeute: **6–8 Stücke berührt**, davon 2–3 auf Reifegrad 2,
-der Rest auf 1.
+> Taktzahlen fehlen noch, weil die Partituren nicht vorliegen (Nextcloud ist von
+> hier aus nicht erreichbar). Stückauswahl, Zeitbudget und Struktur stehen.
 
 ---
 
-## Zeitraster
+## Die eine Zahl, die diesen Tag bestimmt
 
-| Zeit | Min | Block | Inhalt | Besetzung |
+Nach dem 12.09. sieht der Chor **sechs Wochen** keine Probe — der 09.10. ist eine
+reine Orchesterprobe. Was heute nicht so weit kommt, dass es sechs Wochen übersteht,
+ist am 23.10. verloren.
+
+Deshalb ist dieser Tag **nicht** auf Breite gebaut. Zwölf Erstkontakte erzeugen
+zwölfmal das Gefühl „das können wir nicht" und keinen einzigen Erfolg — und nach sechs
+Wochen ist von allen zwölf nichts übrig. Sechs Stücke, von denen zwei wirklich sitzen,
+sind ungleich mehr wert.
+
+Den Eindruck vom Gesamtkonzert stiftest du stattdessen mit dem **Programmbogen als
+Erzählung** (du hast ihn in der Programmerläuterung bereits fertig) und mit der
+**Konzert-Miniatur** am Ende des Tages.
+
+## Ziele
+
+1. **Bindung.** 250 Menschen entscheiden heute, ob sie acht Monate lang verlässlich
+   kommen. Sie entscheiden das nicht rational, sondern danach, ob etwas geklungen hat.
+   Bei 280 Angemeldeten gegenüber 150 im Jahr 2025 ist rund die Hälfte zum ersten Mal
+   in diesem Format dabei — für sie ist heute der einzige Eindruck, den sie bis Ende
+   Oktober haben.
+2. **Zwei neue Stücke auf Reifegrad 2.** Nr. 10 (Titelstück) und Nr. 8.
+3. **Die Eigenübung starten.** Ohne Übe-Material, das heute ausgegeben wird, sind die
+   sechs Wochen verloren. Siehe „Hausaufgaben".
+4. **Tutti-Klang nutzen.** In dieser Besetzung bekommst du Balance, Tempo und Raumklang,
+   die eine Abendprobe nie liefert. Alles, was auch eine Registerprobe kann, ist heute
+   Zeitverschwendung.
+
+**Realistische Ausbeute:** 6 Stücke berührt (Nr. 1, 5, 7, 8, 9, 10), davon 2 auf
+Reifegrad 2, der Rest auf 1.
+
+---
+
+## Zeitraster mit gestaffelter Mittagspause
+
+Der Kniff des Tages: **Chor und Orchester machen nacheinander Mittag, nicht
+gleichzeitig.** Das Orchester pausiert, während der Chor getrennt arbeitet; der Chor
+pausiert, während das Orchester allein probt. Das bringt **45 Minuten zusätzliche
+Orchesterzeit**, ohne den Tag zu verlängern — und das Orchester hat nur drei eigene
+Probenabende in der ganzen Saison.
+
+| Zeit | Min | Block | Chor | Orchester |
 |---|--:|---|---|---|
-| 10:00 | 15 | **Ankommen** | Noten, Sitzordnung, Namensschilder, Orchester baut auf | alle |
-| 10:15 | 7 | **Begrüßung** | Konzertidee, Bogen des Programms, Ziel des Tages, Termine | alle |
-| 10:22 | 18 | **Einsingen** | Körper → Atem → Klang → Registerausgleich, hinführend auf Block 1 | Chor (Orchester stimmt parallel) |
-| 10:40 | 55 | **Block 1 — Zugpferd** | Tutti. Das Stück mit der größten Sofortwirkung. | Chor + Orchester |
-| 11:35 | 15 | *Pause* | | |
-| 11:50 | 55 | **Block 2 — getrennt** | Chor in Registern · Orchester separat | getrennt |
-| 12:45 | 45 | *Mittagspause* | | |
-| 13:30 | 12 | **Aktivierung** | Körper wach, kurzes Einsingen — nach dem Essen zwingend | Chor |
-| 13:42 | 45 | **Block 3 — Zusammenführung** | Was in Block 2 getrennt lief, wird Tutti | Chor + Orchester |
-| 14:27 | 13 | *Pause* | | |
-| 14:40 | 40 | **Block 4 — Erstkontakt** | 2–3 weitere Stücke im Anriss | Chor (+ Orchester wo möglich) |
-| 15:20 | 5 | *Sammeln* | | |
-| 15:25 | 25 | **Block 5 — Konzert-Miniatur** | Alles Angearbeitete am Stück, **ohne Unterbrechung** | alle |
-| 15:50 | 10 | **Abschluss** | Ausblick, Hausaufgaben, Termine, Dank | alle |
+| 10:00 | 15 | Ankommen | Noten, Sitzordnung, Namensschilder | Aufbau, Stimmen |
+| 10:15 | 10 | Begrüßung | Programmbogen erzählen, Ziel des Tages | dabei |
+| 10:25 | 20 | Einsingen | Körper → Atem → Klang | Einspielen (Nebenraum) |
+| 10:45 | 55 | **Block 1 — Tutti** | **Nr. 5** (25) · **Nr. 9** (30) | dabei |
+| 11:40 | 15 | *Pause* | alle | alle |
+| 11:55 | 55 | **Block 2 — getrennt** | Frauen Kirchenraum / Männer Nebenraum: **Nr. 10** (30) · **Nr. 8** (25) | **Mittagspause** |
+| 12:50 | 45 | **Block 2b** | **Mittagspause** | **eigene Probe** im Kirchenraum |
+| 13:35 | 10 | Aktivierung | Körper wach, kurz einsingen | Pause |
+| 13:45 | 50 | **Block 3 — Tutti** | Zusammenführung **Nr. 10** · **Nr. 8** | dabei |
+| 14:35 | 10 | *Pause* | alle | alle |
+| 14:45 | 18 | **Block 4a** | **Nr. 1** — mit Bläsern | dabei |
+| 15:03 | 22 | **Block 4b** | **Nr. 7** — Erstkontakt | Pause |
+| 15:25 | 5 | Sammeln | Aufstellung für den Durchlauf | Aufstellung |
+| 15:30 | 20 | **Block 5 — Miniatur** | Nr. 1 → 5 → 8 → 9 → 10, ohne Unterbrechung | dabei |
+| 15:50 | 10 | Abschluss | Hausaufgaben, Termine, Dank | dabei |
 | 16:00 | | **Ende** | | |
 
-**Netto-Probenzeit: 220 Minuten.** Das ist die Zahl, gegen die dein Zeitfenster
-pro Stück gerechnet wird — nicht die sechs Stunden.
+**Netto-Probenzeit Chor: 220 Min.** · **Orchester: ~188 Min. plus volle Mittagspause.**
 
 ---
 
-## Blöcke im Detail
+## Die Blöcke
 
-### Block 1 — Zugpferd (55 Min., Tutti)
+### Block 1 — Tutti, 55 Min. · Nr. 5 und Nr. 9
 
-*Stück: (offen)* — Kriterien für die Wahl: wirkt sofort, ist nicht zu schwer,
-steht möglichst am Anfang des Programms, und der Orchesterpart trägt.
+**Nr. 5 „Mache dich auf und werde Licht" (25 Min.)** — bekannt, wirkt sofort, und der
+Ruf zum Aufstehen ins Licht ist inhaltlich genau das, was ein Auftakttag sagen soll.
+Hoher Erfolg bei geringem Zeiteinsatz.
 
-| Min | Was |
-|--:|---|
-| 10 | Einmal durch, ohne Korrektur. Der Chor soll hören, wohin die Reise geht. |
-| 30 | Arbeit an 3–4 Stellen *(Taktzahlen offen)* |
-| 10 | Wieder im Zusammenhang |
-| 5 | Merksatz für zu Hause |
+> Prüfe früh, **wie viele es tatsächlich kennen**. Bei 280 Angemeldeten gegenüber 150
+> im Jahr 2025 kann „bekannt" für die Hälfte des Raums falsch sein. Kurze Handabfrage —
+> und wenn die Hälfte die Hand nicht hebt, mehr Zeit einplanen und Nr. 9 kürzen.
 
-> Der Durchlauf zu Beginn ist kein Zeitverlust. Bei 250 Menschen, von denen viele
-> das Stück nicht kennen, ist er die einzige Möglichkeit, allen dasselbe Ziel
-> ins Ohr zu setzen.
+**Nr. 9 „Forever with the Lord" (30 Min.)** — der emotionale Kern des Tages. Alle kennen
+die Melodie, das Arrangement und die Orchesterstimmen sind neu. 280 Menschen, die ihr
+eigenes Lied zum ersten Mal mit Orchester hören, kommen im Oktober wieder.
 
-### Block 2 — getrennte Arbeit (55 Min.)
+> Der Haken, den du vorher aussprechen solltest: **Alle glauben, es zu können, und
+> singen die Melodie statt ihrer Stimme.** Wenn du das benennst, bevor es passiert,
+> wird aus Frust ein Lacher. Alt, Tenor und Bass brauchen hier die meiste Geduld.
 
-**Variante A — vier Räume** (bevorzugt, braucht 4 Räume + 4 Registerleiter + 4 Instrumente):
-S / A / T / B getrennt, je ~55 Personen. Aufgabenzettel je Register kommt von mir.
+### Block 2 — getrennt, 55 Min. · Nr. 10 und Nr. 8
 
-**Variante B — zwei Gruppen** (wenn Räume fehlen):
-hohe Stimmen (S+A) im Hauptraum, tiefe Stimmen (T+B) im Nebenraum. Nicht so gut,
-aber besser als Tutti-Arbeit, bei der 190 Leute warten, während 60 üben.
+**Frauen (S+A) im Kirchenraum · Männer (T+B) im Nebenraum** — die einzige Aufteilung,
+die der Raum hergibt.
 
-**Orchester parallel:** eigene Probe, Schwerpunkt auf den Stellen aus Block 1 und 3.
+**Nr. 10 „I will make all Things new" (30 Min.)** — das Titelstück. Höchste Priorität
+unter den neuen Werken: ein Titelstück, das am Ende das schwächste ist, beschädigt das
+ganze Konzert.
 
-*Welche Stücke hier bearbeitet werden, hängt an den Knackpunkten — kommt mit den Partituren.*
+**Nr. 8 „The Ground" (25 Min.)** — langsam, homophon, weit gesetzte Akkorde. Getrennt
+lernen ist hier deutlich effizienter als im Tutti.
 
-### Block 3 — Zusammenführung (45 Min., Tutti)
+**Zur Leitung:** Die Männergruppe braucht 55 Minuten lang eine eigenständige Leitung auf
+zwei neuen Stücken. Das ist eine anspruchsvolle Aufgabe und keine Aufsicht — sie braucht
+einen vorbereiteten Auftrag und ein Instrument im Raum. Wenn du **zwei** verlässliche
+Leitungen hast, ist die bessere Variante: du arbeitest 25 Minuten mit den Frauen,
+wechselst dann zu den Männern, und die zweite Leitung übernimmt die Frauen. Wenn nicht,
+bleib bei den Frauen (die größere Gruppe) und geh die letzten zehn Minuten zu den Männern.
 
-Genau das Material aus Block 2. Die Registerarbeit muss sich **noch am selben Tag**
-auszahlen, sonst wirkt sie im Rückblick wie eine Pause.
+> Falls das Wetter mitspielt: Mitte September ist ein dritter Arbeitsplatz im Freien
+> denkbar. Damit wären erstmals drei Gruppen möglich — der einzige Weg, im Herbst mehr
+> als zwei Register parallel zu bedienen.
 
-### Block 4 — Erstkontakt (40 Min.)
+### Block 2b — Orchester allein, 45 Min.
 
-2–3 Stücke, je ~13–20 Min. Ziel ist ausdrücklich nur Reifegrad 1: Ablauf verstehen,
-Charakter erleben, einmal singen. Nicht korrigieren, was heute nicht sitzen kann.
+Der Chor isst, das Orchester probt im Kirchenraum. Da der Nebenraum jetzt frei ist,
+können hier **Bläser und Streicher getrennt** arbeiten — die einzige Gelegenheit dazu
+an diesem Tag. Schwerpunkt: Nr. 9 (neue Stimmen), Nr. 1 (Bläserbalance), und die
+Stellen aus Block 3.
 
-### Block 5 — Konzert-Miniatur (25 Min., alle)
+### Block 3 — Tutti, 50 Min. · Zusammenführung
 
-Alles, was heute angearbeitet wurde, in **Programmreihenfolge**, ohne Unterbrechung,
-ohne Korrektur, mit Ansagen wie im Konzert. Das ist der eigentliche „Eindruck vom
-Konzert" — und er funktioniert nur, weil vorher gearbeitet wurde. Wer hier zum
-ersten Mal spürt, dass 250 Menschen etwas Gemeinsames bauen, kommt im Oktober wieder.
+Genau das Material aus Block 2, jetzt zusammen und mit Orchester. **Die Registerarbeit
+muss sich noch am selben Tag auszahlen**, sonst wirkt sie im Rückblick wie eine Pause.
+Schwerpunkt: Balance, Tempo, Einsätze — alles, was nur in voller Besetzung geht.
+
+### Block 4 — 40 Min. · Nr. 1 und Nr. 7
+
+**Nr. 1 „Ave verum corpus" (18 Min., mit Bläsern)** — bekannt aus 2017, aber damals ohne
+Bläser und mit 110 statt 220 Stimmen. Beides macht es zu einem neuen Stück. Heute geht
+es allein um **Balance und Leichtigkeit**: Mit doppelter Besetzung ist die Gefahr nicht,
+dass es nicht klingt, sondern dass es schwer und breiig klingt.
+
+**Nr. 7 „Victoria, my Jesus lives" (22 Min., Erstkontakt)** — rhythmisch, mitreißend,
+lernt sich in großer Besetzung schnell über Energie statt über Notenlesen. Das ideale
+Stück für den späten Nachmittag. Nicht korrigieren, was heute nicht sitzen kann; die
+Arbeit an Präzision und Groove kommt später.
+
+### Block 5 — Konzert-Miniatur, 20 Min.
+
+**Nr. 1 → Nr. 5 → Nr. 8 → Nr. 9 → Nr. 10** in Programmreihenfolge, ohne Unterbrechung,
+ohne Korrektur — mit je einem gesprochenen Satz dazwischen: der „großen Tat Gottes",
+die das Stück benennt. Die Sätze stehen fertig in deiner Programmerläuterung.
+
+Das ist der eigentliche Eindruck vom Konzert, und er funktioniert nur, weil vorher
+gearbeitet wurde. Wenn Nr. 7 am Nachmittag getragen hat, kann es als sechstes dazu —
+sonst weglassen. Lieber fünf Stücke, die stehen.
 
 ---
 
-## Vorbereitung (Checkliste)
+## Hausaufgaben — der wichtigste Teil des Tages
+
+Sechs Wochen bis zur nächsten Chorprobe. Was heute nicht mitgegeben wird, ist verloren.
+
+- ☐ **Stimmtrainer-Dateien für Nr. 10 und Nr. 8**, je Stimme, am 12.09. verfügbar
+  (QR-Code auf dem Handzettel). Das ist der größte Hebel im gesamten Projekt: Es
+  verlagert das Töne-Lernen nach Hause und gibt dir über die Saison rund ein Dutzend
+  Probenslots zurück, die im Budget fehlen.
+- ☐ **Ein konkreter Auftrag pro Stimme**, schriftlich, in einem Satz. Nicht „bitte üben".
+- ☐ **Terminübersicht** als Handzettel — der wichtigste Zettel des Tages.
+- ☐ **Der nächste Chortermin (23.10.) ausdrücklich genannt**, mit dem Hinweis, dass der
+  09.10. nur das Orchester betrifft. Sonst hält die Hälfte den 09.10. für den nächsten
+  Termin und der 23.10. wird schwach besucht.
+
+---
+
+## Checkliste
 
 **Organisation**
-- ☐ Noten für alle 12 Stücke, in Mappen, Reihenfolge Programm
-- ☐ Sitzordnung + Bodenmarkierungen (bei 250 Personen kostet Improvisation 20 Min.)
-- ☐ Beschilderung zu den Registerräumen
-- ☐ Anwesenheitsliste je Stimme
-- ☐ Wasser, Verpflegung Mittagspause
-- ☐ Terminübersicht als Handzettel — der wichtigste Zettel des Tages
+- ☐ Noten für alle heute gespielten Stücke, in Mappen, Programmreihenfolge
+- ☐ Sitzordnung + Bodenmarkierungen — bei 250 Personen kostet Improvisation 20 Minuten
+- ☐ Beschilderung zum Nebenraum, Wegeführung für ~90 Männer
+- ☐ Anwesenheitsliste je Stimme (Basis für die Stimmverteilung im Kalender)
+- ☐ Verpflegung — die gestaffelte Pause funktioniert nur, wenn nicht gesucht werden muss
+- ☐ Handzettel: Termine, QR-Code Übe-Material, Auftrag je Stimme
 
 **Musikalisch**
-- ☐ Registerräume mit Instrument
-- ☐ Registerleiter gebrieft, Aufgabenzettel verteilt
-- ☐ Orchesterpulte, Stimmen, Stimmton
-- ☐ Korrepetitor eingewiesen
-- ☐ Kein Stück ohne Taktzahlen im Umlauf
+- ☐ Instrument im Nebenraum
+- ☐ Leitung der Männergruppe gebrieft, schriftlicher Auftrag für Nr. 10 und Nr. 8
+- ☐ Orchesterstimmen für Nr. 9 (neues Arrangement) und Nr. 1 (Bläser) vollständig
+- ☐ Aufstellung mit 220 Stimmen im Kirchenraum vorher getestet
+- ☐ Alle Noten mit Taktzahlen oder Studierbuchstaben
 
 **Deins**
-- ☐ Der eine Satz, der das Konzert beschreibt — auswendig
-- ☐ Für jeden Block eine Stelle, die du garantiert schaffst (Erfolgsgarantie)
-- ☐ Für jeden Block eine Stelle, die du streichen kannst, wenn die Zeit läuft
+- ☐ Der Programmbogen als Erzählung — auswendig, in unter drei Minuten
+- ☐ Pro Block eine Stelle, die garantiert gelingt
+- ☐ Pro Block eine Stelle, die du streichen kannst, wenn die Zeit läuft
 
 ---
 
@@ -129,16 +197,17 @@ ersten Mal spürt, dass 250 Menschen etwas Gemeinsames bauen, kommt im Oktober w
 
 | Risiko | Gegenmaßnahme |
 |---|---|
-| Zeitplan reißt schon vor der Mittagspause | Jeder Block hat eine vorab markierte Streichstelle |
-| Registerräume fehlen | Variante B (2 Gruppen) vorbereiten |
-| Orchester unterbesetzt (Urlaub) | Block 1 und 3 müssen auch mit Klavier funktionieren |
-| Akustik: 220 Stimmen in Laim | Sitzordnung vorher testen, 10 Min. früher da sein |
-| Energieloch nach dem Essen | Block „Aktivierung" nicht streichen — nie |
-| Nachmittags fallen Leute aus | Miniatur (Block 5) so bauen, dass sie auch mit 80 % trägt |
+| Nr. 5 ist der Hälfte unbekannt | Handabfrage in Minute 1; mehr Zeit für Nr. 5, Nr. 9 auf 25 Min. kürzen |
+| Männergruppe kommt ohne dich nicht voran | Auftrag auf **ein** Stück reduzieren (Nr. 10), Nr. 8 in Block 3 verschieben |
+| Block 2 reißt den Zeitplan | Nr. 8 streichen — Nr. 10 hat Vorrang |
+| Gestaffelte Pause funktioniert organisatorisch nicht | Rückfall auf gemeinsame Mittagspause; Orchester verliert 45 Min. |
+| Ave verum wird schwer und zäh | Nicht ausdirigieren, sondern Besetzung ausdünnen und Tempo anziehen |
+| Nachmittags fallen Leute aus | Miniatur so bauen, dass sie mit 80 % trägt |
+| Übe-Material bis 12.09. nicht fertig | **Jetzt entscheiden.** Ohne Material sind die sechs Wochen verloren — dann muss der 23.10. anders geplant werden |
 
 ---
 
 ## Nach der Probe
 
-Protokoll ausfüllen (`_Vorlage_Probenprotokoll.md`) → Matrix aktualisieren →
-daraus baue ich den Plan für den nächsten Termin.
+Protokoll ausfüllen (`_Vorlage_Probenprotokoll.md`) → Fortschrittsmatrix aktualisieren
+→ daraus der Plan für den 23.10.
