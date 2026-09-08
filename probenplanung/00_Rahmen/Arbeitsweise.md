@@ -23,11 +23,14 @@ voraussetzt:
 
 - **Kein Nebenraum, keine getrennten Registerproben.** Die Raumfrage erledigt sich
   von selbst — es gibt nichts zu teilen.
-- **Keine gestaffelte Mittagspause.** Die hatte ich eingeplant, um dem Orchester
-  45 Minuten zu schenken. Sie funktioniert nur, wenn jemand anderes eine der beiden
-  Gruppen führt. Sonst bedeutet sie: **du arbeitest sechs Stunden ohne Pause.**
-  Das kostet die letzten beiden Blöcke mehr, als die 45 Minuten wert sind.
-  → **Gemeinsame Mittagspause. Du isst mit.**
+- **Aber die gestaffelte Mittagspause funktioniert.** Chor und Orchester pausieren
+  nacheinander: Das Orchester isst, während der Chor im Plenum arbeitet; der Chor isst,
+  während du das Orchester probst. Zum Essen braucht niemand eine Leitung — nur zum
+  Proben. Das bringt dem Orchester **40 Minuten eigene Probenzeit** an einem Tag,
+  an dem es sonst überwiegend sitzt.
+  **Der Preis ist deine eigene Pause:** du bekommst zwei Fenster von je einer
+  Viertelstunde statt einer Mittagspause. Auf deinen ausdrücklichen Wunsch ist der
+  Tag so gebaut.
 
 ### 2. Registerarbeit findet im Plenum statt
 

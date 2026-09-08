@@ -5,7 +5,8 @@
 
 > **Diese Datei ist die einzige, die du für den Tag brauchst.**
 > Fassung für **einen Dirigenten ohne Registerleiter**. Kein Nebenraum, keine
-> parallelen Gruppen, gemeinsame Mittagspause. Begründung: `../00_Rahmen/Arbeitsweise.md`.
+> parallelen Gruppen — aber **gestaffelte Mittagspause**, damit das Orchester eine
+> eigene Probe bekommt. Begründung: `../00_Rahmen/Arbeitsweise.md`.
 
 ---
 
@@ -51,27 +52,32 @@ Orchesterprobe. Was heute nicht so weit kommt, dass es sechs Wochen übersteht, 
 | 10:25 | 15 | Einsingen | funktional, führt direkt in Nr. 5 |
 | 10:40 | 55 | **Block 1** | **Nr. 5** (30) · **Nr. 7** T. 1–20 (25) — Tutti mit Orchester |
 | 11:35 | 15 | *Pause* | alle |
-| 11:50 | 55 | **Block 2** | **Nr. 10** T. 6–33 — stimmenweiser Aufbau |
-| 12:45 | 45 | *Mittagspause* | **alle, du auch** |
-| 13:30 | 10 | Aktivierung | Körper wach, kurz einsingen |
-| 13:40 | 50 | **Block 3** | **Nr. 8** T. 1–27 — stimmenweiser Aufbau, Klavier |
-| 14:30 | 10 | *Pause* | alle |
-| 14:40 | 20 | **Block 4a** | **Nr. 1** — mit Orchester |
-| 15:00 | 10 | **Block 4b** | **Nr. 7** — Refrain festigen |
-| 15:10 | 5 | Sammeln | Aufstellung |
-| 15:15 | 35 | **Block 5** | **Konzert-Miniatur** |
+| 11:50 | 60 | **Block 2** | **Nr. 10** T. 6–33 — stimmenweiser Aufbau · *Orchester: Mittagspause* |
+| 12:50 | 40 | **Block 2b** | **Orchester allein** — Nr. 9, Nr. 1 · *Chor: Mittagspause* |
+| 13:30 | 15 | *Brot* | dein zweites Fenster · Chor sammelt sich, Orchester Pause |
+| 13:45 | 50 | **Block 3** | 5 Min. Aktivierung, dann **Nr. 8** T. 1–27 — Klavier |
+| 14:35 | 10 | *Pause* | alle |
+| 14:45 | 20 | **Block 4a** | **Nr. 1** — mit Orchester |
+| 15:05 | 10 | **Block 4b** | **Nr. 7** — Refrain festigen |
+| 15:15 | 5 | Sammeln | Aufstellung |
+| 15:20 | 30 | **Block 5** | **Konzert-Miniatur** |
 | 15:50 | 10 | Abschluss | Hausaufgaben, Termine, Dank |
 | 16:00 | | **Ende** | |
 
-**Netto-Probenzeit: 225 Min.** — und du hast 45 Minuten Mittagspause.
+**Netto-Probenzeit Chor: 225 Min.** · **Orchester: 145 Min.**
 
-> **Was das Orchester angeht:** Ohne zweite Leitung kann es keine eigene Probe
-> bekommen, während der Chor arbeitet. Es ist heute durchgehend dabei (Block 1, 4a, 5)
-> und sitzt in Block 2 und 3 weitgehend. Das ist der Preis dafür, dass du eine Pause
-> bekommst — und richtig so: Das Orchester hat am 09.10. einen ganzen eigenen Abend,
-> vier Wochen später. Falls jemand aus dem Orchester (Konzertmeister) einen
-> Durchspiel-Block ohne dich leiten kann, ließe sich Block 3 dafür nutzen. Nur wenn es
-> sich von selbst anbietet — nicht organisieren.
+### Die gestaffelte Pause
+
+| | Pause |
+|---|---|
+| **Orchester** | 11:50–12:50 (60 Min., während der Chor arbeitet) |
+| **Chor** | 12:50–13:45 (55 Min., während du das Orchester probst) |
+| **Du** | 11:35–11:50 und 13:30–13:45 — zwei Viertelstunden |
+
+Zum Essen braucht niemand eine Leitung, zum Proben schon. Deshalb funktioniert die
+Staffelung auch ohne zweite Leitung — sie kostet nur **deine** Mittagspause.
+Der Gewinn: 40 Minuten eigene Orchesterprobe an einem Tag, an dem das Orchester sonst
+überwiegend sitzt. Bei drei eigenen Orchesterabenden in der ganzen Saison ist das viel.
 
 ---
 
@@ -140,19 +146,30 @@ Vorschlag für den Ablauf:
 > Jeder Takt ist nummeriert — von allen Partituren lässt sich mit dieser am präzisesten
 > arbeiten.
 
-### Block 3 — Nr. 8 „The Ground", T. 1–27 (50 Min., Klavier)
+### Block 2b — Orchester allein (40 Min.)
 
-Vom „Mmm" über „Pleni sunt caeli" bis „Hosanna in excelsis". Streicher sind bei Gjeilo
-ausdrücklich optional — heute genügt Klavier.
+Der Chor isst, du probst das Orchester. Die einzige eigene Orchesterzeit an diesem Tag.
 
 | Min | Was |
 |--:|---|
+| 25 | **Nr. 9 „Auf ewig bei dem Herrn"** — ~95 Takte, Es-Dur, der größte Orchesterbedarf im Programm. Horn-Solo um T. 50, divisi in Violine 2 und Viola. Ziel heute: einmal ganz durch, Stellen markieren |
+| 15 | **Nr. 1 „Ave verum"** — Bläserbalance vorbereiten für Block 4a: Wo tragen Trompeten und Pauken, wo decken sie zu? |
+
+### Block 3 — Nr. 8 „The Ground", T. 1–27 (50 Min., Klavier)
+
+Erste 5 Minuten Aktivierung — nach 55 Minuten Pause zwingend, sonst ist der Block
+verloren. Dann vom „Mmm" über „Pleni sunt caeli" bis „Hosanna in excelsis".
+Streicher sind bei Gjeilo ausdrücklich optional — heute genügt Klavier.
+
+| Min | Was |
+|--:|---|
+| 5 | Aktivierung: Körper wach, ein paar Töne |
 | 4 | Klavier spielt T. 1–27, alle hören |
 | 6 | **T. 48–53 vorspielen** — das ff auf „Agnus Dei" ist der Gipfel des Stücks. Wer weiß, wohin er singt, lernt den Anfang schneller |
 | 15 | **T. 1–13**: stimmenweiser Aufbau |
-| 15 | **T. 14–27**: dasselbe |
+| 14 | **T. 14–27**: dasselbe |
 | 5 | Latein: Aussprache einmal gemeinsam sprechen |
-| 5 | ganzes Segment im Zusammenhang |
+| 4 | ganzes Segment im Zusammenhang |
 
 > Auch hier Aufnahme mitlaufen lassen.
 
@@ -218,8 +235,9 @@ Was am Nachmittag nicht getragen hat, fällt hier heraus. Lieber fünf, die steh
 | Block 2 reißt den Zeitplan | Refrain (T. 21–33) streichen — Vers 1 hat Vorrang |
 | Nr. 8 kommt nicht weit genug | T. 14–27 streichen, dafür T. 1–13 sicher |
 | Ave verum wird schwer und zäh | Bläser ausdünnen, Trompeten und Pauken erst ab der Steigerung |
-| Orchester langweilt sich in Block 2 und 3 | offen ansprechen; Block 3 ggf. für einen selbstgeleiteten Durchspiel-Block nutzen |
-| Du bist um 15:00 leer | genau dafür ist die Mittagspause da. Nicht durcharbeiten |
+| Gestaffelte Pause klappt organisatorisch nicht | gemeinsame Pause 12:50–13:45; Orchester verliert seine 40 Minuten |
+| Orchester sitzt in Block 1 lange | es ist in Block 1, 2b, 4a und 5 beteiligt — nur Block 3 ist reine Chorzeit |
+| Du bist um 15:00 leer | Block 4b streichen und Block 5 direkt anschließen. Die Miniatur ist das, was hängenbleibt — sie darf nicht die Reste bekommen |
 | Nachmittags fallen Leute aus | Miniatur so bauen, dass sie mit 80 % trägt |
 | Nr. 9 ist doch ein Chorstück | dann Block 4b dafür nutzen |
 
