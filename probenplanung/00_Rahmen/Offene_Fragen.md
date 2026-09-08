@@ -8,14 +8,15 @@
    separaten Chorsatz, oder ist Nr. 9 im Konzert ein Orchesterstück? Der Auftaktplan
    ist derzeit auf die zweite Annahme gebaut.
 
-2. **Fehlende Partituren: Nr. 3 (Our Father), Nr. 4 (Einen anderen Grund),
-   Nr. 6 (By our Love).** Nr. 3 ist am dringendsten — a cappella, längste Laufzeit.
+2. **Fehlende Partitur: nur noch Nr. 3 (Our Father, Kedrov).** A cappella, längste
+   Laufzeit von allen — bitte als nächstes.
 
 3. **Chorausgabe zu Nr. 1 „Ave verum".** In der Orchesterpartitur nicht enthalten.
    Ohne sie kann die Balance nicht geplant werden.
 
-4. **Chorheft Lorenz 10/4953L zu Nr. 10.** Die Partitur (30/3533L) führt den Chor nur
-   als ein zusammengefasstes System. Liegt das Chorheft für 220 Personen vor?
+4. **Chorhefte zu Nr. 10 und Nr. 6.** Beide Partituren führen den Chor nur als ein
+   zusammengefasstes System. Nr. 10: Lorenz **10/4953L**. Nr. 6: Lorenz **10/4354L**
+   oder **10/4355L** — welches liegt vor? Für 220 Personen ist das ein Vorlaufposten.
 
 5. **Enden die Abendproben um 21:30?** Das gesamte Zeitbudget (28 h) hängt daran.
 
@@ -31,8 +32,18 @@
 8. **Orchesterstimmen Nr. 11 und Nr. 12** (deine Orchestrierungen) — Liefertermin
    **09.10.2026**, die erste von nur drei reinen Orchesterproben.
 
-9. **Harfe und Orgel besetzen.** Harfe in Nr. 7 und Nr. 10, Pfeifenorgel in Nr. 11,
-   Orgel in Nr. 5. Beides ist nicht kurzfristig zu lösen.
+9. **Harfe besetzen.** Sie kommt in **vier** Werken vor (Nr. 4, 6, 7, 10) — damit ist
+   sie Pflicht, nicht Option. Ebenso **Orgel** (Nr. 4 ad lib., Nr. 5, Nr. 11 —
+   ausdrücklich Pfeifenorgel) und **Klavier** (Nr. 6, 7, 8, 10).
+
+9b. **Rhythmusgruppe für Nr. 6: Gitarre, Bass, Schlagzeug.** Camp Kirklands
+   Orchestrierung verlangt sie mit Akkordsymbolen und Angaben wie „Rim on 4" und
+   „Fill". Kein anderes Werk braucht das. Wer spielt, und wann gibt es dafür eine
+   eigene Vorprobe?
+
+9c. **In welcher Fassung wurde Nr. 6 im Jahr 2025 aufgeführt?** Wenn damals mit
+   Klavier oder kleiner Band, ist die Orchesterfassung 2027 auch für die 60 % neu,
+   die das Stück zu kennen glauben.
 
 10. **Schlagwerk für Nr. 10:** Bells, Chimes, Mark Tree, Triangel, Cabasa, Finger
     Cymbals, Shaker, Tamburin, Suspended Cymbal, Piatti, Pauken. Zwei bis drei Spieler
@@ -41,6 +52,9 @@
 11. **Klarinetten in A und B, Trompeten in D und B.** Nr. 1 verlangt A-Klarinetten und
     D-Trompeten, alle übrigen Werke B-Instrumente. Haben die Spieler beide, oder
     braucht es transponierte Stimmen?
+
+11b. **Nr. 4: Orgel ad libitum — ja oder nein?** Und die 2. Oboe ad lib. als
+    **Englischhorn**? Beides färbt den Satz deutlich.
 
 12. **Solisten in Nr. 10.** Die Partitur weist Solo-Einsätze in Vers 1 aus (T. 4, T. 9).
     Aus dem Chor oder extern? Ab wann mitprobend?

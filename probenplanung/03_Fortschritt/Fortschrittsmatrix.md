@@ -63,6 +63,12 @@ der 11.12. als Puffer, bevor die Weihnachtspause kommt.
   das nicht optional, sondern die richtige Entscheidung.
 - **Nr. 12** ist **a cappella**, ♩ = 56, mehrfach geteilt, rund eine Minute — und der
   letzte Klang des Konzerts.
+- **Nr. 6** verlangt eine **Rhythmusgruppe** (Gitarre, Bass, Schlagzeug) — als einziges
+  Werk im Programm. Und es moduliert am Schluss von A-Dur nach B-Dur.
+- **Nr. 4** ist die schlankste Orchestrierung: kein Blech außer Hörnern, kein Schlagwerk.
+- **Drei Werke beginnen mit den Männern** (Nr. 4 und Nr. 6 mit Tenor und Bass allein,
+  Nr. 7 mit Registereinsätzen). Die Männergruppe im Nebenraum ist damit nicht der
+  Notbehelf des Raums, sondern die Gruppe mit dem größten Bedarf an separater Arbeit.
 
 ## Beobachtungsliste
 
@@ -83,6 +89,17 @@ früher als andere in die Ampel geraten:
   einen Ganzton höher.
 - **Nr. 11 und 12** — neu, eigene Orchestrierungen, Position am Programmende.
   Orchesterstimmen bis 09.10.2026.
+
+## Beobachtung: die exponierten Männereinsätze
+
+| Werk | Stelle | Wer |
+|---|---|---|
+| Nr. 4 | ab ca. T. 5 | Tenor und Bass allein, mf |
+| Nr. 6 | ab T. 3 | Tenor und Bass allein, p |
+| Nr. 7 | T. 8 | Tenöre, nach den Sopranen |
+
+Diese drei Einsätze gehören in **jede** Männer-Registerprobe, unabhängig davon, welches
+Stück gerade Schwerpunkt ist. Sie entscheiden über den ersten Eindruck von drei Werken.
 
 ## Verlauf
 
