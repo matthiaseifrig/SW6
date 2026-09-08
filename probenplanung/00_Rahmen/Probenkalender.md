@@ -57,17 +57,17 @@ benötigt:   6 neue × 7  +  6 bekannte × 3,5 ≈  63 Kontakt-Slots
 Das Defizit ist beherrschbar, aber **nur wenn es jetzt bearbeitet wird**, nicht im März.
 Die drei Hebel, in dieser Reihenfolge:
 
-1. **Übe-Material ab dem 12.09.** — Stimmtrainer-Dateien je Stimme für die sechs
-   neuen Stücke. Verlagert den Schritt „Töne lernen" (Reifegrad 1 → 2) nach Hause
-   und gibt pro neuem Stück 1–2 Slots zurück. **Größter Hebel, kostet dich am
-   wenigsten Probenzeit — aber er wirkt nur, wenn das Material am Auftakttag
-   bereits existiert.** Nach dem 12.09. folgen sechs Wochen ohne Chorprobe; das
-   ist genau das Fenster, in dem Eigenübung entweder stattfindet oder nicht.
-2. **Getrennte Arbeit konsequent nutzen.** Frauen im Kirchenraum, Männer im
-   Nebenraum verdoppelt an den Probentagen die parallel bearbeitbare Substanz.
-3. **Gestaffelte Pausen an den Probentagen.** Wenn Chor und Orchester nacheinander
-   statt gleichzeitig Mittag machen, gewinnst du pro Probentag ~45 Minuten
-   Orchesterzeit, ohne den Tag zu verlängern. Siehe Plan zum 12.09.
+1. **Übe-Aufnahmen, in der Probe selbst entstanden.** Verlagert den Schritt
+   „Töne lernen" (Reifegrad 1 → 2) nach Hause und gibt pro neuem Stück 1–2 Slots
+   zurück. Größter Hebel — und er kostet **keine** Vorbereitungszeit, wenn das Handy
+   mitläuft, während die Stimmen im Plenum nacheinander aufgebaut werden.
+   Siehe `Arbeitsweise.md`, Punkt 4.
+2. **Stimmenweiser Aufbau im Plenum.** Ersetzt die Registerprobe, die mangels
+   Registerleitern nicht besetzbar ist — und beschäftigt den ganzen Raum, statt dass
+   190 Menschen zusehen, wie 60 üben. Verfahren in `Arbeitsweise.md`, Punkt 2.
+3. **Entscheidungen einmal treffen und aufschreiben.** Tempi, Divisi,
+   Atemversetzungen, Aussprache. Jede in der Probe neu getroffene Entscheidung kostet
+   Zeit und Sicherheit. Liste in `Arbeitsweise.md`, Punkt 5.
 
 ## Die kritischen Stellen im Kalender
 
@@ -101,10 +101,17 @@ geprobt werden, sonst kommen sie zu spät dran.
 
 ## Terminfragen
 
+> **Hinweis zur Kapazität:** Es gibt einen Dirigenten und keine Registerleitung.
+> Alles läuft nacheinander, nichts parallel. Die Netto-Probenzeit oben ist deshalb
+> gleichzeitig **deine** Arbeitszeit am Pult — 28 Stunden Chor plus die
+> Orchestertermine. Das ist bei der Planung der Probentage mitzudenken:
+> gestaffelte Pausen und parallele Gruppen gibt es nicht.
+
 - **Bis wann liegen die Orchesterstimmen zu Nr. 11 und Nr. 12 vor?**
   Die erste Orchesterprobe ist der 09.10.2026 — vier Wochen nach dem Auftakt.
   Wenn das Material dort nicht vollständig ist, verlierst du eine von nur drei
   reinen Orchesterproben. Das ist der härteste Liefertermin im ganzen Projekt.
 - Enden die Abendproben um 21:30?
 - Gibt es an den Probentagen Verpflegung vor Ort (entscheidet über die Pausenlänge)?
-- Sind Registerleiter für Sopran, Alt, Tenor, Bass benannt?
+- Ergeben deine Gespräche über Registerproben-Hilfe etwas? Falls ja, baue ich es
+  ab dem 13.11. ein — für den 12.09. ist der Plan bewusst ohne Hilfe gerechnet.

@@ -1,42 +1,41 @@
-# Probenprotokoll — TT.MM.JJJJ
+# Probenprotokoll — als Sprachnachricht
 
-**Dauer effektiv:** — · **Anwesend:** S — · A — · T — · B — · Orch — 
+**Zwei Minuten auf dem Heimweg. Kein Formular.**
 
-Stichpunkte genügen. Fünf Minuten direkt nach der Probe sind mehr wert
-als eine Stunde drei Tage später.
+Sprich einfach der Reihe nach diese fünf Punkte aufs Handy und schick sie mir.
+Stichworte genügen, Halbsätze auch. Ich mache daraus die Fortschrittsmatrix, aktualisiere
+die Stück-Dateien und baue den Plan für den nächsten Termin.
 
-## 1. Was haben wir tatsächlich gemacht?
+## Die fünf Punkte
 
-| Stück | Takte | Zeit | Stand danach (0–5) |
-|---|---|--:|:-:|
-| | | | |
+1. **Was habt ihr tatsächlich gemacht?**
+   Stück, Takte, ungefähr wie lange.
 
-## 2. Was ist besser geworden als erwartet?
+2. **Was ging besser als erwartet?**
 
--
+3. **Wo hakt es — und woran genau?**
+   Welches Stück, welche Stelle, welche Stimme, welches Symptom
+   (Töne? Rhythmus? Einsatz? Text? Zu laut? Intonation?).
 
-## 3. Wo hakt es — und woran genau?
+4. **Was ist liegengeblieben?**
 
-| Stück | Takte | Register | Symptom | Vermutete Ursache |
-|---|---|---|---|---|
-| | | | | |
+5. **Wie war die Stimmung, wer hat gefehlt?**
+   Grob genügt: „Tenor war dünn", „viele Neue", „nach dem Essen war die Luft raus".
 
-## 4. Was ist liegengeblieben?
+Wenn dir unterwegs noch etwas einfällt — Entscheidungen, die du getroffen hast,
+Namen, Organisatorisches — einfach hinten dranhängen.
 
--
+---
 
-## 5. Beobachtungen zum Ensemble
+## Falls du doch lieber tippst
 
-Stimmung · Konzentration · Ausfälle · Auffälligkeiten in einzelnen Registern:
-
--
-
-## 6. Für das nächste Mal
-
-- Muss:
-- Sollte:
-- Kann:
-
-## 7. Organisatorisch
-
--
+| Feld | |
+|---|---|
+| Datum | |
+| Anwesend | S — · A — · T — · B — · Orch — |
+| Gemacht | |
+| Besser als gedacht | |
+| Hakt | |
+| Liegengeblieben | |
+| Stimmung | |
+| Entscheidungen | |

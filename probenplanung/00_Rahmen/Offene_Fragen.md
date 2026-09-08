@@ -22,14 +22,18 @@
 
 5. **Enden die Abendproben um 21:30?** Das gesamte Zeitbudget (28 h) hängt daran.
 
-6. **Registerleiter benannt?** Für den 12.09. brauche ich mindestens eine verlässliche
-   Leitung für die Männergruppe, besser zwei insgesamt.
+6. ~~Registerleiter benannt?~~ **Geklärt: es gibt keine.** Der Auftaktplan ist
+   vollständig für einen Dirigenten ohne Hilfe gerechnet — kein Nebenraum, keine
+   parallelen Gruppen, gemeinsame Mittagspause. Siehe `Arbeitsweise.md`.
+   Falls aus deinen Gesprächen doch Unterstützung entsteht, sag Bescheid — ich baue
+   sie ab dem 13.11. ein.
 
 ## B — Entscheidungen mit Terminfolgen
 
-7. **Übe-Material (Stimmtrainer-Dateien).** Muss **am 12.09. existieren**, sonst sind
-   die sechs Wochen bis zum 23.10. verloren. Konkret gebraucht: Nr. 10 T. 6–33 und
-   Nr. 8 T. 1–27, je Stimme.
+7. **Übe-Aufnahmen.** Entstehen am 12.09. nebenbei, wenn das Handy während des
+   stimmenweisen Aufbaus mitläuft (Nr. 10 T. 6–33, Nr. 8 T. 1–27). Zu klären ist nur:
+   **Wo werden sie abgelegt, und wer baut den QR-Code?** Das ist eine
+   Viertelstunde — aber sie muss jemand machen.
 
 8. **Orchesterstimmen Nr. 11 und Nr. 12** (deine Orchestrierungen) — Liefertermin
    **09.10.2026**, die erste von nur drei reinen Orchesterproben.

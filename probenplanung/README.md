@@ -8,7 +8,7 @@ Programmtitel: **„I will make all Things new"**. 12 Werke, 280 Angemeldete.
 
 | Ordner | Inhalt | Ändert sich |
 |---|---|---|
-| `00_Rahmen/` | Konzertdaten, Probenkalender mit Zeitbudget, offene Fragen | selten |
+| `00_Rahmen/` | **Arbeitsweise**, Konzertdaten, Probenkalender mit Zeitbudget, Besetzung und Material, offene Fragen | selten |
 | `01_Stuecke/` | je Werk eine Datei: Einordnung, Einschätzung, Knackpunkte, Strategie, Stand | nach jeder Probe |
 | `02_Probentage/` | je Termin ein Plan, danach ein Protokoll | pro Termin neu |
 | `03_Fortschritt/` | Matrix über alle 12 Stücke × Register, Meilensteine | nach jeder Probe |
@@ -28,6 +28,16 @@ Es braucht genau **einen** Schritt Disziplin: nach jeder Probe das Kurzprotokoll
 (`02_Probentage/_Vorlage_Probenprotokoll.md`). Daraus ergibt sich, welches Stück beim
 nächsten Termin wie viel Zeit bekommt — aus Rückstand, Restterminen und Schwierigkeit
 statt aus Bauchgefühl.
+
+## Wichtig: ein Dirigent, ehrenamtlich
+
+Es gibt keine Registerleiter und keinen Stimmbildner. Alles läuft nacheinander, nichts
+parallel. Wie unter dieser Bedingung Registerarbeit, Eigenübung und Arbeitsteilung
+funktionieren, steht in **`00_Rahmen/Arbeitsweise.md`** — das ist nach dem jeweiligen
+Probentagsplan die wichtigste Datei der Ablage.
+
+**Vor einem Termin brauchst du nur eine Datei:** den Plan für diesen Tag in
+`02_Probentage/`. Alles andere ist Nachschlagewerk.
 
 ## Reifegrade — die gemeinsame Sprache
 
