@@ -56,33 +56,42 @@ und 13.11.
 | 10:12 | 13 | **Einsingen** — kurz und funktional | Chor |
 | 10:25 | 22 | **Nr. 6 „By Our Love"** — einmal durch, dann Schluss | beide |
 | 10:47 | 17 | **Nr. 4 „Einen anderen Grund"** — ansingen | beide |
-| 11:04 | 42 | **Nr. 11 „When I Survey"** — Erstkontakt | Chor + Orgel |
-| 11:46 | 15 | *Pause* | alle · Orchester beginnt Mittag |
-| 12:01 | 52 | **Nr. 10 „I Will Make All Things New"** T. 6–33 | Chor · Orchester Mittag |
-| 12:53 | 45 | **Orchester allein** — Nr. 9, Nr. 1, Nr. 6 | Orchester · Chor Mittag |
-| 13:38 | 10 | *Brot* — dein Fenster, Chor kommt zurück | — |
+| 11:04 | 15 | *Pause* | alle |
+| 11:19 | 42 | **Nr. 11 „When I Survey"** — Erstkontakt | Chor + Orgel · **Orchester frei bis 12:50** |
+| 12:01 | 52 | **Nr. 10 „I Will Make All Things New"** T. 6–33 | Chor · Orchester weiter frei |
+| 12:53 | 45 | **Orchester allein** — Nr. 9, Nr. 1, Nr. 6 | Orchester · **Chor Mittagspause bis 13:45** |
+| 13:38 | 10 | *Brot* — dein zweites Fenster | — |
 | 13:48 | 8 | **Das Konzert erklären** — der Programmbogen | alle |
 | 13:56 | 5 | Aktivierung | Chor |
-| 14:01 | 38 | **Nr. 8 „The Ground"** T. 1–27 | Chor + Klavier |
-| 14:39 | 10 | *Pause* | alle |
-| 14:49 | 26 | **Nr. 2 „Since by man came death"** | Chor + Streicher |
+| 14:01 | 26 | **Nr. 2 „Since by man came death"** | Chor + Streicher · **Bläser frei bis 15:15** |
+| 14:27 | 10 | *Pause* | alle |
+| 14:37 | 38 | **Nr. 8 „The Ground"** T. 1–27 | Chor + Klavier · **Orchester frei bis 15:15** |
 | 15:15 | 5 | Sammeln | alle |
 | 15:20 | 30 | **Konzert-Miniatur** | alle |
 | 15:50 | 10 | Abschluss | alle |
 | 16:00 | | **Ende** | |
 
-**Netto-Probenzeit Chor: 227 Min.** · **Orchester: 164 Min.**
+**Netto-Probenzeit Chor: 227 Min.**
 
-### Die gestaffelte Pause
+### Wer wann frei ist
 
-| | Pause |
-|---|---|
-| **Orchester** | 11:46–12:53 (67 Min., während der Chor Nr. 10 arbeitet) |
-| **Chor** | 12:53–13:48 (55 Min., während du das Orchester probst) |
-| **Du** | 11:46–12:01 und 13:38–13:48 |
+Mit einem Dirigenten läuft alles nacheinander, und dieser Tag besteht überwiegend aus
+Notenarbeit im Chor. Das Orchester wird deshalb zwangsläufig warten — die Frage ist
+nur, ob es **sitzend wartet oder weggehen kann**. Deshalb liegen seine freien Zeiten
+in zwei zusammenhängenden Blöcken mit klarer Rückkehrzeit.
 
-Zum Essen braucht niemand eine Leitung, zum Proben schon. Deshalb funktioniert die
-Staffelung auch ohne zweite Leitung — sie kostet nur deine Mittagspause.
+| | spielt / singt | frei |
+|---|---|---|
+| **Chor** | 10:12–11:04 · 11:19–12:53 · 13:48–14:27 · 14:37–15:15 · 15:20–16:00 | 11:04–11:19 · **12:53–13:45** · 14:27–14:37 |
+| **Streicher** | 10:25–11:04 · 12:53–13:38 · 14:01–14:27 · 15:20–16:00 | **11:04–12:50** · 14:27–15:15 |
+| **Bläser** | 10:25–11:04 · 12:53–13:38 · 15:20–16:00 | **11:04–12:50** · 13:38–15:15 |
+| **Du** | durchgehend | 11:04–11:19 · 13:38–13:48 |
+
+> **Zwei Ansagen, die den Tag für das Orchester retten:** „Wir sehen uns um **12:50**
+> wieder" — direkt nach Nr. 4, damit die Pause und die Wartezeit zusammenfallen. Und
+> „wir sehen uns um **15:15** wieder" — nach dem eigenen Block, für die Streicher nach
+> Nr. 2. Ohne diese Zeiten bleiben die Leute sitzen; mit ihnen gehen sie essen und
+> kommen erholt zurück.
 
 ---
 
@@ -134,7 +143,7 @@ Geisch — Grave, alla breve, F-Dur, rund 55 Takte.
 > wird sonst zum zähen Trauermarsch statt zu einer feierlichen Bewegung. Das ist der
 > einzige echte Knackpunkt des Stücks — und er entscheidet sich in den ersten vier Takten.
 
-### 11:04 · Nr. 11 „When I Survey the Wondrous Cross" — 42 Min. · Erstkontakt
+### 11:19 · Nr. 11 „When I Survey the Wondrous Cross" — 42 Min. · Erstkontakt
 
 Der Scharnierpunkt des Programms: die menschliche Antwort auf alles davor, bis zum
 „My Life – My All – Amen". 76 Takte, ♩ = 76. **Heute mit Orgel** — die Partitur setzt
@@ -192,36 +201,14 @@ zwölf Werke für zwölf große Taten Gottes, von der Menschwerdung bis zu seine
 mitten unter uns. Und der Bogen von Nr. 4 („Wohnung Gottes im Geist") zu Nr. 12, der
 sich am Ende schließt — heute besonders schön, weil Nr. 4 am Vormittag dran war.
 
-Danach singt ihr direkt **Nr. 8** — laut deiner Programmerläuterung „die geistgewirkte
-Mitte des Konzerts". Die Erklärung führt also unmittelbar in das Stück, von dem sie handelt.
+Danach singt ihr direkt **Nr. 2** — die Auferstehung, zweite Nummer des Programms.
+Der Bogen, den du gerade erzählt hast, beginnt also unmittelbar zu klingen.
 
-### 14:01 · Nr. 8 „The Ground" T. 1–27 — 38 Min. · Erstkontakt
+### 14:01 · Nr. 2 „Since by man came death" — 26 Min.
 
-Vorher fünf Minuten Aktivierung. Ola Gjeilo, aus der Sunrise Mass — vom „Mmm" über
-„Pleni sunt caeli" bis „Hosanna in excelsis". Die Streicher sind ausdrücklich
-optional; heute genügt Klavier.
-
-| Min | Was |
-|--:|---|
-| 4 | Klavier spielt T. 1–27, alle hören |
-| 5 | **T. 48–53 vorspielen** — das ff auf „Agnus Dei" ist der Gipfel des Stücks. Wer weiß, wohin er singt, lernt den Anfang schneller |
-| 3 | **alle summen die Bassstimme** |
-| 12 | **T. 1–13** — stimmenweiser Aufbau |
-| 10 | **T. 14–27** — dasselbe |
-| 4 | Latein einmal gemeinsam sprechen, dann im Zusammenhang |
-
-> **Der frischeste Nachmittagsslot, mit Absicht.** Gjeilo lebt von langen Bögen, ruhiger
-> Intonation und weit gesetzten Akkorden — das braucht Ohren, keine Kraft. Deshalb steht
-> es direkt nach Pause und Konzerterklärung, nicht am Tagesende.
->
-> Zwei Entscheidungen für später, heute nur beobachten: die **Atemversetzung** in den
-> langen Bögen und die **hohe Sopranlage** gegen Ende — braucht es dort eine Aufteilung?
-
-### 14:49 · Nr. 2 „Since by man came death" — 26 Min.
-
-Händel, Messiah. Wechsel aus unbegleiteten Grave-Teilen und begleiteten Allegro-Teilen.
-Streicher und Continuo, keine Bläser. Nach Gjeilo steht hier bewusst Material, das durch
-die Allegro-Teile wieder Energie bringt.
+Vorher fünf Minuten Aktivierung. Händel, Messiah — Wechsel aus unbegleiteten
+Grave-Teilen und begleiteten Allegro-Teilen. **Streicher und Continuo, keine Bläser:**
+die Bläser sind ab hier bis 15:15 frei.
 
 | Min | Was |
 |--:|---|
@@ -236,6 +223,28 @@ die Allegro-Teile wieder Energie bringt.
 > um einen Halbton über sieben langsame Takte der Normalfall, nicht die Ausnahme — und
 > im Konzert nicht reparabel. Nr. 2 ist das erste von vier a-cappella-Stücken im
 > Programm; was ihr heute an Verfahren lernt, gilt auch für Nr. 3 und Nr. 12.
+
+### 14:37 · Nr. 8 „The Ground" T. 1–27 — 38 Min. · Erstkontakt
+
+Ola Gjeilo, aus der Sunrise Mass — vom „Mmm" über
+„Pleni sunt caeli" bis „Hosanna in excelsis". Die Streicher sind ausdrücklich
+optional; heute genügt Klavier.
+
+| Min | Was |
+|--:|---|
+| 4 | Klavier spielt T. 1–27, alle hören |
+| 5 | **T. 48–53 vorspielen** — das ff auf „Agnus Dei" ist der Gipfel des Stücks. Wer weiß, wohin er singt, lernt den Anfang schneller |
+| 3 | **alle summen die Bassstimme** |
+| 12 | **T. 1–13** — stimmenweiser Aufbau |
+| 10 | **T. 14–27** — dasselbe |
+| 4 | Latein einmal gemeinsam sprechen, dann im Zusammenhang |
+
+> **Direkt hinter einer Pause, mit Absicht.** Gjeilo lebt von langen Bögen, ruhiger
+> Intonation und weit gesetzten Akkorden — das braucht Ohren, keine Kraft. Deshalb steht
+> es hinter der Pause um 14:27 und nicht als letzter Arbeitsblock nach Nr. 2.
+>
+> Zwei Entscheidungen für später, heute nur beobachten: die **Atemversetzung** in den
+> langen Bögen und die **hohe Sopranlage** gegen Ende — braucht es dort eine Aufteilung?
 
 ### 15:20 · Konzert-Miniatur — 30 Min.
 
@@ -282,8 +291,8 @@ frisch für einen Durchlauf. **Nr. 9 ist die Atempause für den Chor** nach sech
 | Grave in Nr. 2 sinkt ständig ab | nicht mehr als 12 Min. daran arbeiten. Das Problem löst sich über Monate, nicht an einem Tag |
 | Ave verum trägt in der Miniatur nicht | aus der Miniatur nehmen und am 23.10. mit dem Chor arbeiten |
 | Orchestermaterial fehlt | jedes Chorstück des Tages geht mit Klavier oder Orgel |
-| Du bist um 15:00 leer | Nr. 2 auf 18 Min. kürzen. Die Miniatur darf nicht die Reste bekommen |
-| Nr. 9 ist doch ein Chorstück | dann statt Nr. 2 in den Block um 14:49 |
+| Du bist um 15:00 leer | Nr. 8 auf 28 Min. kürzen (nur T. 1–13). Die Miniatur darf nicht die Reste bekommen |
+| Nr. 9 ist doch ein Chorstück | dann statt Nr. 2 in den Block um 14:01 |
 
 ---
 
