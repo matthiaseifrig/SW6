@@ -23,16 +23,17 @@ Reifegrade 0–5 (Legende: `../README.md`). Nach jeder Probe aktualisieren.
 
 | Termin | Stücke | Warum |
 |---|---|---|
-| **12.09.2026** (PT) | Chor: 1, 2, 4, 6, 10, 11 · Orchester zusätzlich: 9 | Nach Vorgabe des Dirigenten. Drei bekannte Werke als schneller Zugriff (6, 4, 1), das Titelstück Nr. 10 substanziell, Nr. 11 als Erstkontakt, Nr. 2 als Verfahrensarbeit am a-cappella-Grave |
-| **23.10.2026** | 7, 8, 12 (+ 3, falls die Partitur vorliegt) | Die verbliebenen Neuen. Nr. 12 steht im Programm hinten und darf deshalb in der Probenplanung **nicht** hinten stehen |
+| **12.09.2026** (PT) | Chor: 2, 4, 6, 8, 10, 11 (+ 1 nur im Durchlauf) · Orchester zusätzlich: 9 | Nach Vorgabe des Dirigenten. Bekanntes als schneller Zugriff (6, 4), substanziell werden Nr. 10 und Nr. 8, Nr. 11 als Erstkontakt, Nr. 2 als Verfahrensarbeit am a-cappella-Grave. Nr. 1 hat keinen eigenen Block und kommt nur in der Konzert-Miniatur vor |
+| **23.10.2026** | 7, 12, 1 (+ 3, falls die Partitur vorliegt) | Nr. 7 und Nr. 12 als verbliebene Neue — Nr. 12 steht im Programm hinten und darf deshalb in der Probenplanung **nicht** hinten stehen. Nr. 1 bekommt hier seinen ersten echten Chorblock |
 | **13.11.2026** | 3, 5 | Nr. 5 spät, weil es nach Einschätzung des Dirigenten läuft. Nr. 3 spätestens hier |
 
 Damit sind alle zwölf bis Mitte November mindestens einmal gesungen und es bleibt noch
 der 11.12. als Puffer, bevor die Weihnachtspause kommt.
 
-> **Beobachten:** Nr. 8 „The Ground" rückt durch die neue Auswahl auf den 23.10. Nach
-> Nr. 3 hat es den längsten Reifebedarf im Programm — lange Bögen, hohe Sopranlage,
-> Akkorde, die nur rein wirken. Es verträgt keinen weiteren Aufschub.
+> **Nr. 8 „The Ground" ist am 12.09. dabei** — richtig so: Nach Nr. 3 hat es den
+> längsten Reifebedarf im Programm (lange Bögen, hohe Sopranlage, Akkorde, die nur rein
+> wirken) und verträgt keinen Aufschub. Der Preis ist, dass Nr. 1 „Ave verum" am
+> Auftakttag nur im Durchlauf vorkommt.
 
 ### Ausweichregel für Nr. 3
 
