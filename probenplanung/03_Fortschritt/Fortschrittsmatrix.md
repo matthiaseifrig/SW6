@@ -13,7 +13,7 @@ Reifegrade 0–5 (Legende: `../README.md`). Nach jeder Probe aktualisieren.
 | 5 | Mache dich auf und werde Licht | bekannt | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
 | 6 | By our Love | bekannt 2025 (60 %) | 0 | 0 | 0 | 0 | 0 | 0 | 13.11.26 |
 | 7 | Victoria, my Jesus lives | **neu** | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
-| 8 | The Ground | **neu** | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
+| 8 | The Ground | **neu** | 0 | 0 | 0 | 0 | 0 | 0 | 23.10.26 |
 | 9 | Auf ewig bei dem Herrn | Chor singt mit · **Chorsatz liegt hier nicht vor** | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
 | 10 | **I will make all Things new** | **neu · Titelstück** | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
 | 11 | When I survey the wondrous Cross | **neu** | 0 | 0 | 0 | 0 | 0 | 0 | 23.10.26 |
@@ -23,7 +23,7 @@ Reifegrade 0–5 (Legende: `../README.md`). Nach jeder Probe aktualisieren.
 
 | Termin | Stücke | Warum |
 |---|---|---|
-| **12.09.2026** (PT) | Chor: 1, 2, 4, 6, 9, 10, 11 · Orchester dieselben | Nach der Pausenstruktur des Dirigenten, Tag bis 17:00. Nr. 11, Nr. 9 und Nr. 2 werden getrennt vorbereitet und dann zusammengeführt. **Nr. 8 kommt nicht vor** — Rückfrage offen |
+| **12.09.2026** (PT) | Chor: 1, 2, 4, 6, 9, 10, 11 · Orchester dieselben | Nach der Pausenstruktur des Dirigenten, Tag bis 17:00. Nr. 11, Nr. 9 und Nr. 2 werden getrennt vorbereitet und dann zusammengeführt. **Nr. 8 bewusst nicht dabei** — kommt am 23.10. intensiv dran |
 | **23.10.2026** | 7, 8, 12 (+ 3, falls die Partitur vorliegt) | Nr. 7 und Nr. 12 als verbliebene Neue — Nr. 12 steht im Programm hinten und darf deshalb in der Probenplanung **nicht** hinten stehen. Nr. 1 bekommt hier seinen ersten echten Chorblock |
 | **13.11.2026** | 3, 5 | Nr. 5 spät, weil es nach Einschätzung des Dirigenten läuft. Nr. 3 spätestens hier |
 

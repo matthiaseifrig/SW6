@@ -12,7 +12,7 @@
 | Feld | Wert |
 |---|---|
 | Status im Ensemble | **neu** |
-| Erster Kontakt geplant | 12.09.2026 |
+| Erster Kontakt geplant | **23.10.2026** |
 | Ausgabe | Version for SATB Choir, Piano and Optional String Quartet (or Ensemble) · Manhattan, NY, Jan. 2010 |
 | Umfang | ca. 88 Takte, 13 Partiturseiten |
 | Dauer (gerechnet) | ca. 4:00 |
@@ -98,4 +98,8 @@ eine deutlich klarere Vorbereitung brauchen als bei einem Kammerchor.
 
 ## Entscheidungen
 
-- *(Datum) — Entscheidung, Grund*
+- **11.09.2026 — Erstkontakt auf den 23.10. verschoben.** Entscheidung des Dirigenten:
+  am 12.09. nicht dabei, dafür am 23.10. intensiv. Begründung: Das Werk braucht eine
+  Vorbereitung, für die vor dem Auftakttag keine Zeit mehr war.
+  *Konsequenz:* Nach Nr. 3 hat Nr. 8 den längsten Reifebedarf im Programm. Am 23.10.
+  gehört es unter die ersten drei Stücke, nicht ans Ende der Probe.

@@ -14,7 +14,8 @@
 
 1. **Der Tag endet um 17:00, nicht um 16:00.** Das muss vorher bei allen angekommen
    sein — sonst geht um 16:00 die Hälfte, mitten in der Schlussphase.
-2. **Nr. 8 „The Ground" kommt in der Ablauffolge nicht vor.** Absicht?
+2. **Nr. 8 „The Ground" ist bewusst nicht dabei** — Entscheidung des Dirigenten;
+   das Werk kommt am 23.10. intensiv dran und gehört dort an den Anfang der Probe.
 3. **Zu Nr. 9 singt der Chor mit** — damit ist die offene Frage beantwortet. Mir liegt
    aber nur die Orchesterpartitur ohne Vokalsystem vor, deshalb dort keine Taktzahlen
    für den Chor.
