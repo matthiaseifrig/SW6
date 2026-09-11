@@ -12,7 +12,7 @@ Reifegrade 0–5 (Legende: `../README.md`). Nach jeder Probe aktualisieren.
 | 4 | Einen anderen Grund | bekannt 2017 | 0 | 0 | 0 | 0 | 0 | 0 | 13.11.26 |
 | 5 | Mache dich auf und werde Licht | bekannt | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
 | 6 | By our Love | bekannt 2025 (60 %) | 0 | 0 | 0 | 0 | 0 | 0 | 13.11.26 |
-| 7 | Victoria, my Jesus lives | **neu** | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
+| 7 | Victoria, my Jesus lives | **neu** · am 12.09. unisono | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
 | 8 | The Ground | **neu** | 0 | 0 | 0 | 0 | 0 | 0 | 23.10.26 |
 | 9 | Auf ewig bei dem Herrn | Chor singt mit · **Chorsatz liegt hier nicht vor** | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |
 | 10 | **I will make all Things new** | **neu · Titelstück** | 0 | 0 | 0 | 0 | 0 | 0 | 12.09.26 |

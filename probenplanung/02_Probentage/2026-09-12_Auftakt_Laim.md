@@ -19,7 +19,7 @@
 3. **Zu Nr. 9 singt der Chor mit** — damit ist die offene Frage beantwortet. Mir liegt
    aber nur die Orchesterpartitur ohne Vokalsystem vor, deshalb dort keine Taktzahlen
    für den Chor.
-4. **308 Minuten Chorgesang** sind für 220 Laienstimmen deutlich mehr als üblich.
+4. **310 Minuten Chorgesang** sind für 220 Laienstimmen deutlich mehr als üblich.
    Gegenmittel siehe unten.
 
 ---
@@ -30,9 +30,10 @@
 |---|---|---|
 | 10:00 | **Gebet und Begrüßung** · Grußwort des Bischofs | dabei |
 | 10:12 | Einsingen | stimmt ein |
-| 10:27 | **Nr. 6 — By Our Love** (41 Min.) | dabei |
-| 11:08 | *Durchatmen, Notenwechsel* (5 Min.) | |
-| 11:13 | **Nr. 4 — Einen anderen Grund** (37 Min.) | dabei |
+| 10:25 | **Nr. 6 — By Our Love** (32 Min.) | dabei |
+| 10:57 | *Durchatmen, Notenwechsel* (5 Min.) | |
+| 11:02 | **Nr. 4 — Einen anderen Grund** (28 Min.) | dabei |
+| 11:30 | **Nr. 7 — Victoria, my Jesus lives!** (20 Min.) — alle auf der Melodie | dabei |
 | **11:50** | **PAUSE bis 12:30** | **Nr. 11 — When I Survey** (ab 11:55) |
 | **12:30** | **Nr. 11 — When I Survey** (ab 12:35) | **PAUSE bis 13:10** |
 | 13:10 | **Nr. 11 zusammenführen** (35 Min.), dann **Nr. 10 — I Will Make All Things New** (45 Min.) | dabei |
@@ -41,7 +42,17 @@
 | 15:30 | **Nr. 2** (22) · **Nr. 9** (22) · **Nr. 1 Ave verum** (18) · **Zusammenfassung und Durchlauf** (28) | dabei |
 | 17:00 | **Ende** | |
 
-**Chorarbeit: 308 Min.** · **Orchesterarbeit: 308 Min.**
+**Chorarbeit: 310 Min.** · **Orchesterarbeit: 310 Min.**
+
+### Woher die 20 Minuten für Nr. 7 kommen
+
+Aus dem Vormittag: Nr. 6 gibt neun Minuten ab (41 → 32), Nr. 4 neun (37 → 28). Beide
+sind bekannt und bleiben gut versorgt — „einmal durch" und „ansingen" brauchen keine
+vierzig Minuten. **Alles nach 11:50 bleibt unverändert.**
+
+Nr. 7 steht bewusst direkt vor der Pause: 250 Stimmen unisono über vollem Orchester
+ist der Klang, mit dem die Leute in die Pause gehen. Und vokal kostet es fast nichts,
+weil niemand eine Nebenstimme halten muss.
 
 ### Fünf Minuten Umbau in jedem Wechsel
 
@@ -100,6 +111,7 @@ Je Stück ein Blatt, links Chor, rechts Orchester, unten was nur im Tutti geht:
 |---|---|---|---|
 | **Nr. 6** By Our Love | T. 3 (T/B allein) · T. 60–62 Tonartwechsel · T. 63–65 Schluss | Rhythmusgruppe · Harfe T. 3 und T. 64–65 · Perc. im Schluss-ff | Balance im Schluss-ff |
 | **Nr. 4** Einen anderen Grund | T. 5–8 (T/B allein, Triole) · T. 51–55 Amen · alla breve | Fagottsolo T. 4 · Orgel ad lib. · Englischhorn ad lib. | Grundtempo, Übergang T. 4/5 |
+| **Nr. 7** Victoria, my Jesus lives! | **alle unisono auf der Melodie**, ohne Noten · Refrain T. 13–20 · derselbe Refrain T. 29–41 · T. 47–53 rall. | einmal ganz durch, während der Chor hört · T. 17–20 pizz. · T. 37–41 Beckenwirbel | 250 Stimmen unisono über vollem Orchester |
 | **Nr. 11** When I Survey | **T. 26–34 unisono zuerst** · T. 1–17 · T. 18–25 div. · T. 35 Half Chorus | T. 1–8 Orgel · Violinteilung · T. 52–59 marcato · T. 60–76 Broadening | T. 52 Full Chorus, Steigerung |
 | **Nr. 10** I Will Make All Things New | T. 6–20 Vers 1 (Solo) · T. 21–33 Refrain · T. 39 Tonartwechsel nur zeigen | Schlagwerk (2–3 Spieler) · T. 15–20 cresc. · T. 21–22 Harfe | Balance, Solo-Balance, Chor schonen |
 | **Nr. 9** Auf ewig bei dem Herrn | **Chorsatz fehlt** · Melodiereflex ist das Problem · Bass zuerst | Horn solo T. 50 · divisi ab T. 46 · Besetzung 12/12/8/6/4 prüfen | falls kein Chorsatz: Orchester spielt vor |

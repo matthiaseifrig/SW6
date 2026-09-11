@@ -12,7 +12,7 @@
 | Feld | Wert |
 |---|---|
 | Status im Ensemble | **neu** |
-| Erster Kontakt geplant | 12.09.2026 |
+| Erster Kontakt geplant | 12.09.2026, 11:30 (20 Min.) |
 | Ausgabe | Full Score, © 2016 Musik / © 2024 Arrangement, New Apostolic Church South Africa |
 | Umfang | ca. 53 Takte, 13 Partiturseiten |
 | Dauer (gerechnet) | ca. 3:25 |
@@ -101,4 +101,9 @@ Praktisch: **Harfe.** Die ist nicht kurzfristig zu besetzen.
 
 ## Entscheidungen
 
-- *(Datum) — Entscheidung, Grund*
+- **11.09.2026 — Erstkontakt am 12.09. als Unisono-Block.** Entscheidung des Dirigenten:
+  20 Minuten, in denen **alle die Melodie singen**, mit Orchester — kein vierstimmiger
+  Satz. Begründung: Der Refrain kehrt dreimal wieder, die Melodie trägt sich selbst, und
+  mit 250 Menschen ist Vor- und Nachsingen ohne Noten schneller als jedes Notenlesen.
+  *Konsequenz:* Beim nächsten Kontakt muss ausdrücklich angesagt werden, dass der
+  vierstimmige Satz folgt — sonst entsteht derselbe Umlernwiderstand wie bei Nr. 9.
