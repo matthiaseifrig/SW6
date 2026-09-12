@@ -36,6 +36,31 @@
 | 60–67 | „That were a present far too small; Love so amazing, so divine“ | **„Broadening — breiter werden“** |
 | 68–76 | „Demands my soul, my life, my all! Amen!“ | div. · unis. · Schluss |
 
+## Der Chorbeginn, Takt 7–8 — aus der Partitur abgelesen
+
+Notenköpfe gegen die Notenlinien vermessen, nicht rekonstruiert.
+
+```
+Tenor und Bass UNISONO, pp, a tempo, D-Dur
+
+Takt 7:   –     D3    D3    E3    │  Takt 8:  F#3 (Halbe)   E3 ‿ F#3
+               When    I   sur-   │           vey           the ————
+Stufe           1      1     2    │            3             2    3
+                                     <—— cresc. —— decresc. ——>
+```
+
+Umfang **D3–F#3 = große Terz, rein stufenweise, kein einziger Sprung.**
+Beleg für das Unisono: der Stufenabstand Bass minus Tenor ist über alle fünf
+Noten konstant (+4,97 / +4,97 / +4,81 / +4,81 / +4,77 ≈ 5 Stufen), und 5 Stufen
+Violinschlüssel-8 gegen Bassschlüssel sind genau Einklang.
+
+**Konsequenz für die Probe:** Diese Figur ist zugleich der Einsingbaustein A2
+(→ `05_Einsingen/`). Wenn am 12.09. im Einsingen das Original in D-Dur gesungen
+wird — Männer wie notiert, Frauen eine Oktave höher, ohne Noten —, sind die
+ersten Töne des Stücks im Ohr, lange bevor die Partitur aufgeschlagen wird.
+Gerade weil kein Sprung vorkommt, ist der Einstieg reine Atem- und Legato-Arbeit,
+nicht Intonationsarbeit.
+
 ## Einschätzung
 
 Der Scharnierpunkt des Programms — und die Partitur enthält eine Lösung für
