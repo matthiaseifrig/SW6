@@ -129,7 +129,22 @@ Sicherheit. Diese hier gehören einmal festgelegt und dann in die Partitur gesch
 Was haben wir gemacht, was ging besser als gedacht, wo hakt es, was ist liegengeblieben.
 Den Rest mache ich. Siehe `../02_Probentage/_Vorlage_Probenprotokoll.md`.
 
-### 7. Welche Datei du wirklich lesen musst
+### 7. Wie die Unterlagen aussehen müssen
+
+Feste Regeln für alles, was gedruckt wird:
+
+| Regel | Warum |
+|---|---|
+| **Jede Seite trägt eine Seitenzahl** — links der Kurztitel, rechts „Seite n / N“ | Am Pult rutschen Blätter. Eine einzelne Seite ohne Nummer ist wertlos, und Neusortieren kostet Probenzeit |
+| Jedes Dokument gibt es als **PDF und als Word** | PDF zum Drucken, Word zum Ändern unterwegs |
+| **Taktzahlen statt Beschreibungen** | „ab der Stelle mit den Achteln“ findet niemand wieder |
+| Entscheidungen stehen als **Liste zum Abhaken** am Schluss | Was nicht abgehakt wird, taucht in der nächsten Probe wieder auf |
+
+Die Seitenzahlen setzen `_Werkzeuge/paginate.py` (PDF) und
+`_Werkzeuge/docx_fusszeile.py` (Word). Beide laufen, **bevor** eine Datei herausgeht,
+und sind idempotent. Siehe `../_Werkzeuge/README.md`.
+
+### 8. Welche Datei du wirklich lesen musst
 
 Diese Ablage ist Nachschlagewerk, nicht Lektüre. Vor einem Termin brauchst du **eine**
 Datei: den Plan für diesen Tag in `../02_Probentage/`. Alles andere liegt bereit, wenn
