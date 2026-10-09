@@ -16,7 +16,7 @@
 | Ausgabe | Verlag Friedrich Bischoff GmbH, Frankfurt am Main · Best.-Nr. 1278 |
 | Umfang | ca. 95 Takte, 12 Notenseiten |
 | Dauer (gerechnet) | ca. 5:00 |
-| Tempo / Taktart / Tonart | Es-Dur |
+| Tempo / Taktart / Tonart | **G-Dur** · 4/4 · Mittelteil in Es-Dur, Rückkehr nach G-Dur bei **Buchstabe D** |
 | Chor in der Partitur | **nein — die Partitur enthält kein Vokalsystem** |
 | Begleitung | 2 Fl · 2 Ob · 2 Kl in B · 2 Fg · **4 Hörner in F** · 2–3 Trp in B · 3 Pos (Tenor/Bass) · Pauken D/G · **Streicher 12/12/8/6/4** · Violine 3 ad libitum |
 | Solo | Horn solo (ca. T. 50) |
@@ -32,6 +32,24 @@
 
 Eine genaue Formanalyse liefere ich nach, sobald geklärt ist, welche Rolle das Stück
 im Konzert spielt — davon hängt ab, worauf es beim Proben ankommt.
+
+## Aus der Partitur gelesen (09.10.2026)
+
+| Stelle | Was dort steht |
+|---|---|
+| T. 1 | Einleitung, 4/4, G-Dur · **solo Klar. 1**, **solo Horn 1** · Flöte 1+2 und Violine 1 **divisi** · Viola (Violine 3) **divisi con sordino** · Pauke **ad libitum** |
+| T. 8 | **Fermate** vor Buchstabe A |
+| **A** (T. 9) | **Thema in der Oboe solo, pp** · Streicher **con sordino** pp · **„nur Celli“** — Kontrabässe schweigen · Violen **unisono** |
+| T. 16–22 | Solokette: Oboe → **Fagott solo** → **Horn 1+2** → **Horn solo** (T. 19) → **Klarinette solo** (T. 21), alle mp · Streicher p mit **„+ Kb pizz.“** (T. 16) und **„senza Kb“** (T. 21) |
+| T. 54–57 | Vier Soli nacheinander — Flöte, Oboe, Klarinette, Fagott, je p mit Schwellgabel · Es-Dur · Fermate |
+| **D** (T. 58) | **Es-Dur → G-Dur**, a tempo · Streicher **„Dämpfer weg / senza sordino“** · pp · Horn 1 **marcato** mf, Fagott mf marcato |
+| T. 92–Ende | Tutti mit Posaunen · mf → mp · **Fermaten auf allen Systemen** · **Pauke ad lib. mit Wirbel** · **Violoncello solo** („con ripieno“, dann solo) als oberste Stimme am Schluss |
+
+**Korrektur:** Die Grundtonart ist **G-Dur**, nicht Es-Dur. Es-Dur ist der Mittelteil.
+
+**Verlagshinweis zur Besetzung:** Werden dritte Violinen eingesetzt, entfallen die
+Divisi-Partien der Violen; die Violen spielen dann die untere, die 3. Violinen die
+obere Stimme. Diese Entscheidung bestimmt das Stimmenmaterial.
 
 ## Einschätzung
 
