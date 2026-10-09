@@ -43,7 +43,10 @@ Die Partitur ist eine **Orchesterbearbeitung ohne Chorsystem**. Zwei Folgen:
 1. Du dirigierst ohne den Chorsatz vor Augen. Bei Mozart machbar — aber du kannst
    nicht nachsehen, wo die Bearbeitung den Chor verdoppelt, und genau das entscheidet
    über die Balance. Eine Chorausgabe fehlt noch.
-2. **Trompeten in D und Pauken in einem 46-taktigen Adagio, dazu 220 Stimmen.**
+2. **Trompeten und Pauken in einem 46-taktigen Adagio, dazu 220 Stimmen.** Die
+   Partitur notiert Trompeten in D; die **Stimmen liegen nach B transponiert vor**
+   (M. Eifrig), die Spieler lesen also ihre gewohnte Stimmung. Offen ist allein,
+   **ab wann** sie spielen.
    Mozart schrieb Streicher und Orgel. Das ist ein sehr großer Apparat für ein sehr
    intimes Stück.
 
@@ -62,7 +65,7 @@ dieser Größe braucht es reguläres Aufführungsmaterial — vor dem 09.10. kl�
 | 1 | 27–39 | alle | zwei lange cresc.-Ketten hintereinander; die Steigerung verpufft, wenn sie zu früh beginnt | Zielpunkt festlegen und **rückwärts** dynamisch planen |
 | 2 | 1–12 | Streicher, Hörner | pp mit 42 Streichern und 220 Sängern gegenüber — die Balance entscheidet sich hier | Bläser ausdünnen, Streicher solistisch prüfen |
 | 3 | 40–46 | alle | dim. bis zum Schluss; mit 220 Stimmen schwer kontrollierbar | Atemversetzung, Endkonsonant gemeinsam |
-| 4 | Trp/Pk | Orchester | Trompeten in D und Pauken sind bei Mozart Fremdkörper | Prüfen: erst ab der Steigerung einsetzen lassen |
+| 4 | Trp/Pk | Orchester | Trompeten und Pauken sind bei Mozart Fremdkörper — **keine Notationsfrage**: die Stimmen sind bereits **nach B transponiert geliefert** | Reine Balancefrage: erst ab der Steigerung einsetzen lassen. Entscheidung in die vorhandenen Stimmen eintragen |
 
 ## Probenstrategie
 
