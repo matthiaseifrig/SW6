@@ -10,12 +10,11 @@ import {
   getCalls,
   getAppointmentsSetBy,
   getFirmActivity,
-  getMyCallbacks,
   getAllCustomers,
   assignFirms,
   listUsers,
   inPoolOf,
-} from "./data-store.js?v=20261109g";
+} from "./data-store.js?v=20261109i";
 
 let ctx = null;
 const els = {};
@@ -178,8 +177,9 @@ function updateCounts() {
 
 async function reloadCallbacks() {
   try {
+    // Wiedervorlagen nur aus den eigenen (sichtbaren) Firmen
     const uid = ctx.state.user.uid;
-    call.callbacks = (await getMyCallbacks(uid)).filter((c) => c.callback && c.callback.byUid === uid && c.callback.date);
+    call.callbacks = ctx.state.customers.filter((c) => c.callback && c.callback.byUid === uid && c.callback.date);
   } catch (err) {
     console.error(err);
   }
@@ -389,7 +389,7 @@ function buildWarnings(firm) {
   const uid = ctx.state.user.uid;
   if (firm.doNotCall) items.push(["stop", "Nicht mehr anrufen – die Firma möchte keine Anrufe."]);
   const others = sharedWith(firm);
-  if (others.length) items.push(["info", "Liegt auch bei " + others.join(", ") + " – deine Eintragungen sehen alle."]);
+  if (others.length) items.push(["info", "Liegt auch bei " + others.join(", ") + " – deine Eintragungen sieht auch " + (others.length === 1 ? "diese Person" : "jede dieser Personen") + "."]);
   if (firm.membershipSigned) items.push(["info", "Ist bereits BdSt-Mitglied."]);
   if (firm.nextAppointment && firm.nextAppointment.date) {
     const n = firm.nextAppointment;

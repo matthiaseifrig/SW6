@@ -20,10 +20,10 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20261109g";
-import { buildAddressMeta } from "./address-utils.js?v=20261109g";
-import { normalizeFunctions } from "./roles.js?v=20261109g";
-import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109g";
+import { db } from "./firebase-app.js?v=20261109i";
+import { buildAddressMeta } from "./address-utils.js?v=20261109i";
+import { normalizeFunctions } from "./roles.js?v=20261109i";
+import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109i";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -109,6 +109,12 @@ export function subscribeCustomers(scope, onChange, onError) {
 }
 
 export async function addCustomer(fields, ownerUid) {
+  const created = await addDocCustomer(fields, ownerUid);
+  await writeFirmKeys(created.id, created.keys, false);
+  return created.id;
+}
+
+async function addDocCustomer(fields, ownerUid) {
   const docRef = await addDoc(collection(db, CUSTOMERS), {
     ...customerCoreFields(fields),
     lat: null,
@@ -127,7 +133,7 @@ export async function addCustomer(fields, ownerUid) {
     createdBy: ownerUid,
     createdAt: serverTimestamp(),
   });
-  return docRef.id;
+  return { id: docRef.id, keys: buildDedupKeys(fields) };
 }
 
 export async function updateCustomer(customerId, fields) {
@@ -541,9 +547,11 @@ export async function runImportPlan(plan, targetOwnerUid, createdByUid, onProgre
       if (item.rec.financials && Object.keys(nonEmptyValues(item.rec.financials)).length) {
         await setDoc(doc(db, CUSTOMERS, docRef.id, "financials", FINANCIALS_DOC), nonEmptyValues(item.rec.financials));
       }
+      await writeFirmKeys(docRef.id, buildDedupKeys(item.rec), true);
       result.created++;
     } else if (item.action === "merge" && item.target) {
       await mergeIntoCustomer(item.target, item.rec, { withFinancials: true, addPoolUid: targetOwnerUid });
+      await writeFirmKeys(item.target.id, buildDedupKeys({ ...item.rec, ...item.target }), true);
       result.merged++;
     } else {
       result.skipped++;
@@ -629,6 +637,11 @@ export async function mergeDuplicateFirms(primary, secondaries) {
   if (Object.keys(fin).length) {
     await setDoc(doc(db, CUSTOMERS, primary.id, "financials", FINANCIALS_DOC), fin);
   }
+
+  await writeFirmKeys(primary.id, buildDedupKeys(merged), true);
+  // Pools zusammenfuehren
+  const pools = new Set([...(primary.poolUids || []), ...secondaries.flatMap((x) => [x.ownerUid, ...(x.poolUids || [])])].filter(Boolean));
+  await updateDoc(doc(db, CUSTOMERS, primary.id), { poolUids: Array.from(pools) });
 
   // Neben-Firmen samt Unterdokumenten loeschen
   for (const sec of secondaries) {
@@ -716,6 +729,8 @@ export async function createAppointment(firm, { type, forUid, forName, date, tim
   });
   const firmUpdate = {
     nextAppointment: { id: ref.id, at: Timestamp.fromDate(when), date, time: time || "", forUid, forName, type, setByName },
+    // Wer den Termin wahrnimmt, muss die Firma sehen koennen
+    poolUids: arrayUnion(forUid),
   };
   // Kette an der Firma festhalten: wer hat terminiert (Pre-Sales) bzw.
   // wer hat nach der Aufnahme den Makler-Termin vereinbart (Werber).
@@ -804,4 +819,77 @@ export { increment as fsIncrement, arrayUnion as fsArrayUnion, Timestamp as FsTi
 // Liegt eine Firma im Pool einer Person (Besitzer oder poolUids)?
 export function inPoolOf(firm, uid) {
   return Boolean(firm) && (firm.ownerUid === uid || (firm.poolUids || []).includes(uid));
+}
+
+
+// ---------- Dubletten-Schluessel (firmKeys) ----------
+// Kolleg:innen sehen nur ihre eigenen Firmen. Damit trotzdem niemand eine
+// Firma doppelt anlegt, gibt es je Schluessel (Registernummer, Telefon,
+// Name+PLZ, Name+Ort) ein kleines Dokument firmKeys/{schluessel} mit der
+// Firmen-ID. Kolleg:innen duerfen nur gezielt nachsehen ("gibt es diesen
+// Schluessel?"), nicht auflisten.
+
+function keyDocId(key) {
+  return key.replace(/\//g, "_").slice(0, 400);
+}
+
+// overwrite=true nur fuer "owner" (Import, Zusammenfuehren, Neuaufbau)
+export async function writeFirmKeys(customerId, keys, overwrite) {
+  for (const key of keys || []) {
+    const ref = doc(db, "firmKeys", keyDocId(key));
+    try {
+      if (!overwrite) {
+        const snap = await getDoc(ref);
+        if (snap.exists()) continue;
+      }
+      await setDoc(ref, { customerId, key });
+    } catch (err) {
+      console.warn("Dubletten-Schluessel nicht gespeichert:", key, err.message);
+    }
+  }
+}
+
+// Welche Schluessel gibt es schon? -> [{ key, customerId }]
+export async function lookupFirmKeys(keys) {
+  const hits = [];
+  for (const key of keys || []) {
+    try {
+      const snap = await getDoc(doc(db, "firmKeys", keyDocId(key)));
+      if (snap.exists()) hits.push({ key, customerId: snap.data().customerId });
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+  return hits;
+}
+
+// Einmalig/bei Bedarf (nur "owner"): Schluessel aller Firmen neu schreiben
+// und Firmen mit offenen Terminen in den Pool der Person aufnehmen, die den
+// Termin wahrnimmt bzw. vereinbart hat (fuer Termine von vor dieser Regel).
+export async function rebuildKeysAndPools(onProgress) {
+  const firms = await getAllCustomers();
+  let done = 0;
+  for (const f of firms) {
+    await writeFirmKeys(f.id, buildDedupKeys(f), true);
+    if (!(f.poolUids || []).includes(f.ownerUid)) {
+      await updateDoc(doc(db, CUSTOMERS, f.id), { poolUids: arrayUnion(f.ownerUid) });
+    }
+    done++;
+    if (onProgress) onProgress(done, firms.length, "Firmen");
+  }
+  const appts = await getDocs(collection(db, APPOINTMENTS));
+  let fixed = 0;
+  const byId = new Map(firms.map((f) => [f.id, f]));
+  for (const a of appts.docs) {
+    const d = a.data();
+    const firm = byId.get(d.customerId);
+    if (!firm) continue;
+    const need = [d.forUid, d.setByUid].filter((u) => u && !(firm.poolUids || []).includes(u) && firm.ownerUid !== u);
+    if (need.length) {
+      await updateDoc(doc(db, CUSTOMERS, firm.id), { poolUids: arrayUnion(...need) });
+      firm.poolUids = [...(firm.poolUids || []), ...need];
+      fixed++;
+    }
+  }
+  return { firms: firms.length, fixed };
 }

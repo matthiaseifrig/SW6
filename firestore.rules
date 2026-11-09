@@ -33,6 +33,17 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
+    // Eine Firma "gehoert" zu einer Person, wenn sie Besitzer ist (ownerUid)
+    // oder in deren Adresspool aufgenommen ist (poolUids).
+    function inPool(data) {
+      return data.ownerUid == request.auth.uid ||
+        request.auth.uid in data.get('poolUids', []);
+    }
+
+    function firmInPool(customerId) {
+      return inPool(get(/databases/$(database)/documents/customers/$(customerId)).data);
+    }
+
     // Benutzer: Alle im Team duerfen die Benutzerliste lesen (Namen und
     // Funktionen, z. B. fuer "Termin fuer wen?"). Beim ersten Login legt
     // jede/r das eigene Profil an - nur mit Name, E-Mail, Rolle "colleague"
@@ -46,30 +57,27 @@ service cloud.firestore {
       allow update: if isOwnerRole();
     }
 
-    // Firmen: Alle im Team sehen alle Firmen (noetig fuer den Hinweis
-    // "schon angerufen von ..." und die Dublettenpruefung) und duerfen den
-    // Stand fortschreiben (Anruf, Termin, Besuch, ToDo ...). Wem eine
-    // Firma "gehoert" (ownerUid, createdBy, createdAt, source), aendert nur
+    // Firmen: Jede/r sieht und bearbeitet NUR die eigenen bzw. zugeordneten
+    // Firmen (ownerUid / poolUids). "owner" (Admin) sieht alle. Wem eine
+    // Firma gehoert (ownerUid, createdBy, createdAt, source), aendert nur
     // "owner"; loeschen bzw. zusammenfuehren ebenfalls nur "owner".
     match /customers/{customerId} {
-      allow read: if isMember();
-      // "owner" darf Firmen auch im Namen einer/s Kolleg:in anlegen (Import).
-      allow create: if isMember() &&
-        (request.resource.data.ownerUid == request.auth.uid || isOwnerRole());
-      allow update: if isMember() &&
-        (isOwnerRole() || !changedKeys().hasAny(['ownerUid', 'createdBy', 'createdAt', 'source']));
+      allow read: if isOwnerRole() || (isMember() && inPool(resource.data));
+      allow create: if isOwnerRole() ||
+        (isMember() && request.resource.data.ownerUid == request.auth.uid);
+      allow update: if isOwnerRole() ||
+        (isMember() && inPool(resource.data) &&
+          !changedKeys().hasAny(['ownerUid', 'createdBy', 'createdAt', 'source']));
       allow delete: if isOwnerRole();
 
       match /visits/{visitId} {
-        allow read: if isMember();
-        // Im eigenen Namen; "owner" auch fuer andere (Dubletten zusammenfuehren
-        // kopiert Besuche auf die Haupt-Firma).
-        allow create: if isMember() &&
-          (request.resource.data.byUid == request.auth.uid || isOwnerRole());
+        allow read: if isOwnerRole() || (isMember() && firmInPool(customerId));
+        allow create: if isOwnerRole() ||
+          (isMember() && firmInPool(customerId) && request.resource.data.byUid == request.auth.uid);
         // Nachtraegliches Ergaenzen (Mitgliedsaufnahme, ToDo erledigt ...)
         // durch die Person, die den Besuch eingetragen hat (oder "owner").
-        allow update: if isMember() &&
-          (resource.data.byUid == request.auth.uid || isOwnerRole());
+        allow update: if isOwnerRole() ||
+          (isMember() && resource.data.byUid == request.auth.uid);
         allow delete: if isOwnerRole();
       }
 
@@ -86,28 +94,45 @@ service cloud.firestore {
       }
     }
 
-    // Anrufe (Telefonakquise): alle im Team lesen; eintragen nur im eigenen
-    // Namen (owner auch fuer andere, z. B. bei der Cockpit-Uebernahme);
-    // korrigieren nur die anrufende Person bzw. "owner".
+    // Dubletten-Schluessel: nur Einzelabfrage per Schluessel erlaubt ("gibt
+    // es diese Firma schon?"), kein Auflisten - so erfahren Kolleg:innen
+    // nicht, welche Firmen andere betreuen. Neue Schluessel darf anlegen,
+    // wer gerade eine eigene Firma anlegt; aendern/loeschen nur "owner".
+    match /firmKeys/{key} {
+      allow get: if isMember();
+      allow list: if isOwnerRole();
+      allow create: if isOwnerRole() ||
+        (isMember() && firmInPool(request.resource.data.customerId));
+      allow update, delete: if isOwnerRole();
+    }
+
+    // Anrufe: sehen darf man eigene Anrufe und Anrufe zu Firmen im eigenen
+    // Pool (z. B. sieht der Werber die Anrufe von Pre-Sales bei seiner
+    // Firma). Eintragen nur im eigenen Namen bei Firmen im eigenen Pool.
     match /calls/{callId} {
-      allow read: if isMember();
-      allow create: if isMember() &&
-        (request.resource.data.byUid == request.auth.uid || isOwnerRole());
+      allow read: if isOwnerRole() ||
+        (isMember() && (resource.data.byUid == request.auth.uid || firmInPool(resource.data.customerId)));
+      allow create: if isOwnerRole() ||
+        (isMember() && request.resource.data.byUid == request.auth.uid &&
+          firmInPool(request.resource.data.customerId));
       allow update: if isMember() &&
         (resource.data.byUid == request.auth.uid || isOwnerRole()) &&
         request.resource.data.byUid == resource.data.byUid;
       allow delete: if isOwnerRole();
     }
 
-    // Termine: alle im Team lesen. Vereinbaren im eigenen Namen (setByUid).
-    // Aendern (verschieben, absagen, weiterleiten) duerfen, wer den Termin
-    // vereinbart hat, wer ihn wahrnimmt (forUid) und "owner". "Durchgefuehrt"
-    // und das Ergebnis (Mitglied / Abschluss) setzt nur, wer den Termin
+    // Termine: sehen darf man Termine, die man vereinbart hat oder
+    // wahrnimmt, und Termine zu Firmen im eigenen Pool. "Durchgefuehrt" und
+    // das Ergebnis (Mitglied / Abschluss) setzt nur, wer den Termin
     // wahrnimmt - oder "owner". Wer den Termin vereinbart hat, bleibt fest.
     match /appointments/{apptId} {
-      allow read: if isMember();
-      allow create: if isMember() &&
-        (request.resource.data.setByUid == request.auth.uid || isOwnerRole());
+      allow read: if isOwnerRole() ||
+        (isMember() && (resource.data.setByUid == request.auth.uid ||
+          resource.data.forUid == request.auth.uid ||
+          firmInPool(resource.data.customerId)));
+      allow create: if isOwnerRole() ||
+        (isMember() && request.resource.data.setByUid == request.auth.uid &&
+          firmInPool(request.resource.data.customerId));
       allow update: if isMember() &&
         (isOwnerRole() ||
           (request.resource.data.setByUid == resource.data.setByUid &&

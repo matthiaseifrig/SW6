@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109g";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109i";
 import {
   subscribeCustomers,
   addCustomer,
@@ -32,9 +32,11 @@ import {
   removeTag,
   backfillSourceTag,
   updateUserProfile,
-} from "./js/data-store.js?v=20261109g";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109g";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109g";
+  lookupFirmKeys,
+  rebuildKeysAndPools,
+} from "./js/data-store.js?v=20261109i";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109i";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109i";
 import {
   initCalls,
   onCustomersChanged,
@@ -43,10 +45,10 @@ import {
   populateAssignSelects,
   buildFirmActivitySection,
   firmStatusHtml,
-} from "./js/calls-ui.js?v=20261109g";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109g";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109g";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261109g";
+} from "./js/calls-ui.js?v=20261109i";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109i";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261109i";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109i";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -257,6 +259,19 @@ function bindStaticEvents() {
   });
   els.addCustomerDupe.addEventListener("click", onDupeBoxClick);
   els.dupeSearchBtn.addEventListener("click", onDupeSearchClick);
+  document.getElementById("rebuild-keys-btn").addEventListener("click", async (ev) => {
+    const btn = ev.currentTarget;
+    const status = document.getElementById("rebuild-keys-status");
+    btn.disabled = true;
+    try {
+      const r = await rebuildKeysAndPools((done, total) => (status.textContent = "Aktualisiere … " + done + "/" + total));
+      status.textContent = "Fertig: " + r.firms + " Firmen geprüft, " + r.fixed + " Firmen den Personen mit Terminen zugeordnet.";
+    } catch (err) {
+      status.textContent = "Fehler: " + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
   els.importBtn.addEventListener("click", onImportClick);
 
   els.adminImportBtn.addEventListener("click", onAdminImportClick);
@@ -368,7 +383,10 @@ async function handleAuthChange(user) {
   els.userInfo.textContent = state.user.name + (roleParts.length ? " (" + roleParts.join(", ") + ")" : "");
   // Alle im Team sehen alle Firmen (Finanzkennzahlen bleiben gesperrt) -
   // standardmaessig startet die Liste aber mit den eigenen Firmen.
-  els.scopeToggleLabel.classList.remove("hidden");
+  els.scopeToggleLabel.classList.toggle("hidden", state.role !== "owner");
+  // Drucken / Export nur fuer den Admin
+  document.body.classList.toggle("no-print", state.role !== "owner");
+  els.printBtn.classList.toggle("hidden", state.role !== "owner");
   els.scopeToggle.checked = false;
   state.scopeAll = false;
 
@@ -908,7 +926,7 @@ const VIEW_TITLES = {
   benutzer: "Benutzer",
   firma: "Firma",
 };
-const OWNER_VIEWS = ["import", "benutzer"];
+const OWNER_VIEWS = ["import", "benutzer", "drucken"];
 
 function currentView() {
   if (state.openCustomerId) return "firma";
@@ -970,7 +988,7 @@ function visibleTiles() {
   const set = new Set(["suche", "neu", "zahlen"]);
   if (f.includes("presales")) set.add("anrufen");
   if (f.includes("werber") || f.includes("makler") || !f.length) {
-    ["termine", "tour", "drucken"].forEach((t) => set.add(t));
+    ["termine", "tour"].forEach((t) => set.add(t));
   }
   return set;
 }
@@ -1664,7 +1682,7 @@ function readAddCustomerFields() {
 // anzeigen" an, ist die Live-Liste schon vollstaendig; sonst einmal laden
 // und 2 Minuten zwischenspeichern.
 async function getDedupIndex(force) {
-  if (state.scopeAll) return buildIndex(state.customers.slice());
+  if (state.scopeAll || state.role !== "owner") return buildIndex(state.customers.slice());
   const fresh = state.dedupIndex && Date.now() - state.dedupIndex.loadedAt < 120000;
   if (!force && fresh) return state.dedupIndex.index;
   const firms = await getAllCustomers();
@@ -1715,6 +1733,13 @@ async function runLiveDupeCheck() {
   try {
     const [index] = await Promise.all([getDedupIndex(false), ensureUsersCache()]);
     const matches = findMatches(fields, index);
+    if (matches.level === "none") {
+      const foreign = await foreignDuplicate(fields);
+      if (foreign) {
+        renderForeignDupe(foreign, false);
+        return;
+      }
+    }
     renderDupeBox(matches, false);
   } catch (err) {
     console.error(err);
@@ -1824,6 +1849,46 @@ function finishAddCustomer(message) {
   setTimeout(() => (els.addCustomerStatus.textContent = ""), 5000);
 }
 
+// Kolleg:innen sehen fremde Firmen nicht. Ob es eine Firma schon bei
+// jemand anderem gibt, verraten nur die Dubletten-Schluessel (firmKeys).
+// Sicher gleich (Registernummer, Name + PLZ, Name + Ort) -> nicht anlegen.
+// Nur gleiche Telefonnummer -> Hinweis, Anlegen bleibt moeglich.
+async function foreignDuplicate(fields) {
+  if (state.role === "owner") return null;
+  const keys = buildDedupKeys(fields);
+  const own = new Set(state.customers.map((c) => c.id));
+  const hits = (await lookupFirmKeys(keys)).filter((h) => !own.has(h.customerId));
+  if (!hits.length) return null;
+  const hard = hits.some((h) => !h.key.startsWith("tel:"));
+  return { hard, hits };
+}
+
+function renderForeignDupe(result, decide) {
+  const box = els.addCustomerDupe;
+  box.innerHTML = "";
+  box.classList.remove("hidden");
+  box.classList.toggle("sure", result.hard);
+  const p = document.createElement("p");
+  p.className = "dupe-title";
+  p.textContent = result.hard
+    ? "Diese Firma ist bereits im System – sie wird von einer Kollegin / einem Kollegen betreut."
+    : "Eine andere Firma im System hat dieselbe Telefonnummer.";
+  box.appendChild(p);
+  const hint = document.createElement("p");
+  hint.textContent = result.hard
+    ? "Bitte nicht neu anlegen. Wenn du sie betreuen sollst, gib dem Admin Bescheid – er kann sie dir zuordnen."
+    : "Bitte prüfen, ob es wirklich eine andere Firma ist (z. B. gemeinsames Büro).";
+  box.appendChild(hint);
+  if (decide && !result.hard) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "secondary";
+    b.dataset.action = "new";
+    b.textContent = "Ist eine andere Firma – trotzdem anlegen";
+    box.appendChild(b);
+  }
+}
+
 async function onAddCustomerSubmit(ev) {
   ev.preventDefault();
   const fields = readAddCustomerFields();
@@ -1843,6 +1908,16 @@ async function onAddCustomerSubmit(ev) {
         matches.level === "sure"
           ? "Nicht gespeichert – diese Firma gibt es schon. Bitte die vorhandene ergänzen."
           : "Bitte entscheiden: dieselbe Firma oder eine andere?";
+      els.addCustomerDupe.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    const foreign = await foreignDuplicate(fields);
+    if (foreign) {
+      state.pendingAdd = { fields, matches: { sure: [], maybe: [] } };
+      renderForeignDupe(foreign, true);
+      els.addCustomerStatus.textContent = foreign.hard
+        ? "Nicht gespeichert – diese Firma gibt es schon."
+        : "Bitte prüfen: gleiche Telefonnummer wie eine andere Firma.";
       els.addCustomerDupe.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }

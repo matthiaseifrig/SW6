@@ -68,10 +68,24 @@ Login und alle Kunden-/Besuchsdaten laufen über ein Firebase-Projekt
   (E-Mail/Passwort), angelegt in der Firebase-Konsole unter
   **Authentication → Nutzer → Nutzer hinzufügen**. Es gibt keine
   Selbstregistrierung in der App.
-- Standardmäßig bekommt jeder neue Nutzer die Rolle **„colleague“**. Alle
-  Angemeldeten sehen alle Firmen (Schalter „Alle Firmen anzeigen“; ohne
-  Schalter nur die eigenen). Finanzkennzahlen bleiben gesperrt (siehe unten),
-  Dashboard-Zahlen zeigen für Kolleg:innen nur die eigenen Firmen.
+- Standardmäßig bekommt jeder neue Nutzer die Rolle **„colleague“** und sieht
+  **nur die eigenen bzw. ihm zugeordneten Firmen** (Besitzer `ownerUid` oder
+  Adresspool `poolUids`) samt deren Anrufen, Terminen und Besuchen – von den
+  Firestore-Regeln erzwungen. Nur der Admin („owner“) sieht alle Firmen
+  (Schalter „Alle Firmen anzeigen“).
+- **Drucken und Export nur für den Admin:** Kundenliste drucken und
+  „Drucken / PDF“ gibt es nur für „owner“; druckt ein Kollege über den
+  Browser, erscheint nur ein Hinweis statt der Daten. (Abschreiben oder
+  Bildschirmfotos lassen sich technisch nicht verhindern.)
+- **Dublettenschutz über alle Firmen:** Damit niemand eine Firma doppelt
+  anlegt, die er selbst nicht sieht, gibt es je Firma Prüfschlüssel
+  (`firmKeys`: Registernummer, Telefon, Name + PLZ, Name + Ort). Kolleg:innen
+  können nur gezielt prüfen, nicht auflisten. Gleicher Name + PLZ/Ort oder
+  gleiche Registernummer → nicht anlegen; nur gleiche Telefonnummer → Hinweis.
+  Nach dem Update einmal unter „Import & Dubletten → Dublettenschutz und
+  Zuordnungen aktualisieren“ ausführen.
+- Wer einen Termin vereinbart bekommt, wird automatisch in den Pool der Firma
+  aufgenommen (sonst könnte er sie nicht sehen).
 - **Funktionen** (Pre-Sales, BdSt-Werber, Makler – auch mehrere) und den
   Anzeigenamen setzt „owner“ direkt in der App im Bereich **„Benutzer“**. Eine
   Person erscheint dort, sobald sie sich einmal angemeldet hat.

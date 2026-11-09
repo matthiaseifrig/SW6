@@ -1164,3 +1164,10 @@ a.tile:hover .tile-icon, a.tile:focus-visible .tile-icon { color: var(--brand-go
 .chain-body p { margin: 0.2rem 0 0; }
 .chain-body .kennung { color: var(--color-muted); }
 .activity-title { margin: 0.8rem 0 0; font-size: 1rem; color: var(--brand-navy); }
+
+/* Drucken/Export nur fuer den Admin: bei Kolleg:innen druckt der Browser
+   nur einen Hinweis statt der Daten. */
+@media print {
+  body.no-print > * { display: none !important; }
+  body.no-print::before { content: "Drucken ist nur für den Admin der G.B.V.M. GmbH freigegeben."; display: block; padding: 2rem; font-size: 14pt; }
+}
