@@ -62,7 +62,10 @@ service cloud.firestore {
 
       match /visits/{visitId} {
         allow read: if isMember();
-        allow create: if isMember() && request.resource.data.byUid == request.auth.uid;
+        // Im eigenen Namen; "owner" auch fuer andere (Dubletten zusammenfuehren
+        // kopiert Besuche auf die Haupt-Firma).
+        allow create: if isMember() &&
+          (request.resource.data.byUid == request.auth.uid || isOwnerRole());
         // Nachtraegliches Ergaenzen (Mitgliedsaufnahme, ToDo erledigt ...)
         // durch die Person, die den Besuch eingetragen hat (oder "owner").
         allow update: if isMember() &&

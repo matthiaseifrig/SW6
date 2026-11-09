@@ -20,9 +20,10 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20261109a";
-import { buildAddressMeta } from "./address-utils.js?v=20261109a";
-import { normalizeFunctions } from "./roles.js?v=20261109a";
+import { db } from "./firebase-app.js?v=20261109b";
+import { buildAddressMeta } from "./address-utils.js?v=20261109b";
+import { normalizeFunctions } from "./roles.js?v=20261109b";
+import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109b";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -50,7 +51,14 @@ function customerCoreFields(fields) {
     telefon: fields.telefon || "",
     email: fields.email || "",
     website: fields.website || "",
+    rechtsform: fields.rechtsform || "",
+    registerGericht: fields.registerGericht || "",
+    registerId: fields.registerId || "",
+    registerNr: fields.registerNr || "",
+    branche: fields.branche || "",
+    northDataUrl: fields.northDataUrl || "",
     tags: normalizeTags(fields.tags),
+    dedupKeys: buildDedupKeys(fields),
     hasAddress: meta.hasAddress,
     geocodeQuery: meta.geocodeQuery,
   };
@@ -372,39 +380,6 @@ export async function importStaticAddresses(ownerUid, staticRecords, onProgress)
   return imported;
 }
 
-// Import fuer einen Kollegen durch "owner": legt Kunden im Namen von
-// targetOwnerUid an (von den Sicherheitsregeln nur fuer "owner" erlaubt)
-// und speichert optionale Finanzkennzahlen in einer separaten, nur fuer
-// "owner" lesbaren Unter-Sammlung.
-export async function importRecordsForColleague(targetOwnerUid, createdByUid, records, onProgress) {
-  let imported = 0;
-  for (const rec of records) {
-    const docRef = await addDoc(collection(db, CUSTOMERS), {
-      ...customerCoreFields(rec),
-      lat: null,
-      lon: null,
-      lastVisitedAt: null,
-      lastVisitNote: "",
-      lastVisitConfirmed: false,
-      membershipSigned: false,
-      consultationRequested: false,
-      consultationAt: null,
-      contacts: [],
-      totalProvision: 0,
-      source: rec.source || "import",
-      ownerUid: targetOwnerUid,
-      createdBy: createdByUid,
-      createdAt: serverTimestamp(),
-    });
-    if (rec.financials && Object.values(rec.financials).some((v) => v !== null && v !== undefined)) {
-      await setDoc(doc(db, CUSTOMERS, docRef.id, "financials", FINANCIALS_DOC), rec.financials);
-    }
-    imported++;
-    if (onProgress) onProgress(imported, records.length);
-  }
-  return imported;
-}
-
 export async function getFinancials(customerId) {
   const snap = await getDoc(doc(db, CUSTOMERS, customerId, "financials", FINANCIALS_DOC));
   return snap.exists() ? snap.data() : null;
@@ -440,4 +415,196 @@ export async function updateUserProfile(uid, { name, functions }) {
     name: String(name || "").trim(),
     functions: normalizeFunctions(functions),
   });
+}
+
+
+// ---------- Dublettenschutz ----------
+
+// Alle Firmen einmalig (nicht live) laden - Grundlage fuer die
+// Dublettenpruefung beim Anlegen, beim Import und fuers Zusammenfuehren.
+export async function getAllCustomers() {
+  const snap = await getDocs(collection(db, CUSTOMERS));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function getCustomer(customerId) {
+  const snap = await getDoc(doc(db, CUSTOMERS, customerId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+// Nur Kennzahlen mit Wert uebernehmen (null/leer ueberschreibt nichts).
+function nonEmptyValues(obj) {
+  const out = {};
+  Object.entries(obj || {}).forEach(([k, v]) => {
+    if (v !== null && v !== undefined && v !== "") out[k] = v;
+  });
+  return out;
+}
+
+// Ergaenzt eine vorhandene Firma um die Angaben eines neuen Datensatzes:
+// leere Felder werden gefuellt, Vorhandenes nie ueberschrieben, Tags
+// zusammengefuehrt. Finanzkennzahlen (nur "owner", z. B. beim
+// North-Data-Import) werden aktualisiert - dabei kommen u. a. die
+// Pensionsrueckstellungen als Betrag dazu. Liefert die Liste der
+// ergaenzten Felder.
+export async function mergeIntoCustomer(existing, incoming, { withFinancials = false } = {}) {
+  const update = fillEmptyFields(existing, incoming);
+  const merged = { ...existing, ...update };
+  const tags = Array.from(new Set([...(existing.tags || []), ...((incoming.tags || []).filter(Boolean))]));
+  if (tags.length !== (existing.tags || []).length) update.tags = tags;
+  update.dedupKeys = buildDedupKeys(merged);
+  if (update.strasse || update.plz || update.ort) {
+    const meta = buildAddressMeta(merged);
+    update.hasAddress = meta.hasAddress;
+    update.geocodeQuery = meta.geocodeQuery;
+    update.lat = null;
+    update.lon = null;
+  }
+  update.lastMergedAt = serverTimestamp();
+  await updateDoc(doc(db, CUSTOMERS, existing.id), update);
+
+  const changed = Object.keys(update).filter((k) => !["dedupKeys", "lastMergedAt", "hasAddress", "geocodeQuery", "lat", "lon"].includes(k));
+  if (withFinancials && incoming.financials) {
+    const fin = nonEmptyValues(incoming.financials);
+    if (Object.keys(fin).length) {
+      await setDoc(doc(db, CUSTOMERS, existing.id, "financials", FINANCIALS_DOC), fin, { merge: true });
+      changed.push("Finanzkennzahlen");
+    }
+  }
+  return changed;
+}
+
+// Fuehrt einen vorbereiteten Import-Plan aus (siehe app.js):
+// [{ action: "new" | "merge" | "skip", rec, target }]
+export async function runImportPlan(plan, targetOwnerUid, createdByUid, onProgress) {
+  const result = { created: 0, merged: 0, skipped: 0 };
+  let done = 0;
+  for (const item of plan) {
+    if (item.action === "new") {
+      const docRef = await addDoc(collection(db, CUSTOMERS), {
+        ...customerCoreFields(item.rec),
+        lat: null,
+        lon: null,
+        lastVisitedAt: null,
+        lastVisitNote: "",
+        lastVisitConfirmed: false,
+        membershipSigned: false,
+        consultationRequested: false,
+        consultationAt: null,
+        contacts: [],
+        totalProvision: 0,
+        source: item.rec.source || "import",
+        ownerUid: targetOwnerUid,
+        createdBy: createdByUid,
+        createdAt: serverTimestamp(),
+        importedAt: serverTimestamp(),
+      });
+      if (item.rec.financials && Object.keys(nonEmptyValues(item.rec.financials)).length) {
+        await setDoc(doc(db, CUSTOMERS, docRef.id, "financials", FINANCIALS_DOC), nonEmptyValues(item.rec.financials));
+      }
+      result.created++;
+    } else if (item.action === "merge" && item.target) {
+      await mergeIntoCustomer(item.target, item.rec, { withFinancials: true });
+      result.merged++;
+    } else {
+      result.skipped++;
+    }
+    done++;
+    if (onProgress) onProgress(done, plan.length);
+  }
+  return result;
+}
+
+function tsMillis(ts) {
+  if (!ts) return 0;
+  if (typeof ts.toMillis === "function") return ts.toMillis();
+  const d = new Date(ts);
+  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
+// Fuehrt Dubletten zusammen (nur "owner"): alles von den Neben-Firmen
+// wandert auf die Haupt-Firma - Besuche, ToDo, Ansprechpartner, Tags,
+// Mitgliedschaft/Termin-Stand, Kennzahl-Summe, Finanzkennzahlen, Anrufe und
+// Termine. Danach werden die Neben-Firmen geloescht.
+export async function mergeDuplicateFirms(primary, secondaries) {
+  const merged = { ...primary };
+  const update = {};
+  const contactKey = (c) => (c.name || "") + "|" + (c.telefon || "");
+  const contacts = [...(primary.contacts || [])];
+  const tags = new Set(primary.tags || []);
+  let fin = (await getFinancials(primary.id)) || {};
+
+  for (const sec of secondaries) {
+    Object.assign(update, fillEmptyFields(merged, sec));
+    Object.assign(merged, update);
+    (sec.tags || []).forEach((t) => tags.add(t));
+    (sec.contacts || []).forEach((c) => {
+      if (!contacts.some((x) => contactKey(x) === contactKey(c))) contacts.push(c);
+    });
+    if (sec.membershipSigned) update.membershipSigned = true;
+    if (sec.consultationRequested) {
+      update.consultationRequested = true;
+      if (!merged.consultationAt && sec.consultationAt) update.consultationAt = sec.consultationAt;
+    }
+    if (sec.totalProvision) update.totalProvision = (merged.totalProvision || 0) + sec.totalProvision;
+    Object.assign(merged, update);
+    if (tsMillis(sec.lastVisitedAt) > tsMillis(merged.lastVisitedAt)) {
+      update.lastVisitedAt = sec.lastVisitedAt;
+      update.lastVisitNote = sec.lastVisitNote || "";
+      update.lastVisitConfirmed = Boolean(sec.lastVisitConfirmed);
+      Object.assign(merged, update);
+    }
+    if (!(merged.openTodo && merged.openTodo.text) && sec.openTodo && sec.openTodo.text) {
+      update.openTodo = sec.openTodo;
+      merged.openTodo = sec.openTodo;
+    }
+
+    // Besuche umziehen (gleiche Dokument-ID behalten)
+    const visits = await getDocs(collection(db, CUSTOMERS, sec.id, "visits"));
+    for (const v of visits.docs) {
+      await setDoc(doc(db, CUSTOMERS, primary.id, "visits", v.id), v.data());
+    }
+    // Finanzkennzahlen: Haupt-Firma hat Vorrang, fehlende Werte ergaenzen
+    const secFin = await getFinancials(sec.id);
+    if (secFin) fin = { ...nonEmptyValues(secFin), ...nonEmptyValues(fin) };
+    // Anrufe und Termine auf die Haupt-Firma umhaengen
+    for (const colName of ["calls", "appointments"]) {
+      const snap = await getDocs(query(collection(db, colName), where("customerId", "==", sec.id)));
+      for (const d of snap.docs) await updateDoc(d.ref, { customerId: primary.id });
+    }
+  }
+
+  update.tags = Array.from(tags);
+  update.contacts = contacts;
+  update.dedupKeys = buildDedupKeys(merged);
+  update.mergedFrom = arrayUnion(...secondaries.map((s) => s.id));
+  update.lastMergedAt = serverTimestamp();
+  if (update.strasse || update.plz || update.ort) {
+    const meta = buildAddressMeta(merged);
+    update.hasAddress = meta.hasAddress;
+    update.geocodeQuery = meta.geocodeQuery;
+    update.lat = null;
+    update.lon = null;
+  }
+  await updateDoc(doc(db, CUSTOMERS, primary.id), update);
+  if (Object.keys(fin).length) {
+    await setDoc(doc(db, CUSTOMERS, primary.id, "financials", FINANCIALS_DOC), fin);
+  }
+
+  // Neben-Firmen samt Unterdokumenten loeschen
+  for (const sec of secondaries) {
+    const visits = await getDocs(collection(db, CUSTOMERS, sec.id, "visits"));
+    for (const v of visits.docs) await deleteDoc(v.ref);
+    await deleteDoc(doc(db, CUSTOMERS, sec.id, "financials", FINANCIALS_DOC));
+    await deleteDoc(doc(db, CUSTOMERS, sec.id));
+  }
+}
+
+// Zwei Firmen als "keine Dublette" markieren, damit sie im Werkzeug
+// "Dubletten zusammenfuehren" nicht mehr vorgeschlagen werden.
+export async function markNotDuplicate(ids) {
+  for (const id of ids) {
+    const others = ids.filter((x) => x !== id);
+    await updateDoc(doc(db, CUSTOMERS, id), { notDuplicateWith: arrayUnion(...others) });
+  }
 }

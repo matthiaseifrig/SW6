@@ -1,5 +1,7 @@
-// Parst CSV-Exporte von North Data (semikolon-getrennt, ISO-8859-1/CP1252
-// kodiert, deutsches Zahlenformat) in die Kundenstruktur der App.
+import { formatRegister } from "./dedup.js?v=20261109b";
+
+// Parst CSV-Exporte von North Data (semikolon-getrennt, Windows-1252 oder
+// UTF-8 kodiert, deutsches Zahlenformat) in die Kundenstruktur der App.
 
 // Minimaler CSV-Parser mit Unterstuetzung fuer per Anfuehrungszeichen
 // geschuetzte Felder (falls ein Feld selbst das Trennzeichen enthaelt).
@@ -60,29 +62,59 @@ export function parseGermanNumber(s) {
 
 const COLUMN_MAP = {
   unternehmen: "Name",
+  rechtsform: "Rechtsform",
   strasse: "Straße",
   plz: "PLZ",
   ort: "Ort",
+  registerGericht: "HR Amtsgericht",
+  registerId: "Register-ID",
+  northDataUrl: "North Data URL",
   telefon: "Tel.",
   email: "E-Mail",
   website: "Website",
+  branche: "Branche (WZ)",
   vertreter1: "Ges. Vertreter 1",
   vertreter2: "Ges. Vertreter 2",
   vertreter3: "Ges. Vertreter 3",
 };
 
+// Zahlen-Kennzahlen (deutsches Zahlenformat). Pensionsrückstellungen kommen
+// seit dem erweiterten Export als Betrag in EUR mit.
 const FINANCIAL_COLUMN_MAP = {
   umsatz: "Umsatz EUR",
   umsatzCagr: "Umsatz CAGR %",
   gewinn: "Gewinn EUR",
   gewinnCagr: "Gewinn CAGR %",
   mitarbeiterzahl: "Mitarbeiterzahl",
+  bilanzsumme: "Bilanzsumme EUR",
+  eigenkapital: "Eigenkapital EUR",
+  personalaufwand: "Personalaufwand EUR",
+  pensionsrueckstellungenEur: "Pensionsrückstellungen EUR",
 };
+
+// Text-Kennzahlen (z. B. Stichtag der Finanzkennzahlen)
+const FINANCIAL_TEXT_COLUMN_MAP = {
+  finanzkennzahlenDatum: "Finanzkennzahlen Datum",
+};
+
+// North-Data-Exporte kommen je nach Einstellung als Windows-1252 (ANSI)
+// oder als UTF-8 (ggf. mit BOM). Erst streng als UTF-8 versuchen - wenn
+// das scheitert (ungueltige Bytefolgen, typisch fuer ANSI-Umlaute), als
+// Windows-1252 lesen.
+export function decodeCsvBytes(buffer) {
+  const bytes = new Uint8Array(buffer);
+  try {
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return text.replace(/^\uFEFF/, "");
+  } catch (e) {
+    return new TextDecoder("windows-1252").decode(bytes);
+  }
+}
 
 function buildHeaderIndex(headerRow) {
   const index = {};
   headerRow.forEach((name, i) => {
-    index[name.trim()] = i;
+    index[name.replace(/^\uFEFF/, "").trim()] = i;
   });
   return index;
 }
@@ -118,7 +150,17 @@ export function parseNorthDataCsv(text) {
       financials[field] = num;
       if (num !== null) hasFinancials = true;
     });
+    Object.entries(FINANCIAL_TEXT_COLUMN_MAP).forEach(([field, label]) => {
+      const raw = get(row, label);
+      financials[field] = raw || null;
+    });
+    // Bei bekanntem Betrag auch das bisherige Ja/Nein-Feld mitfuehren
+    // (wird an mehreren Stellen in der App angezeigt).
+    if (financials.pensionsrueckstellungenEur !== null) {
+      financials.pensionsrueckstellungen = financials.pensionsrueckstellungenEur > 0;
+    }
     rec.financials = hasFinancials ? financials : null;
+    rec.registerNr = formatRegister(rec.registerGericht, rec.registerId);
 
     records.push(rec);
   }

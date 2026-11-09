@@ -1,6 +1,16 @@
 # Konzept: Umbau zum CRM mit Tourenplanung
 
-Stand: 09.11.2026 – **Entwurf zur Freigabe, noch nichts gebaut.**
+Stand: 09.11.2026 – **freigegeben.** Erledigt: Abschnitt 1 (Rollen/Regeln),
+Abschnitt 2 (Dublettenschutz inkl. Registernummer und Pensionsrückstellungen
+aus North Data).
+
+Entscheidungen zu den offenen Fragen (09.11.2026): Pre-Sales = Thomas Kühne;
+Vorschlag zu abgesagt/verschoben gilt; alle sehen alle Firmen (ohne
+Finanzkennzahlen); Werber-Kennzahl wie im Cockpit (150 € Aufnahme, 200 €
+Termin), für durchgeführte Makler-Termine nur Anzahl; Makler nur Anzahl und
+Sparte; Sparten wie vorgeschlagen; Registernummer = HR Amtsgericht +
+Register-ID; Zuständigkeit wie vorgeschlagen; Pre-Sales telefoniert am Handy;
+„Nicht mehr anrufen“ wird eingebaut.
 
 ## 0. Leitlinien
 

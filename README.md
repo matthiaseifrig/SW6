@@ -150,13 +150,43 @@ hochladen und im Namen einer bestimmten Person importieren:
 1. Die Person muss sich vorher **einmal** selbst in der App angemeldet haben
    (Zugang wie gewohnt vorher in der Firebase-Konsole anlegen) – erst dann
    taucht sie in der Auswahlliste auf.
-2. North-Data-CSV-Datei auswählen und „Importieren“ klicken.
-3. Übernommen werden: Firmenname, Adresse, bis zu drei gesetzliche
-   Vertreter (Handelsregister), Telefon/E-Mail/Website – sichtbar für
-   „owner“ und die zugeordnete Person. Alle importierten Kunden werden
-   automatisch mit „Akquise“ getaggt. Umsatz, Gewinn, CAGR% und
-   Mitarbeiterzahl landen in der separaten `financials`-Unter-Sammlung und
-   sind ausschließlich für „owner“ sichtbar.
+2. North-Data-CSV-Datei auswählen und **„Datei prüfen“** klicken. Die Datei
+   darf als ANSI/Windows-1252 oder UTF-8 gespeichert sein – das wird
+   automatisch erkannt.
+3. Jede Zeile wird mit **allen** vorhandenen Firmen abgeglichen
+   (Dublettenschutz, siehe unten). Die Vorschau zeigt „neu“, „schon
+   vorhanden – werden ergänzt“ und „bitte prüfen“; unklare Fälle lassen sich
+   einzeln entscheiden. Erst **„Import starten“** schreibt die Daten.
+4. Übernommen werden: Firmenname, Rechtsform, Adresse, Registernummer
+   (HR Amtsgericht + Register-ID), Branche, North-Data-Link, bis zu drei
+   gesetzliche Vertreter, Telefon/E-Mail/Website. Umsatz, Gewinn, CAGR %,
+   Mitarbeiterzahl, Bilanzsumme, Eigenkapital, Personalaufwand,
+   **Pensionsrückstellungen (Betrag in EUR)** und der Stichtag landen in der
+   gesperrten `financials`-Unter-Sammlung (owner + `financialsAccess` bei
+   eigenen Firmen).
+
+Ein **erneuter Import** derselben oder einer erweiterten Datei ist gefahrlos:
+vorhandene Firmen werden nur ergänzt (leere Felder gefüllt, nie
+überschrieben) und ihre Finanzkennzahlen aktualisiert – so kommen z. B. die
+Pensionsrückstellungen auch bei schon importierten Firmen nachträglich dazu.
+
+### Dublettenschutz
+
+Eine Firma gilt als **sicher vorhanden** bei gleicher Registernummer, gleicher
+Telefonnummer (nur Ziffern verglichen, +49 = 0) oder gleichem Firmennamen
+(ohne Rechtsform, Umlaute vereinheitlicht) mit gleicher PLZ bzw. gleichem Ort.
+Haben beide Firmen eine Registernummer und die ist verschieden, sind es
+verschiedene Firmen (z. B. GmbH & Co. KG und Verwaltungs-GmbH) – dann wird nur
+nachgefragt. **Bitte prüfen** heißt: gleicher Name an anderem Ort oder sehr
+ähnlicher Name am selben Ort.
+
+- **Kunde hinzufügen:** Schon beim Tippen erscheint ein Hinweis, wenn es die
+  Firma gibt. Beim Speichern wird ein sicherer Treffer nicht neu angelegt,
+  sondern kann ergänzt werden.
+- **Dubletten zusammenführen** (im Bereich „Kunden Import“): findet bereits
+  doppelt angelegte Firmen; Besuche, ToDos, Ansprechpartner, Tags,
+  Finanzkennzahlen, Anrufe und Termine wandern auf die gewählte Haupt-Firma.
+  „Sind verschiedene Firmen“ merkt sich das Paar dauerhaft.
 
 Die alte „Excel-Liste importieren“-Funktion (ursprüngliche 215er-Liste,
 `data/adressen.js`) bleibt unabhängig davon bestehen und importiert weiterhin
