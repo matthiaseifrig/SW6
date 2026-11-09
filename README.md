@@ -1,3 +1,13 @@
+# G.B.V.M. GmbH – Kunden & Termine (CRM mit Tourenplanung)
+
+Nach dem Anmelden erscheint eine **Startseite mit Kacheln** (Firma suchen,
+Neue Firma, Tour planen, Zahlen, Kundenliste drucken; für Admins zusätzlich
+Import & Dubletten und Benutzer; „Anrufen“ und „Meine Termine“ folgen). Jede
+Kachel öffnet einen eigenen Bildschirm mit „← Startseite“ oben links; die
+Browser-Zurück-Taste funktioniert ebenfalls. Gestaltung nach dem G.B.V.M.
+Markenkit (Nachtblau, Gold als Akzent, Montserrat – lokal eingebunden unter
+`vendor/fonts/`, keine Verbindung zu Google Fonts).
+
 # Tourenplaner – Jubilare BdSt
 
 Web-App zur Tourenplanung mit eigenem Kundenstamm pro Nutzer: Login,

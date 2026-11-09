@@ -1,17 +1,29 @@
 :root {
-  --color-bg: #e4e7ec;
+  /* G.B.V.M. Markenkit (CI-Buch): Nachtblau Grundton, Gold nur Akzent,
+     Blau fuer Links und Buttons, Montserrat, eckige Flaechen, 1-px-Linien. */
+  --brand-navy: #1d334e;
+  --brand-gold: #ffb300;
+  --brand-blue: #0068b3;
+  --brand-white: #ffffff;
+  --surface-alt: #f3f5f8;
+  --color-bg: #f3f5f8;
   --color-panel: #ffffff;
-  --color-border: #cdd3db;
-  --color-text: #1f2430;
-  --color-muted: #6b7280;
-  --color-primary: #1a5fb4;
-  --color-primary-dark: #103d78;
-  --color-accent: #2c9e6b;
+  --color-border: #d6dde6;
+  --color-text: #1d334e;
+  --color-muted: #56657a;
+  --color-primary: #0068b3;
+  --color-primary-dark: #1d334e;
+  --color-accent: #2c7a4b;
   --color-visited: #b45309;
   --color-end: #b6316c;
   --color-todo: #6d28d9;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
 }
+
+@font-face { font-family: Montserrat; font-style: normal; font-weight: 400; font-display: swap; src: url("vendor/fonts/montserrat-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: Montserrat; font-style: normal; font-weight: 500; font-display: swap; src: url("vendor/fonts/montserrat-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: Montserrat; font-style: normal; font-weight: 600; font-display: swap; src: url("vendor/fonts/montserrat-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: Montserrat; font-style: normal; font-weight: 700; font-display: swap; src: url("vendor/fonts/montserrat-latin-700-normal.woff2") format("woff2"); }
 
 * { box-sizing: border-box; }
 
@@ -822,3 +834,185 @@ footer {
 }
 .review-option input { width: 1.2rem; height: 1.2rem; margin-top: 0.15rem; flex-shrink: 0; }
 .dupe-groups { margin-top: 0.7rem; }
+
+
+/* =====================================================================
+   G.B.V.M.-Erscheinungsbild + CRM-Startseite (Abschnitt 3)
+   Grosse Schrift und Knoepfe fuer alle Altersgruppen, breit auf grossen
+   Bildschirmen, einspaltig auf dem Handy.
+   ===================================================================== */
+html { font-size: 17px; }
+@media (max-width: 600px) { html { font-size: 18px; } }
+body { font-family: Montserrat, "Segoe UI", system-ui, sans-serif; color: var(--color-text); background: var(--color-bg); line-height: 1.5; }
+a { color: var(--brand-blue); }
+:focus-visible { outline: 2px solid var(--brand-blue); outline-offset: 2px; }
+.kennung { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; }
+.view-hidden { display: none !important; }
+
+/* Kopf: Nachtblau-Band mit weissem Logo (wie Maklerportal) */
+.topbar { background: var(--brand-navy); color: #fff; padding: 0; }
+.topbar-inner, .user-bar {
+  max-width: 1560px;
+  margin-inline: auto;
+  padding-inline: max(16px, 2.5vw);
+}
+.topbar-inner { display: flex; align-items: center; gap: 1.5rem; padding-block: 1rem; flex-wrap: wrap; }
+.brand-link { display: block; flex: none; line-height: 0; }
+.brand-logo { width: 120px; height: 120px; display: block; }
+.brand-text { display: grid; gap: 0.15rem; flex: 1 1 16rem; min-width: 0; }
+.brand-text .kennung { color: #aab8ca; }
+.topbar h1 { font-size: 1.9rem; line-height: 1.2; font-weight: 700; margin: 0; color: #fff; }
+.topbar .subtitle { color: #aab8ca; opacity: 1; font-size: 0.95rem; margin: 0; }
+.partner-badge { background: #fff; padding: 0.35rem 0.5rem; line-height: 0; flex: none; }
+.partner-badge img { height: 46px; width: auto; display: block; }
+.topbar-inner { border-bottom: 1px solid #2e4866; }
+.user-bar {
+  margin: 0 auto;
+  padding-block: 0.6rem;
+  font-size: 0.9rem;
+  color: #fff;
+}
+.user-bar label, .user-bar .scope-toggle { color: #fff; }
+.scope-toggle input { width: 1.2rem; height: 1.2rem; accent-color: var(--brand-gold); }
+.user-bar #user-info { font-weight: 600; }
+button.ghost { background: transparent; color: #fff; border: 1px solid #aab8ca; }
+button.ghost:hover { background: rgba(255, 255, 255, 0.1); }
+@media (max-width: 700px) {
+  .topbar-inner { flex-wrap: nowrap; gap: 0.75rem; padding-block: 0.5rem; }
+  .brand-logo { width: 72px; height: 72px; }
+  .brand-text .kennung, .topbar .subtitle { display: none; }
+  .topbar h1 { font-size: 1.25rem; }
+  .partner-badge img { height: 30px; }
+  .user-bar { gap: 0.5rem 0.75rem; font-size: 0.85rem; }
+  .tile { min-height: 0; padding: 1.1rem 1.25rem; }
+  .tile-label { font-size: 1.3rem; }
+  .home-head h2 { font-size: 1.6rem; }
+  .panel, .panel.accent { padding: 1rem; }
+  .view-bar h2 { font-size: 1.35rem; }
+}
+
+/* Breite: auf grossen Bildschirmen (z. B. 1920 x 1080) deutlich breiter */
+main { max-width: 1560px; padding: 0 max(16px, 2.5vw); margin: 1.5rem auto 2rem; }
+#app-root { display: flex; flex-direction: column; gap: 1.25rem; }
+
+/* Flaechen: eckig, 1-px-Linien, keine Verlaeufe/Schatten */
+.panel, .panel.accent {
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-panel);
+  box-shadow: none;
+  margin-bottom: 0;
+  padding: 1.5rem;
+}
+.panel h2, .panel h3 { color: var(--brand-navy); font-weight: 700; }
+[data-view] > .collapsible-header, [data-view] > .collapsible-title { display: none; }
+.collapsible-header { cursor: default; }
+
+button, .button-like { border-radius: 4px; font-family: inherit; font-size: 1rem; min-height: 48px; padding: 0.6rem 1.2rem; font-weight: 600; }
+button.small { min-height: 40px; font-size: 0.9rem; padding: 0.4rem 0.9rem; }
+button.primary { background: var(--brand-blue); color: #fff; border: 1px solid var(--brand-blue); }
+button.primary:hover { background: var(--brand-navy); border-color: var(--brand-navy); }
+button.secondary { background: #fff; color: var(--brand-navy); border: 1px solid var(--brand-navy); }
+button.secondary:hover { background: var(--surface-alt); }
+input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="date"], input[type="time"], input[type="number"], select, textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  border-radius: 4px;
+  border: 1px solid #aab8ca;
+  min-height: 48px;
+  color: var(--color-text);
+}
+label { color: var(--brand-navy); }
+.hint { color: var(--color-muted); font-size: 0.9rem; }
+
+/* Anmeldung */
+#login-panel { border-radius: 0; background: #fff; box-shadow: none; border: 1px solid var(--color-border); border-top: 4px solid var(--brand-navy); animation: none; }
+.login-logo { width: 140px; height: 140px; display: block; margin: -0.5rem auto 0.5rem; }
+#login-panel button.primary { width: 100%; }
+
+/* Willkommensgruss */
+.welcome-banner { background: #fff; border: 1px solid var(--color-border); border-left: 4px solid var(--brand-gold); border-radius: 0; color: var(--brand-navy); animation: none; }
+
+/* Ansichtsleiste: Zurueck + Titel */
+.view-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--brand-navy);
+  padding-bottom: 0.75rem;
+}
+.view-bar h2 { margin: 0; font-size: 1.6rem; font-weight: 700; color: var(--brand-navy); }
+.back-home { background: #fff; color: var(--brand-navy); border: 1px solid var(--brand-navy); font-size: 1.05rem; }
+.back-home:hover { background: var(--surface-alt); }
+
+/* Startseite */
+.home-head { display: grid; gap: 0.35rem; margin-bottom: 1.25rem; }
+.home-head .kennung { color: var(--color-muted); }
+.home-head h2 { margin: 0; font-size: 2rem; line-height: 1.2; font-weight: 700; color: var(--brand-navy); }
+.gold-rule { display: block; width: 64px; height: 2px; background: var(--brand-gold); margin-top: 0.4rem; }
+.tile-grid {
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  border-top: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
+}
+.tile {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  min-height: 170px;
+  padding: 1.5rem;
+  background: #fff;
+  color: var(--brand-navy);
+  text-decoration: none;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+.tile .kennung { color: var(--color-muted); }
+.tile::after { content: ""; display: block; width: 48px; height: 1px; background: var(--brand-gold); order: 1; margin-top: 0.2rem; }
+.tile-label { font-size: 1.45rem; line-height: 1.25; font-weight: 700; order: 2; }
+.tile-sub { color: var(--color-muted); font-size: 0.95rem; order: 3; }
+.tile .kennung { order: 0; }
+.tile-badge { order: 4; justify-self: start; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; background: var(--surface-alt); color: var(--color-muted); border: 1px solid var(--color-border); }
+a.tile:hover, a.tile:focus-visible { background: var(--brand-navy); color: #fff; }
+a.tile:hover .kennung, a.tile:hover .tile-sub, a.tile:focus-visible .kennung, a.tile:focus-visible .tile-sub { color: #aab8ca; }
+.tile-soon { color: #7a8799; }
+.tile-soon .tile-label { color: #56657a; }
+
+/* Dashboard-Kacheln im CI */
+.stat-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+.stat-tile { border-radius: 0; border: 1px solid var(--color-border); background: #fff; }
+.stat-tile:hover { box-shadow: none; transform: none; border-color: var(--brand-navy); }
+.stat-tile .stat-value { color: var(--brand-navy); }
+.stat-tile.wide { background: var(--surface-alt); border-color: var(--color-border); }
+.stat-tile.wide .stat-value { color: var(--brand-navy); }
+
+/* Dubletten-/Pruefkarten eckig */
+.dupe-box, .review-card, .user-card, .big-check { border-radius: 0; }
+
+/* Breite Bildschirme: Tour mit Einstellungen links, Ergebnis/Karte rechts */
+@media (min-width: 1280px) {
+  body[data-screen="tour"] #app-root {
+    display: grid;
+    grid-template-columns: minmax(380px, 460px) minmax(0, 1fr);
+    align-items: start;
+  }
+  body[data-screen="tour"] #app-root > * { grid-column: 1 / -1; }
+  body[data-screen="tour"] #app-root > .controls { grid-column: 1; position: sticky; top: 1rem; }
+  body[data-screen="tour"] #app-root > #results-panel { grid-column: 2; }
+  body[data-screen="tour"] .map { height: 560px; }
+  body[data-screen="zahlen"] .stat-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  body[data-screen="zahlen"] .stat-tile.wide { grid-column: span 2; }
+  #add-customer-form .field-row { gap: 1.25rem; }
+  body[data-screen="firma"] #deeplink-panel, body[data-screen="neu"] #add-customer-panel,
+  body[data-screen="benutzer"] #users-panel, body[data-screen="drucken"] #print-panel { max-width: 1100px; }
+  .users-list { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+}
+
+@media print {
+  .view-bar, #home-view, #print-panel, #users-panel, .welcome-banner, .user-bar { display: none !important; }
+  body[data-screen] #app-root { display: block !important; }
+}
