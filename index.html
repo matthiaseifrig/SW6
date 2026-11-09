@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – Kunden &amp; Termine</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20261109i">
+<link rel="stylesheet" href="style.css?v=20261109k">
 </head>
 <body>
 <header class="topbar">
@@ -61,6 +61,7 @@
       <div class="home-head">
         <span class="kennung" id="home-roles"></span>
         <h2 id="home-greeting">Guten Tag</h2>
+        <p class="home-saying" id="home-saying"></p>
         <span class="gold-rule"></span>
       </div>
       <div class="tile-grid" id="tile-grid">
@@ -242,7 +243,7 @@
       <div class="collapsible-title">
         <h2>Kundenseite</h2>
       </div>
-      <button type="button" id="deeplink-back-btn" class="link-btn">← Zurück zur Übersicht</button>
+      <button type="button" id="deeplink-back-btn" class="link-btn hidden">← Zurück</button>
       <div id="deeplink-body"></div>
     </section>
 
@@ -251,14 +252,22 @@
         <div class="collapsible-title">
           <label for="customer-search">Kunde suchen</label>
         </div>
-        <input type="text" id="customer-search" placeholder="Firmenname, Ort, Straße oder Ansprechpartner …">
+        <input type="search" id="customer-search" placeholder="Firmenname, Ort, PLZ, Straße oder Ansprechpartner …" autocomplete="off">
       </div>
-      <div class="search-filters">
-        <button type="button" class="filter-chip" id="filter-members" data-filter="members">Nur Mitglieder</button>
-        <button type="button" class="filter-chip" id="filter-consultations" data-filter="consultations">Nur Beratungstermine</button>
+      <div class="search-filters" role="group" aria-label="Filter">
+        <button type="button" class="filter-chip active" data-filter="alle">Alle A–Z</button>
+        <button type="button" class="filter-chip" data-filter="zuletzt">Zuletzt angesehen</button>
+        <button type="button" class="filter-chip" data-filter="wiedervorlage">Wiedervorlage fällig</button>
+        <button type="button" class="filter-chip" data-filter="termin">Offener Termin</button>
+        <button type="button" class="filter-chip" data-filter="neu">Noch nicht kontaktiert</button>
+        <button type="button" class="filter-chip" data-filter="mitglied">BdSt-Mitglieder</button>
+        <button type="button" class="filter-chip" data-filter="kunde">Kunden</button>
+        <button type="button" class="filter-chip" data-filter="todo">Offene ToDos</button>
       </div>
+      <p id="search-count" class="search-count"></p>
       <ul id="search-results" class="search-results hidden"></ul>
       <p id="search-empty" class="hint hidden">Keine Treffer.</p>
+      <button type="button" id="search-more" class="secondary hidden">Weitere anzeigen</button>
     </section>
 
       <section class="panel accent" id="add-customer-panel" data-view="neu">
@@ -350,6 +359,21 @@
             <div class="progress-bar"><div id="admin-import-progress-fill"></div></div>
           </div>
           <p id="admin-import-status" class="hint"></p>
+
+          <hr class="divider">
+          <h3>Firmen ohne Umsatzdaten</h3>
+          <p class="hint">
+            Prüft, bei welchen Firmen Umsatz, Gewinn oder Bilanzsumme fehlen, und
+            erstellt daraus eine CSV-Liste (Name, Adresse, Registernummer) für die
+            Suche in North Data. Den North-Data-Export dieser Firmen dann oben
+            über „Datei prüfen“ importieren – vorhandene Firmen werden ergänzt,
+            die Kennzahlen aktualisiert. Hinweis: Kleine Kapitalgesellschaften
+            veröffentlichen meist nur die Bilanz (kein Umsatz), Einzelunternehmen
+            und Personengesellschaften in der Regel gar keine Zahlen.
+          </p>
+          <button type="button" id="fin-check-btn" class="secondary">Prüfen</button>
+          <button type="button" id="fin-csv-btn" class="primary hidden">Liste herunterladen (CSV)</button>
+          <p id="fin-check-status" class="hint"></p>
 
           <hr class="divider">
           <h3>Adresspool zuweisen</h3>
@@ -615,12 +639,13 @@
 </div>
 
 <footer>
+  <p class="data-notice">Die angezeigten Firmendaten sind Eigentum der G.B.V.M. GmbH und dürfen nur für vertriebliche Zwecke in Zusammenarbeit mit der G.B.V.M. GmbH verwendet werden.</p>
   <p>G.B.V.M. GmbH · Ismaninger Str. 7b, 85609 Aschheim · Geokodierung: OpenStreetMap Nominatim · Routing: OSRM (project-osrm.org) · Kunden-, Besuchs- und Notizdaten: Firebase.</p>
 </footer>
 
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20261109i"></script>
+<script type="module" src="app.js?v=20261109k"></script>
 </body>
 </html>

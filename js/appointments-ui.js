@@ -2,8 +2,8 @@
 // durchgefuehrt / verschoben / abgesagt eintragen, Ergebnis erfassen
 // (Mitglied gewonnen bzw. Abschluss + Sparte), Folgetermin Werber ->
 // Makler vereinbaren. Dazu die Auswertung "Termine & Ergebnisse".
-import { getAppointmentsFor, updateAppointment, createAppointment, fsIncrement, fsArrayUnion, FsTimestamp } from "./data-store.js?v=20261109i";
-import { periodStart, toDate, deDate, esc, todayIso, addDaysIso, TYPE_LABELS, STATUS_LABELS, telHref, loadUsers } from "./calls-ui.js?v=20261109i";
+import { getAppointmentsFor, updateAppointment, createAppointment, fsIncrement, fsArrayUnion, FsTimestamp } from "./data-store.js?v=20261109k";
+import { periodStart, toDate, deDate, esc, todayIso, addDaysIso, TYPE_LABELS, STATUS_LABELS, telHref, loadUsers } from "./calls-ui.js?v=20261109k";
 
 // Kennzahlen Werber (nur Uebersicht, keine Abrechnung) - wie bisher in
 // der App und im BdSt-Vertriebscockpit hinterlegt.

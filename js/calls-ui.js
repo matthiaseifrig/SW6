@@ -14,7 +14,7 @@ import {
   assignFirms,
   listUsers,
   inPoolOf,
-} from "./data-store.js?v=20261109i";
+} from "./data-store.js?v=20261109k";
 
 let ctx = null;
 const els = {};
@@ -667,14 +667,6 @@ export async function buildFirmActivitySection(meta) {
   const h = document.createElement("h3");
   h.textContent = "Verlauf: wer hat was gemacht";
   box.appendChild(h);
-  if (ctx.canCall()) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "primary";
-    btn.textContent = "Anrufen / Ergebnis eintragen";
-    btn.addEventListener("click", () => callFirm(meta));
-    box.appendChild(btn);
-  }
   const chainBox = document.createElement("ol");
   chainBox.className = "chain";
   box.appendChild(chainBox);
