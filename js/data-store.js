@@ -20,10 +20,10 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20261109o";
-import { buildAddressMeta } from "./address-utils.js?v=20261109o";
-import { normalizeFunctions } from "./roles.js?v=20261109o";
-import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109o";
+import { db } from "./firebase-app.js?v=20261109q";
+import { buildAddressMeta } from "./address-utils.js?v=20261109q";
+import { normalizeFunctions } from "./roles.js?v=20261109q";
+import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109q";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -455,10 +455,11 @@ export async function listUsers() {
 // Name und Funktionen (presales/werber/makler) einer Person setzen - nur
 // "owner" (siehe firestore.rules). Rolle und financialsAccess bleiben
 // bewusst Sache der Firebase-Konsole.
-export async function updateUserProfile(uid, { name, functions }) {
+export async function updateUserProfile(uid, { name, functions, financialsAccess }) {
   await updateDoc(doc(db, "users", uid), {
     name: String(name || "").trim(),
     functions: normalizeFunctions(functions),
+    financialsAccess: Boolean(financialsAccess),
   });
 }
 

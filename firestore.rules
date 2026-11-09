@@ -21,12 +21,13 @@ service cloud.firestore {
       return isMember() && get(myUserPath()).data.role == 'owner';
     }
 
-    // Einzelnen Kolleg:innen kann "owner" zusaetzlich Lesezugriff auf die
-    // Finanzkennzahlen ihrer eigenen Kunden geben (Feld financialsAccess auf
-    // dem eigenen users/{uid}-Dokument, manuell in der Firebase-Konsole
-    // gesetzt - genau wie die Rolle "owner" selbst).
+    // Finanzkennzahlen: Admin immer; Makler und Personen mit Freigabe
+    // (financialsAccess) bei allen Firmen in ihrem Pool.
+    // Kennzahlen sehen: Makler immer, andere mit Freigabe (financialsAccess,
+    // vom Admin in der App unter "Benutzer" gesetzt).
     function hasFinancialsAccess() {
-      return isMember() && get(myUserPath()).data.financialsAccess == true;
+      return isMember() && (get(myUserPath()).data.get('financialsAccess', false) == true ||
+        'makler' in get(myUserPath()).data.get('functions', []));
     }
 
     function changedKeys() {
@@ -81,15 +82,11 @@ service cloud.firestore {
         allow delete: if isOwnerRole();
       }
 
-      // Finanzkennzahlen (Umsatz, Gewinn, CAGR, Mitarbeiterzahl,
-      // Pensionsrückstellungen, ...) sind vertraulich - grundsaetzlich nur
-      // "owner". Einzelne Kolleg:innen mit financialsAccess=true duerfen sie
-      // zusaetzlich lesen, aber nur fuer ihre eigenen Kunden. Schreiben
-      // bleibt in jedem Fall "owner" vorbehalten.
+      // Finanzkennzahlen (Umsatz, Bilanz, Liquiditaet, Pensionsrueckstellungen
+      // ...) sind vertraulich: Admin immer; Makler und freigegebene Personen
+      // nur bei Firmen in ihrem Pool. Schreiben nur Admin.
       match /financials/{docId} {
-        allow read: if isOwnerRole() ||
-          (hasFinancialsAccess() &&
-            get(/databases/$(database)/documents/customers/$(customerId)).data.ownerUid == request.auth.uid);
+        allow read: if isOwnerRole() || (hasFinancialsAccess() && firmInPool(customerId));
         allow write: if isOwnerRole();
       }
     }
