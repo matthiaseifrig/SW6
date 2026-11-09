@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – BdSt – Tourenplaner</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20260812b">
+<link rel="stylesheet" href="style.css?v=20261109b">
 </head>
 <body>
 <header class="topbar">
@@ -19,7 +19,7 @@
     <span id="user-info"></span>
     <label id="scope-toggle-label" class="scope-toggle hidden">
       <input type="checkbox" id="scope-toggle">
-      Alle Kollegen anzeigen
+      <span id="scope-toggle-text">Alle Firmen anzeigen</span>
     </label>
     <button id="logout-btn" class="secondary small">Abmelden</button>
   </div>
@@ -184,6 +184,7 @@
             <div id="nc-tags-options" class="tag-checkboxes"></div>
             <p class="hint">„Akquise“ wird automatisch immer vergeben.</p>
           </div>
+          <div id="add-customer-dupe" class="dupe-box hidden" role="alert"></div>
           <button type="submit" class="primary">Kunde speichern</button>
           <p id="add-customer-status" class="hint"></p>
         </form>
@@ -199,11 +200,15 @@
         </div>
         <div id="admin-import-body" class="hidden">
           <p class="hint">
-            Lädt eine North-Data-CSV-Exportdatei (Firmenname, Adresse, gesetzliche
-            Vertreter, Finanzkennzahlen) und legt die Kunden im Namen der
-            ausgewählten Person an. Diese Person muss sich vorher einmal selbst
-            angemeldet haben, damit sie hier auswählbar ist. Importierte Kunden
-            werden automatisch mit „Akquise“ und „North Data“ getaggt.
+            Lädt eine North-Data-CSV-Exportdatei (Firmenname, Adresse,
+            Registernummer, gesetzliche Vertreter, Finanzkennzahlen inkl.
+            Pensionsrückstellungen) – egal ob als ANSI/Windows oder UTF-8
+            gespeichert. Vor dem Import wird jede Zeile mit den vorhandenen
+            Firmen abgeglichen (Registernummer, Telefon, Name + PLZ/Ort):
+            Vorhandene Firmen werden <strong>ergänzt statt doppelt angelegt</strong>,
+            unklare Fälle kannst du einzeln entscheiden. Neue Firmen werden im
+            Namen der ausgewählten Person angelegt und mit „Akquise“ und
+            „North Data“ getaggt.
           </p>
           <div class="field">
             <label for="admin-import-user">Für wen importieren?</label>
@@ -213,11 +218,25 @@
             <label for="admin-import-file">North-Data-CSV-Datei</label>
             <input type="file" id="admin-import-file" accept=".csv">
           </div>
-          <button id="admin-import-btn" class="primary">Importieren</button>
+          <button id="admin-import-btn" class="primary">Datei prüfen</button>
+          <div id="admin-import-preview" class="import-preview hidden"></div>
           <div id="admin-import-progress" class="hidden">
             <div class="progress-bar"><div id="admin-import-progress-fill"></div></div>
           </div>
           <p id="admin-import-status" class="hint"></p>
+
+          <hr class="divider">
+          <h3>Dubletten zusammenführen</h3>
+          <p class="hint">
+            Sucht Firmen, die doppelt angelegt sind (gleiche Registernummer,
+            gleiche Telefonnummer oder gleicher Name mit gleicher PLZ bzw. gleichem
+            Ort). Beim Zusammenführen wandern Besuche, ToDos, Ansprechpartner,
+            Tags, Finanzkennzahlen, Anrufe und Termine auf die gewählte
+            Haupt-Firma; die anderen Einträge werden gelöscht.
+          </p>
+          <button type="button" id="dupe-search-btn" class="secondary">Dubletten suchen</button>
+          <p id="dupe-search-status" class="hint"></p>
+          <div id="dupe-groups" class="dupe-groups"></div>
 
           <hr class="divider">
           <p class="hint">
@@ -244,6 +263,26 @@
         </div>
       </section>
     </div>
+
+    <section class="panel accent hidden" id="users-panel">
+      <div class="collapsible-header" id="users-toggle">
+        <div class="collapsible-title">
+          <span class="add-icon">👥</span>
+          <h2>Benutzer</h2>
+        </div>
+        <span class="chevron">▾</span>
+      </div>
+      <div id="users-body" class="hidden">
+        <p class="hint">
+          Hier legst du fest, wie jede Person heißt und welche Arbeit sie
+          macht. Eine Person kann mehrere Funktionen haben. Neue Personen
+          erscheinen hier, sobald sie sich einmal angemeldet haben (Zugang
+          vorher in Firebase unter Authentication → Nutzer anlegen).
+        </p>
+        <div id="users-list" class="users-list"></div>
+        <p id="users-status" class="hint"></p>
+      </div>
+    </section>
 
     <section class="panel hidden" id="import-panel">
       <p class="hint">Deine Kundenliste ist noch leer. Du kannst die ursprüngliche Excel-Liste (215 Adressen) einmalig importieren:</p>
@@ -415,6 +454,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20260812b"></script>
+<script type="module" src="app.js?v=20261109b"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260812b";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109b";
 import {
   subscribeCustomers,
   addCustomer,
@@ -20,15 +20,23 @@ import {
   getVisits,
   getFinancials,
   importStaticAddresses,
-  importRecordsForColleague,
+  runImportPlan,
+  getAllCustomers,
+  getCustomer,
+  mergeIntoCustomer,
+  mergeDuplicateFirms,
+  markNotDuplicate,
   countOwnCustomers,
   listUsers,
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260812b";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260812b";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260812b";
+  updateUserProfile,
+} from "./js/data-store.js?v=20261109b";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109b";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109b";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109b";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109b";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -53,6 +61,7 @@ let mapLayer = null;
 const state = {
   user: null, // { uid, email }
   role: "colleague",
+  functions: [], // "presales" | "werber" | "makler" (siehe js/roles.js)
   canSeeFinancials: false,
   customers: [], // aktuelle Firestore-Kundenliste (je nach scope)
   byCity: {},
@@ -64,6 +73,9 @@ const state = {
   activeSearchFilter: null, // "members" | "consultations" | null
   openCustomerId: new URLSearchParams(location.search).get("customer") || null,
   customerPageScrolled: false,
+  dedupIndex: null, // { index, loadedAt } - alle Firmen fuer die Dublettenpruefung
+  pendingAdd: null, // { fields, matches } - "Neue Firma" wartet auf Entscheidung
+  importPlan: null, // vorbereiteter North-Data-Import (siehe onAdminImportClick)
 };
 
 document.addEventListener("DOMContentLoaded", init);
@@ -112,11 +124,22 @@ function cacheEls() {
   els.adminImportProgress = document.getElementById("admin-import-progress");
   els.adminImportProgressFill = document.getElementById("admin-import-progress-fill");
   els.adminImportStatus = document.getElementById("admin-import-status");
+  els.adminImportPreview = document.getElementById("admin-import-preview");
+  els.addCustomerDupe = document.getElementById("add-customer-dupe");
+  els.dupeSearchBtn = document.getElementById("dupe-search-btn");
+  els.dupeSearchStatus = document.getElementById("dupe-search-status");
+  els.dupeGroups = document.getElementById("dupe-groups");
   els.backfillBtn = document.getElementById("backfill-btn");
   els.backfillStatus = document.getElementById("backfill-status");
   els.printListUser = document.getElementById("print-list-user");
   els.printListBtn = document.getElementById("print-list-btn");
   els.printListStatus = document.getElementById("print-list-status");
+
+  els.usersPanel = document.getElementById("users-panel");
+  els.usersToggle = document.getElementById("users-toggle");
+  els.usersBody = document.getElementById("users-body");
+  els.usersList = document.getElementById("users-list");
+  els.usersStatus = document.getElementById("users-status");
 
   els.welcomeBanner = document.getElementById("welcome-banner");
   els.welcomeText = document.getElementById("welcome-text");
@@ -209,6 +232,11 @@ function bindStaticEvents() {
     els.addCustomerForm.classList.toggle("hidden");
   });
   els.addCustomerForm.addEventListener("submit", onAddCustomerSubmit);
+  ["nc-unternehmen", "nc-plz", "nc-ort", "nc-telefon"].forEach((id) => {
+    document.getElementById(id).addEventListener("input", scheduleLiveDupeCheck);
+  });
+  els.addCustomerDupe.addEventListener("click", onDupeBoxClick);
+  els.dupeSearchBtn.addEventListener("click", onDupeSearchClick);
   els.importBtn.addEventListener("click", onImportClick);
 
   els.adminImportToggle.addEventListener("click", () => {
@@ -217,6 +245,11 @@ function bindStaticEvents() {
   els.adminImportBtn.addEventListener("click", onAdminImportClick);
   els.backfillBtn.addEventListener("click", onBackfillClick);
   els.printListBtn.addEventListener("click", onPrintListClick);
+
+  els.usersToggle.addEventListener("click", () => {
+    els.usersBody.classList.toggle("hidden");
+    if (!els.usersBody.classList.contains("hidden")) renderUsersList();
+  });
 
   els.citySelect.addEventListener("change", onCityChange);
   els.streetSelect.addEventListener("change", refreshStartAddressOptions);
@@ -306,19 +339,25 @@ async function handleAuthChange(user) {
   const profile = await ensureUserDoc(user);
   state.user = { uid: user.uid, email: user.email, name: profile.name || user.email };
   state.role = profile.role || "colleague";
+  state.functions = normalizeFunctions(profile.functions);
   state.canSeeFinancials = state.role === "owner" || Boolean(profile.financialsAccess);
 
   els.loginPanel.classList.add("hidden");
   els.appRoot.classList.remove("hidden");
   els.userBar.classList.remove("hidden");
-  els.userInfo.textContent = user.email + (state.role === "owner" ? " (Admin)" : "");
-  els.scopeToggleLabel.classList.toggle("hidden", state.role !== "owner");
+  const roleParts = state.functions.map(functionLabel);
+  if (state.role === "owner") roleParts.unshift("Admin");
+  els.userInfo.textContent = state.user.name + (roleParts.length ? " (" + roleParts.join(", ") + ")" : "");
+  // Alle im Team sehen alle Firmen (Finanzkennzahlen bleiben gesperrt) -
+  // standardmaessig startet die Liste aber mit den eigenen Firmen.
+  els.scopeToggleLabel.classList.remove("hidden");
   els.scopeToggle.checked = false;
   state.scopeAll = false;
 
   showWelcomeBanner(state.user.name);
 
   els.adminImportPanel.classList.toggle("hidden", state.role !== "owner");
+  els.usersPanel.classList.toggle("hidden", state.role !== "owner");
   if (state.role === "owner") {
     populateAdminImportUsers();
     populatePrintListUsers();
@@ -435,8 +474,16 @@ function maybeShowImportPanel() {
 // Mitgliedschaft und Beratungstermin sind dafuer als "letzter Stand" am
 // Kundendokument gespiegelt (siehe updateVisitOutcome in data-store.js).
 
+// Zahlen im Dashboard: "owner" sieht je nach Schalter eigene oder alle,
+// Kolleg:innen immer nur die eigenen - auch wenn sie "Alle Firmen
+// anzeigen" eingeschaltet haben (das dient nur der Suche/Tour).
+function dashboardCustomers() {
+  if (state.role === "owner") return state.customers;
+  return state.customers.filter((c) => c.ownerUid === state.user.uid);
+}
+
 function refreshDashboard() {
-  const customers = state.customers;
+  const customers = dashboardCustomers();
   els.statCustomers.textContent = String(customers.length);
   els.statVisits.textContent = String(customers.filter((c) => c.lastVisitedAt).length);
   els.statMemberships.textContent = String(customers.filter((c) => c.membershipSigned).length);
@@ -623,7 +670,7 @@ function renderCustomerLinkList(container, entries) {
 // anderen Dashboard-Kacheln. "erledigt" gibt es hier bewusst nicht direkt
 // (nur read-only Übersicht) - dafür auf die Kundenseite durchklicken.
 function renderTodoOverview(container) {
-  const withTodo = state.customers.filter((c) => c.openTodo && c.openTodo.text);
+  const withTodo = dashboardCustomers().filter((c) => c.openTodo && c.openTodo.text);
   if (!withTodo.length) {
     const p = document.createElement("p");
     p.className = "hint";
@@ -660,14 +707,14 @@ function renderTodoOverview(container) {
 
 async function openStatDetail(stat) {
   els.statDetailTitle.textContent = STAT_LABELS[stat] || stat;
-  els.statDetailSubtitle.textContent = state.role === "owner" && state.scopeAll ? "Alle Kollegen · aktueller Stand" : "Eigene Kunden · aktueller Stand";
+  els.statDetailSubtitle.textContent = state.role === "owner" && state.scopeAll ? "Alle Firmen · aktueller Stand" : "Eigene Kunden · aktueller Stand";
   els.statDetailBody.innerHTML = "";
   els.statDetailOverlay.classList.remove("hidden");
 
   if (stat === "customers") {
     const buckets = {};
     const entries = [];
-    state.customers.forEach((c) => {
+    dashboardCustomers().forEach((c) => {
       const d = toJsDate(c.createdAt);
       if (!d) return;
       const key = monthKeyFromDate(d);
@@ -690,7 +737,7 @@ async function openStatDetail(stat) {
   els.statDetailBody.appendChild(loading);
 
   try {
-    const visits = await loadAllVisitsForCustomers(state.customers, (done, total) => {
+    const visits = await loadAllVisitsForCustomers(dashboardCustomers(), (done, total) => {
       loading.textContent = `Lade Besuchsdaten … ${done}/${total} Kunden`;
     });
     const buckets = {};
@@ -753,8 +800,21 @@ async function openStatDetail(stat) {
 // (Suche, Tourenplaner, offene Termine). Navigation passiert client-seitig
 // (history.pushState) statt per Seiten-Reload.
 
-function openCustomerPage(id) {
+// Firma aus der geladenen Liste - oder (z. B. fremde Firma bei
+// ausgeschaltetem "Alle Firmen anzeigen") einzeln nachladen.
+async function findCustomerAnywhere(id) {
   const meta = state.customers.find((c) => c.id === id);
+  if (meta) return meta;
+  try {
+    return await getCustomer(id);
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
+async function openCustomerPage(id) {
+  const meta = await findCustomerAnywhere(id);
   if (!meta) return;
   history.pushState({ customerId: id }, "", "?customer=" + encodeURIComponent(id));
   state.openCustomerId = id;
@@ -774,16 +834,24 @@ function refreshCustomerPage() {
     els.deeplinkPanel.classList.add("hidden");
     return;
   }
-  const meta = state.customers.find((c) => c.id === state.openCustomerId);
-  if (!meta) {
-    els.deeplinkPanel.classList.add("hidden");
+  const id = state.openCustomerId;
+  const meta = state.customers.find((c) => c.id === id);
+  if (meta) {
+    renderCustomerPage(meta);
     return;
   }
-  renderCustomerPage(meta);
+  findCustomerAnywhere(id).then((m) => {
+    if (state.openCustomerId !== id) return;
+    if (!m) {
+      els.deeplinkPanel.classList.add("hidden");
+      return;
+    }
+    renderCustomerPage(m);
+  });
 }
 
 async function renderCustomerPage(meta) {
-  if (state.canSeeFinancials && meta.financials === undefined) {
+  if (canSeeFinancialsOf(meta) && meta.financials === undefined) {
     try {
       meta.financials = (await getFinancials(meta.id)) || null;
     } catch (e) {
@@ -796,7 +864,9 @@ async function renderCustomerPage(meta) {
   detailsDiv.innerHTML = buildCustomerDetailsHtml(meta);
   els.deeplinkBody.appendChild(detailsDiv);
 
-  if (state.role === "owner") {
+  // Manuelles Ja/Nein nur, solange North Data keinen Betrag geliefert hat.
+  const hasPensionAmount = meta.financials && typeof meta.financials.pensionsrueckstellungenEur === "number";
+  if (state.role === "owner" && !hasPensionAmount) {
     detailsDiv.appendChild(buildPensionToggle(meta));
   }
 
@@ -1175,13 +1245,108 @@ function buildContactsSection(meta) {
   return wrap;
 }
 
+// Finanzkennzahlen: "owner" bei allen Firmen, Personen mit
+// financialsAccess nur bei eigenen Firmen (wie in firestore.rules).
+function canSeeFinancialsOf(meta) {
+  if (state.role === "owner") return true;
+  return state.canSeeFinancials && meta && meta.ownerUid === state.user.uid;
+}
+
+// ---------- Benutzer (nur "owner"): Name und Funktionen ----------
+
+async function renderUsersList() {
+  els.usersList.innerHTML = "";
+  els.usersStatus.textContent = "Lade Benutzer …";
+  let users = [];
+  try {
+    users = await listUsers();
+  } catch (err) {
+    els.usersStatus.textContent = "Fehler beim Laden: " + err.message;
+    return;
+  }
+  els.usersStatus.textContent = "";
+  users.sort((a, b) => (a.name || a.email || "").localeCompare(b.name || b.email || "", "de"));
+  users.forEach((u) => els.usersList.appendChild(buildUserCard(u)));
+}
+
+function buildUserCard(u) {
+  const card = document.createElement("div");
+  card.className = "user-card";
+
+  const head = document.createElement("div");
+  head.className = "user-card-head";
+  head.textContent = (u.email || u.uid) + (u.role === "owner" ? " · Admin" : "") + (u.financialsAccess ? " · Finanzzugriff" : "");
+  card.appendChild(head);
+
+  const nameLabel = document.createElement("label");
+  nameLabel.className = "user-card-label";
+  nameLabel.textContent = "Name";
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.value = u.name && u.name !== u.email ? u.name : "";
+  nameInput.placeholder = "Vor- und Nachname";
+  nameLabel.appendChild(nameInput);
+  card.appendChild(nameLabel);
+
+  const fnWrap = document.createElement("div");
+  fnWrap.className = "user-card-functions";
+  const current = normalizeFunctions(u.functions);
+  const boxes = FUNCTIONS.map((f) => {
+    const lbl = document.createElement("label");
+    lbl.className = "big-check";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = f.key;
+    cb.checked = current.includes(f.key);
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(" " + f.label));
+    fnWrap.appendChild(lbl);
+    return cb;
+  });
+  card.appendChild(fnWrap);
+
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.className = "primary";
+  saveBtn.textContent = "Speichern";
+  const status = document.createElement("p");
+  status.className = "hint";
+  saveBtn.addEventListener("click", async () => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      status.textContent = "Bitte einen Namen eintragen.";
+      return;
+    }
+    saveBtn.disabled = true;
+    status.textContent = "Speichere …";
+    try {
+      const functions = boxes.filter((b) => b.checked).map((b) => b.value);
+      await updateUserProfile(u.uid, { name, functions });
+      u.name = name;
+      u.functions = functions;
+      status.textContent = "Gespeichert: " + name + (functions.length ? " – " + functions.map(functionLabel).join(", ") : " – keine Funktion");
+      if (u.uid === state.user.uid) {
+        state.user.name = name;
+        state.functions = normalizeFunctions(functions);
+      }
+    } catch (err) {
+      status.textContent = "Fehler: " + err.message;
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+  card.appendChild(saveBtn);
+  card.appendChild(status);
+  return card;
+}
+
 // ---------- Provisionen für ältere Einträge nachtragen (Dashboard) ----------
 
 async function onBackfillProvisionsClick() {
   els.backfillProvisionsBtn.disabled = true;
   els.backfillProvisionsStatus.textContent = "Prüfe bestehende Einträge …";
   try {
-    const result = await backfillMissingProvisions(state.customers, (done, total) => {
+    const result = await backfillMissingProvisions(dashboardCustomers(), (done, total) => {
       els.backfillProvisionsStatus.textContent = `Prüfe … ${done}/${total}`;
     });
     els.backfillProvisionsStatus.textContent =
@@ -1306,9 +1471,8 @@ function selectedTagCheckboxes(container) {
   return Array.from(container.querySelectorAll("input[type=checkbox]:checked")).map((c) => c.value);
 }
 
-async function onAddCustomerSubmit(ev) {
-  ev.preventDefault();
-  const fields = {
+function readAddCustomerFields() {
+  return {
     unternehmen: document.getElementById("nc-unternehmen").value.trim(),
     strasse: document.getElementById("nc-strasse").value.trim(),
     plz: document.getElementById("nc-plz").value.trim(),
@@ -1319,17 +1483,199 @@ async function onAddCustomerSubmit(ev) {
     website: document.getElementById("nc-website").value.trim(),
     tags: selectedTagCheckboxes(els.ncTagsOptions),
   };
+}
+
+// ---------- Dublettenschutz: Index aller Firmen ----------
+
+// Alle Firmen (nicht nur die eigenen) fuer den Abgleich. Ist "Alle Firmen
+// anzeigen" an, ist die Live-Liste schon vollstaendig; sonst einmal laden
+// und 2 Minuten zwischenspeichern.
+async function getDedupIndex(force) {
+  if (state.scopeAll) return buildIndex(state.customers.slice());
+  const fresh = state.dedupIndex && Date.now() - state.dedupIndex.loadedAt < 120000;
+  if (!force && fresh) return state.dedupIndex.index;
+  const firms = await getAllCustomers();
+  const index = buildIndex(firms);
+  state.dedupIndex = { index, loadedAt: Date.now() };
+  return index;
+}
+
+function invalidateDedupIndex() {
+  state.dedupIndex = null;
+}
+
+function firmShortLine(f) {
+  const place = [f.plz, f.ort].filter(Boolean).join(" ");
+  return [f.strasse, place].filter(Boolean).join(", ") + (f.telefon ? " · Tel. " + f.telefon : "");
+}
+
+function ownerNameOf(uid) {
+  if (!uid) return "";
+  if (state.user && uid === state.user.uid) return "dir";
+  const u = (state.usersCache || []).find((x) => x.uid === uid);
+  return u ? u.name || u.email : "";
+}
+
+async function ensureUsersCache() {
+  if (state.usersCache) return state.usersCache;
+  try {
+    state.usersCache = await listUsers();
+  } catch (err) {
+    state.usersCache = [];
+  }
+  return state.usersCache;
+}
+
+let liveDupeTimer = null;
+function scheduleLiveDupeCheck() {
+  clearTimeout(liveDupeTimer);
+  state.pendingAdd = null;
+  liveDupeTimer = setTimeout(runLiveDupeCheck, 500);
+}
+
+async function runLiveDupeCheck() {
+  const fields = readAddCustomerFields();
+  if (!fields.unternehmen && !fields.telefon) {
+    els.addCustomerDupe.classList.add("hidden");
+    return;
+  }
+  try {
+    const [index] = await Promise.all([getDedupIndex(false), ensureUsersCache()]);
+    const matches = findMatches(fields, index);
+    renderDupeBox(matches, false);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// Zeigt im Formular "Neue Firma" an, ob es die Firma schon gibt.
+// decide=true: beim Speichern - mit Knoepfen zur Entscheidung.
+function renderDupeBox(matches, decide) {
+  const box = els.addCustomerDupe;
+  box.innerHTML = "";
+  if (matches.level === "none") {
+    box.classList.add("hidden");
+    return;
+  }
+  box.classList.remove("hidden");
+  box.classList.toggle("sure", matches.level === "sure");
+
+  const title = document.createElement("p");
+  title.className = "dupe-title";
+  title.textContent =
+    matches.level === "sure" ? "Diese Firma gibt es schon:" : "Gibt es diese Firma vielleicht schon?";
+  box.appendChild(title);
+
+  const list = matches.level === "sure" ? matches.sure : matches.maybe;
+  list.slice(0, 5).forEach(({ firm, reasons }) => {
+    const item = document.createElement("div");
+    item.className = "dupe-item";
+    const owner = ownerNameOf(firm.ownerUid);
+    item.innerHTML =
+      "<strong>" + escapeHtml(firm.unternehmen) + "</strong><br>" +
+      escapeHtml(firmShortLine(firm)) +
+      (owner ? "<br>angelegt von " + escapeHtml(owner) : "") +
+      '<br><span class="dupe-reason">' + escapeHtml(reasons.join(", ")) + "</span>";
+    const btnRow = document.createElement("div");
+    btnRow.className = "dupe-actions";
+    const openBtn = document.createElement("button");
+    openBtn.type = "button";
+    openBtn.className = "secondary";
+    openBtn.dataset.action = "open";
+    openBtn.dataset.id = firm.id;
+    openBtn.textContent = "Firma öffnen";
+    btnRow.appendChild(openBtn);
+    if (decide) {
+      const mergeBtn = document.createElement("button");
+      mergeBtn.type = "button";
+      mergeBtn.className = "primary";
+      mergeBtn.dataset.action = "merge";
+      mergeBtn.dataset.id = firm.id;
+      mergeBtn.textContent = matches.level === "sure" ? "Fehlende Angaben dort ergänzen" : "Ja, dieselbe – dort ergänzen";
+      btnRow.appendChild(mergeBtn);
+    }
+    item.appendChild(btnRow);
+    box.appendChild(item);
+  });
+
+  if (decide && matches.level === "maybe") {
+    const newBtn = document.createElement("button");
+    newBtn.type = "button";
+    newBtn.className = "secondary";
+    newBtn.dataset.action = "new";
+    newBtn.textContent = "Nein, andere Firma – neu anlegen";
+    box.appendChild(newBtn);
+  }
+}
+
+async function onDupeBoxClick(ev) {
+  const btn = ev.target.closest("button[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === "open") {
+    openCustomerPage(btn.dataset.id);
+    return;
+  }
+  const pending = state.pendingAdd;
+  if (!pending) {
+    els.addCustomerStatus.textContent = "Bitte zuerst auf „Kunde speichern“ tippen.";
+    return;
+  }
+  btn.disabled = true;
+  try {
+    if (action === "merge") {
+      const entry = [...pending.matches.sure, ...pending.matches.maybe].find((m) => m.firm.id === btn.dataset.id);
+      const changed = await mergeIntoCustomer(entry.firm, pending.fields);
+      finishAddCustomer(
+        changed.length
+          ? "Vorhandene Firma ergänzt (" + changed.join(", ") + ")."
+          : "Die vorhandene Firma hatte schon alle Angaben – nichts geändert."
+      );
+    } else if (action === "new") {
+      await addCustomer(pending.fields, state.user.uid);
+      finishAddCustomer("Neue Firma gespeichert.");
+    }
+  } catch (err) {
+    els.addCustomerStatus.textContent = "Fehler: " + err.message;
+    btn.disabled = false;
+  }
+}
+
+function finishAddCustomer(message) {
+  state.pendingAdd = null;
+  invalidateDedupIndex();
+  els.addCustomerForm.reset();
+  els.addCustomerDupe.classList.add("hidden");
+  els.addCustomerDupe.innerHTML = "";
+  els.addCustomerStatus.textContent = message;
+  setTimeout(() => (els.addCustomerStatus.textContent = ""), 5000);
+}
+
+async function onAddCustomerSubmit(ev) {
+  ev.preventDefault();
+  const fields = readAddCustomerFields();
   if (!fields.unternehmen || !fields.strasse || !fields.plz || !fields.ort || !fields.inhaber) {
     els.addCustomerStatus.textContent =
       "Bitte Unternehmen, Ansprechpartner, Straße, PLZ und Ort angeben (sonst funktioniert die Routenberechnung nicht).";
     return;
   }
-  els.addCustomerStatus.textContent = "Speichere …";
+  els.addCustomerStatus.textContent = "Prüfe, ob es die Firma schon gibt …";
   try {
+    const [index] = await Promise.all([getDedupIndex(true), ensureUsersCache()]);
+    const matches = findMatches(fields, index);
+    if (matches.level !== "none") {
+      state.pendingAdd = { fields, matches };
+      renderDupeBox(matches, true);
+      els.addCustomerStatus.textContent =
+        matches.level === "sure"
+          ? "Nicht gespeichert – diese Firma gibt es schon. Bitte die vorhandene ergänzen."
+          : "Bitte entscheiden: dieselbe Firma oder eine andere?";
+      els.addCustomerDupe.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    els.addCustomerStatus.textContent = "Speichere …";
     await addCustomer(fields, state.user.uid);
-    els.addCustomerForm.reset();
-    els.addCustomerStatus.textContent = "Gespeichert.";
-    setTimeout(() => (els.addCustomerStatus.textContent = ""), 3000);
+    finishAddCustomer("Gespeichert.");
   } catch (err) {
     els.addCustomerStatus.textContent = "Fehler: " + err.message;
   }
@@ -1354,15 +1700,18 @@ async function onImportClick() {
   els.importBtn.disabled = false;
 }
 
-function readFileAsText(file, encoding) {
+function readFileAsArrayBuffer(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(reader.error);
-    reader.readAsText(file, encoding);
+    reader.readAsArrayBuffer(file);
   });
 }
 
+// Schritt 1: Datei lesen und jede Zeile gegen die vorhandenen Firmen
+// pruefen. Ergebnis ist ein Plan (neu / ergaenzen / bitte pruefen), der
+// erst nach Klick auf "Import starten" ausgefuehrt wird.
 async function onAdminImportClick() {
   const targetUid = els.adminImportUser.value;
   const file = els.adminImportFile.files[0];
@@ -1376,29 +1725,319 @@ async function onAdminImportClick() {
   }
 
   els.adminImportBtn.disabled = true;
+  els.adminImportPreview.classList.add("hidden");
+  els.adminImportPreview.innerHTML = "";
+  state.importPlan = null;
   els.adminImportStatus.textContent = "Lese Datei …";
   try {
-    // North-Data-Exporte sind ISO-8859-1/CP1252 kodiert, nicht UTF-8.
-    const text = await readFileAsText(file, "ISO-8859-1");
+    const text = decodeCsvBytes(await readFileAsArrayBuffer(file));
     const records = parseNorthDataCsv(text);
     if (!records.length) {
       els.adminImportStatus.textContent = "Keine verwertbaren Zeilen in der Datei gefunden.";
       return;
     }
-    els.adminImportProgress.classList.remove("hidden");
-    await importRecordsForColleague(targetUid, state.user.uid, records, (done, total) => {
-      els.adminImportProgressFill.style.width = Math.round((done / total) * 100) + "%";
-      els.adminImportStatus.textContent = `Importiere … ${done}/${total}`;
+    els.adminImportStatus.textContent = "Gleiche " + records.length + " Zeilen mit den vorhandenen Firmen ab …";
+    const index = await getDedupIndex(true);
+    await ensureUsersCache();
+
+    const plan = [];
+    records.forEach((rec, i) => {
+      const matches = findMatches(rec, index);
+      // Sicherer Treffer auf genau eine Firma -> ergaenzen
+      if (matches.level === "sure" && matches.sure.length === 1) {
+        const target = matches.sure[0].firm;
+        if (target.pendingNew) {
+          // gleiche Firma steht mehrfach in der Datei -> Zeilen zusammenlegen
+          Object.entries(rec).forEach(([k, v]) => {
+            if ((target.rec[k] === undefined || target.rec[k] === "" || target.rec[k] === null) && v) target.rec[k] = v;
+          });
+          plan.push({ action: "skip", rec, reason: "doppelt in der Datei", fixed: true });
+        } else {
+          plan.push({ action: "merge", rec, target, reason: matches.sure[0].reasons.join(", "), fixed: true });
+        }
+        return;
+      }
+      if (matches.level === "none") {
+        const item = { action: "new", rec, fixed: true };
+        plan.push(item);
+        addToIndex(index, { ...rec, id: "neu:" + i, pendingNew: true, rec });
+        return;
+      }
+      // mehrere sichere oder nur moegliche Treffer -> bitte pruefen
+      const candidates = [...matches.sure, ...matches.maybe].filter((m) => !m.firm.pendingNew);
+      if (!candidates.length) {
+        plan.push({ action: "skip", rec, reason: "vermutlich doppelt in der Datei", fixed: false, candidates: [] });
+        return;
+      }
+      const item = { action: "new", rec, fixed: false, candidates };
+      plan.push(item);
+      addToIndex(index, { ...rec, id: "neu:" + i, pendingNew: true, rec });
     });
-    els.adminImportStatus.textContent = `Fertig: ${records.length} Kunden importiert.`;
-    els.adminImportFile.value = "";
+
+    state.importPlan = { plan, targetUid };
+    renderImportPreview();
+    els.adminImportStatus.textContent = "";
   } catch (err) {
     els.adminImportStatus.textContent = "Fehler: " + err.message;
     console.error(err);
   } finally {
+    els.adminImportBtn.disabled = false;
+  }
+}
+
+function renderImportPreview() {
+  const { plan } = state.importPlan;
+  const box = els.adminImportPreview;
+  box.innerHTML = "";
+  box.classList.remove("hidden");
+
+  const fixedNew = plan.filter((p) => p.fixed && p.action === "new");
+  const fixedMerge = plan.filter((p) => p.fixed && p.action === "merge");
+  const fixedSkip = plan.filter((p) => p.fixed && p.action === "skip");
+  const review = plan.filter((p) => !p.fixed);
+
+  const summary = document.createElement("div");
+  summary.className = "import-summary";
+  summary.innerHTML =
+    "<div><strong>" + fixedNew.length + "</strong> neu</div>" +
+    "<div><strong>" + fixedMerge.length + "</strong> schon vorhanden – werden ergänzt</div>" +
+    (fixedSkip.length ? "<div><strong>" + fixedSkip.length + "</strong> doppelt in der Datei – zusammengelegt</div>" : "") +
+    "<div><strong>" + review.length + "</strong> bitte prüfen</div>";
+  box.appendChild(summary);
+
+  const listDetails = (title, items, line) => {
+    if (!items.length) return;
+    const d = document.createElement("details");
+    const sum = document.createElement("summary");
+    sum.textContent = title + " (" + items.length + ")";
+    d.appendChild(sum);
+    const ul = document.createElement("ul");
+    items.forEach((it) => {
+      const li = document.createElement("li");
+      li.textContent = line(it);
+      ul.appendChild(li);
+    });
+    d.appendChild(ul);
+    box.appendChild(d);
+  };
+  listDetails("Neu anlegen", fixedNew, (it) => it.rec.unternehmen + " – " + [it.rec.plz, it.rec.ort].filter(Boolean).join(" "));
+  listDetails("Vorhandene ergänzen", fixedMerge, (it) => it.rec.unternehmen + " → " + it.target.unternehmen + " (" + it.reason + ")");
+
+  if (review.length) {
+    const h = document.createElement("h4");
+    h.textContent = "Bitte prüfen";
+    box.appendChild(h);
+    const hint = document.createElement("p");
+    hint.className = "hint";
+    hint.textContent = "Voreingestellt ist „Neu anlegen“. Wenn es dieselbe Firma ist, die passende vorhandene auswählen.";
+    box.appendChild(hint);
+    review.forEach((it, n) => {
+      const card = document.createElement("div");
+      card.className = "review-card";
+      const head = document.createElement("div");
+      head.innerHTML =
+        "<strong>Aus der Datei: " + escapeHtml(it.rec.unternehmen) + "</strong><br>" + escapeHtml(firmShortLine(it.rec)) +
+        (it.rec.registerNr ? "<br>" + escapeHtml(it.rec.registerNr) : "");
+      card.appendChild(head);
+      const name = "review-" + n;
+      const addRadio = (value, html, checked) => {
+        const lbl = document.createElement("label");
+        lbl.className = "review-option";
+        const r = document.createElement("input");
+        r.type = "radio";
+        r.name = name;
+        r.value = value;
+        r.checked = checked;
+        r.addEventListener("change", () => {
+          if (value === "new") {
+            it.action = "new";
+            it.target = null;
+          } else if (value === "skip") {
+            it.action = "skip";
+            it.target = null;
+          } else {
+            it.action = "merge";
+            it.target = it.candidates.find((c) => c.firm.id === value).firm;
+          }
+        });
+        lbl.appendChild(r);
+        const span = document.createElement("span");
+        span.innerHTML = html;
+        lbl.appendChild(span);
+        card.appendChild(lbl);
+      };
+      it.candidates.forEach((c) => {
+        const owner = ownerNameOf(c.firm.ownerUid);
+        addRadio(
+          c.firm.id,
+          "Dieselbe wie <strong>" + escapeHtml(c.firm.unternehmen) + "</strong> – " + escapeHtml(firmShortLine(c.firm)) +
+            (c.firm.registerNr ? " · " + escapeHtml(c.firm.registerNr) : "") +
+            (owner ? " · bei " + escapeHtml(owner) : "") +
+            '<br><span class="dupe-reason">' + escapeHtml(c.reasons.join(", ")) + "</span>",
+          false
+        );
+      });
+      addRadio("new", "Andere Firma – <strong>neu anlegen</strong>", it.action === "new");
+      addRadio("skip", "Diese Zeile überspringen", it.action === "skip");
+      box.appendChild(card);
+    });
+  }
+
+  const startBtn = document.createElement("button");
+  startBtn.type = "button";
+  startBtn.className = "primary";
+  startBtn.textContent = "Import starten";
+  startBtn.addEventListener("click", () => executeImportPlan(startBtn));
+  box.appendChild(startBtn);
+}
+
+async function executeImportPlan(btn) {
+  if (!state.importPlan) return;
+  const { plan, targetUid } = state.importPlan;
+  btn.disabled = true;
+  els.adminImportBtn.disabled = true;
+  els.adminImportProgress.classList.remove("hidden");
+  try {
+    const result = await runImportPlan(plan, targetUid, state.user.uid, (done, total) => {
+      els.adminImportProgressFill.style.width = Math.round((done / total) * 100) + "%";
+      els.adminImportStatus.textContent = `Importiere … ${done}/${total}`;
+    });
+    els.adminImportStatus.textContent =
+      `Fertig: ${result.created} neu angelegt, ${result.merged} vorhandene ergänzt, ${result.skipped} übersprungen.`;
+    els.adminImportFile.value = "";
+    els.adminImportPreview.classList.add("hidden");
+    els.adminImportPreview.innerHTML = "";
+    state.importPlan = null;
+    invalidateDedupIndex();
+  } catch (err) {
+    els.adminImportStatus.textContent = "Fehler: " + err.message + " – bereits verarbeitete Zeilen sind gespeichert; die Datei kann gefahrlos erneut geprüft werden.";
+    console.error(err);
+    btn.disabled = false;
+  } finally {
     els.adminImportProgress.classList.add("hidden");
     els.adminImportBtn.disabled = false;
   }
+}
+
+// ---------- Dubletten zusammenführen (nur "owner") ----------
+
+async function onDupeSearchClick() {
+  els.dupeSearchBtn.disabled = true;
+  els.dupeGroups.innerHTML = "";
+  els.dupeSearchStatus.textContent = "Suche …";
+  try {
+    const [firms] = await Promise.all([getAllCustomers(), ensureUsersCache()]);
+    const groups = findDuplicateGroups(firms);
+    els.dupeSearchStatus.textContent = groups.length
+      ? groups.length + " mögliche Dubletten-Gruppe(n) gefunden. Bitte jeweils die Haupt-Firma wählen."
+      : "Keine Dubletten gefunden.";
+    groups.forEach((g) => els.dupeGroups.appendChild(buildDupeGroupCard(g)));
+  } catch (err) {
+    els.dupeSearchStatus.textContent = "Fehler: " + err.message;
+  } finally {
+    els.dupeSearchBtn.disabled = false;
+  }
+}
+
+// Vorschlag fuer die Haupt-Firma: die mit den meisten Daten (Besuch,
+// Mitglied, ToDo), bei Gleichstand die aelteste.
+function firmWeight(f) {
+  let w = 0;
+  if (f.lastVisitedAt) w += 4;
+  if (f.membershipSigned) w += 4;
+  if (f.consultationRequested) w += 2;
+  if (f.openTodo && f.openTodo.text) w += 2;
+  w += (f.contacts || []).length;
+  return w;
+}
+
+function buildDupeGroupCard(group) {
+  const card = document.createElement("div");
+  card.className = "review-card";
+  const firms = group.firms.slice().sort((a, b) => {
+    const d = firmWeight(b) - firmWeight(a);
+    if (d) return d;
+    return (toJsDate(a.createdAt) || 0) - (toJsDate(b.createdAt) || 0);
+  });
+  const reason = document.createElement("p");
+  reason.className = "dupe-reason";
+  reason.textContent = "Grund: " + group.reasons.join(", ");
+  card.appendChild(reason);
+
+  const groupName = "dupe-" + firms[0].id;
+  firms.forEach((f, i) => {
+    const lbl = document.createElement("label");
+    lbl.className = "review-option";
+    const r = document.createElement("input");
+    r.type = "radio";
+    r.name = groupName;
+    r.value = f.id;
+    r.checked = i === 0;
+    lbl.appendChild(r);
+    const span = document.createElement("span");
+    const bits = [];
+    const owner = ownerNameOf(f.ownerUid);
+    if (owner) bits.push("bei " + owner);
+    const created = toJsDate(f.createdAt);
+    if (created) bits.push("angelegt " + created.toLocaleDateString("de-DE"));
+    if (f.lastVisitedAt) bits.push("besucht " + formatDate(f.lastVisitedAt));
+    if (f.membershipSigned) bits.push("Mitglied");
+    if (f.openTodo && f.openTodo.text) bits.push("offenes ToDo");
+    if (f.source) bits.push("Quelle: " + f.source);
+    span.innerHTML =
+      "<strong>" + escapeHtml(f.unternehmen) + "</strong> – " + escapeHtml(firmShortLine(f)) +
+      (f.registerNr ? " · " + escapeHtml(f.registerNr) : "") +
+      '<br><span class="dupe-reason">' + escapeHtml(bits.join(" · ")) + "</span>";
+    lbl.appendChild(span);
+    card.appendChild(lbl);
+  });
+
+  const status = document.createElement("p");
+  status.className = "hint";
+  const actions = document.createElement("div");
+  actions.className = "dupe-actions";
+  const mergeBtn = document.createElement("button");
+  mergeBtn.type = "button";
+  mergeBtn.className = "primary";
+  mergeBtn.textContent = "Zusammenführen (gewählte bleibt)";
+  const notBtn = document.createElement("button");
+  notBtn.type = "button";
+  notBtn.className = "secondary";
+  notBtn.textContent = "Sind verschiedene Firmen";
+  actions.appendChild(mergeBtn);
+  actions.appendChild(notBtn);
+  card.appendChild(actions);
+  card.appendChild(status);
+
+  mergeBtn.addEventListener("click", async () => {
+    const chosenId = card.querySelector('input[name="' + groupName + '"]:checked').value;
+    const primary = firms.find((f) => f.id === chosenId);
+    const secondaries = firms.filter((f) => f.id !== chosenId);
+    if (!confirm("„" + primary.unternehmen + "“ behalten und " + secondaries.length + " weitere(n) Eintrag/Einträge hineinführen und löschen?")) return;
+    mergeBtn.disabled = true;
+    notBtn.disabled = true;
+    status.textContent = "Führe zusammen …";
+    try {
+      await mergeDuplicateFirms(primary, secondaries);
+      invalidateDedupIndex();
+      card.innerHTML = '<p class="hint">✓ Zusammengeführt: ' + escapeHtml(primary.unternehmen) + "</p>";
+    } catch (err) {
+      status.textContent = "Fehler: " + err.message;
+      mergeBtn.disabled = false;
+      notBtn.disabled = false;
+    }
+  });
+  notBtn.addEventListener("click", async () => {
+    notBtn.disabled = true;
+    try {
+      await markNotDuplicate(firms.map((f) => f.id));
+      card.innerHTML = '<p class="hint">Gemerkt: verschiedene Firmen – wird nicht mehr vorgeschlagen.</p>';
+    } catch (err) {
+      status.textContent = "Fehler: " + err.message;
+      notBtn.disabled = false;
+    }
+  });
+  return card;
 }
 
 // ---------- Städte / Auswahl ----------
@@ -1739,7 +2378,14 @@ function buildFinancialsText(f) {
   const gewinn = formatEuro(f.gewinn);
   if (gewinn) bits.push("Gewinn " + gewinn + (typeof f.gewinnCagr === "number" ? " (CAGR " + formatPercent(f.gewinnCagr) + ")" : ""));
   if (typeof f.mitarbeiterzahl === "number") bits.push("Mitarbeiter " + f.mitarbeiterzahl);
-  if (f.pensionsrueckstellungen) bits.push("Pensionsrückstellungen vorhanden");
+  const bilanz = formatEuro(f.bilanzsumme);
+  if (bilanz) bits.push("Bilanzsumme " + bilanz);
+  if (typeof f.pensionsrueckstellungenEur === "number") {
+    bits.push(f.pensionsrueckstellungenEur > 0 ? "Pensionsrückstellungen " + formatEuro(f.pensionsrueckstellungenEur) : "Keine Pensionsrückstellungen");
+  } else if (f.pensionsrueckstellungen) {
+    bits.push("Pensionsrückstellungen vorhanden");
+  }
+  if (f.finanzkennzahlenDatum) bits.push("Stand " + f.finanzkennzahlenDatum);
   if (!bits.length) return "";
   return '<span class="label">Nur für dich:</span><ul class="financials-list">' + bits.map((b) => "<li>" + escapeHtml(b) + "</li>").join("") + "</ul>";
 }
@@ -1953,7 +2599,7 @@ async function onComputeClick() {
       setProgress(1, "Lade Finanzkennzahlen …");
       await Promise.all(
         orderedMeta.map(async (meta) => {
-          if (!meta || meta.waypoint) return;
+          if (!meta || meta.waypoint || !canSeeFinancialsOf(meta)) return;
           try {
             meta.financials = await getFinancials(meta.id);
           } catch (e) {
@@ -2189,6 +2835,7 @@ function buildCustomerDetailsHtml(meta) {
   if (meta.email) contactBits.push(escapeHtml(meta.email));
   if (meta.website) contactBits.push(escapeHtml(meta.website));
   if (contactBits.length) html += '<div class="contact">' + contactBits.join(" · ") + "</div>";
+  if (meta.registerNr) html += '<div class="register">' + escapeHtml(meta.registerNr) + "</div>";
 
   // "Ges. Vertreter" aus North Data sind i.d.R. die Geschäftsführer -
   // deshalb einheitlich so benannt statt "Vertretung". Pipe als Trenner

@@ -21,10 +21,16 @@ Login und alle Kunden-/Besuchsdaten laufen über ein Firebase-Projekt
   (E-Mail/Passwort), angelegt in der Firebase-Konsole unter
   **Authentication → Nutzer → Nutzer hinzufügen**. Es gibt keine
   Selbstregistrierung in der App.
-- Standardmäßig bekommt jeder neue Nutzer die Rolle **„colleague“** und
-  sieht/bearbeitet nur die eigenen angelegten Kunden.
-- Eine Person mit der Rolle **„owner“** sieht zusätzlich einen Schalter „Alle
-  Kollegen anzeigen“ und kann so auf die Gesamtdaten aller zugreifen.
+- Standardmäßig bekommt jeder neue Nutzer die Rolle **„colleague“**. Alle
+  Angemeldeten sehen alle Firmen (Schalter „Alle Firmen anzeigen“; ohne
+  Schalter nur die eigenen). Finanzkennzahlen bleiben gesperrt (siehe unten),
+  Dashboard-Zahlen zeigen für Kolleg:innen nur die eigenen Firmen.
+- **Funktionen** (Pre-Sales, BdSt-Werber, Makler – auch mehrere) und den
+  Anzeigenamen setzt „owner“ direkt in der App im Bereich **„Benutzer“**. Eine
+  Person erscheint dort, sobald sie sich einmal angemeldet hat.
+- Eine Person mit der Rolle **„owner“** sieht im Dashboard bei „Alle Firmen
+  anzeigen“ die Gesamtzahlen aller, darf Firmen löschen, importieren und
+  Benutzer verwalten.
   Die Rolle wird **einmalig manuell** gesetzt: Firebase-Konsole →
   **Firestore Database → Daten** → Sammlung `users` → das Dokument mit der
   eigenen User-ID öffnen → Feld `role` von `colleague` auf `owner` ändern.
@@ -101,7 +107,7 @@ Adresse nur einmal, egal wer sie zuerst berechnet.
 
 - **Kunde suchen**: Suchfeld oben in der App, durchsucht Firmenname, Ort,
   Straße, PLZ sowie Ansprechpartner/gesetzliche Vertreter der eigenen (bzw.
-  bei „owner“ + „Alle Kollegen anzeigen“ aller) Kunden – unabhängig von der
+  bei „owner“ + „Alle Firmen anzeigen“ aller) Kunden – unabhängig von der
   Ortsauswahl weiter unten. Ein Treffer lässt sich aufklappen und zeigt
   dieselben Details/Aktionen wie ein Stopp in der Route (Kontakt, Besuch
   bestätigen, Verlauf).
@@ -144,13 +150,43 @@ hochladen und im Namen einer bestimmten Person importieren:
 1. Die Person muss sich vorher **einmal** selbst in der App angemeldet haben
    (Zugang wie gewohnt vorher in der Firebase-Konsole anlegen) – erst dann
    taucht sie in der Auswahlliste auf.
-2. North-Data-CSV-Datei auswählen und „Importieren“ klicken.
-3. Übernommen werden: Firmenname, Adresse, bis zu drei gesetzliche
-   Vertreter (Handelsregister), Telefon/E-Mail/Website – sichtbar für
-   „owner“ und die zugeordnete Person. Alle importierten Kunden werden
-   automatisch mit „Akquise“ getaggt. Umsatz, Gewinn, CAGR% und
-   Mitarbeiterzahl landen in der separaten `financials`-Unter-Sammlung und
-   sind ausschließlich für „owner“ sichtbar.
+2. North-Data-CSV-Datei auswählen und **„Datei prüfen“** klicken. Die Datei
+   darf als ANSI/Windows-1252 oder UTF-8 gespeichert sein – das wird
+   automatisch erkannt.
+3. Jede Zeile wird mit **allen** vorhandenen Firmen abgeglichen
+   (Dublettenschutz, siehe unten). Die Vorschau zeigt „neu“, „schon
+   vorhanden – werden ergänzt“ und „bitte prüfen“; unklare Fälle lassen sich
+   einzeln entscheiden. Erst **„Import starten“** schreibt die Daten.
+4. Übernommen werden: Firmenname, Rechtsform, Adresse, Registernummer
+   (HR Amtsgericht + Register-ID), Branche, North-Data-Link, bis zu drei
+   gesetzliche Vertreter, Telefon/E-Mail/Website. Umsatz, Gewinn, CAGR %,
+   Mitarbeiterzahl, Bilanzsumme, Eigenkapital, Personalaufwand,
+   **Pensionsrückstellungen (Betrag in EUR)** und der Stichtag landen in der
+   gesperrten `financials`-Unter-Sammlung (owner + `financialsAccess` bei
+   eigenen Firmen).
+
+Ein **erneuter Import** derselben oder einer erweiterten Datei ist gefahrlos:
+vorhandene Firmen werden nur ergänzt (leere Felder gefüllt, nie
+überschrieben) und ihre Finanzkennzahlen aktualisiert – so kommen z. B. die
+Pensionsrückstellungen auch bei schon importierten Firmen nachträglich dazu.
+
+### Dublettenschutz
+
+Eine Firma gilt als **sicher vorhanden** bei gleicher Registernummer, gleicher
+Telefonnummer (nur Ziffern verglichen, +49 = 0) oder gleichem Firmennamen
+(ohne Rechtsform, Umlaute vereinheitlicht) mit gleicher PLZ bzw. gleichem Ort.
+Haben beide Firmen eine Registernummer und die ist verschieden, sind es
+verschiedene Firmen (z. B. GmbH & Co. KG und Verwaltungs-GmbH) – dann wird nur
+nachgefragt. **Bitte prüfen** heißt: gleicher Name an anderem Ort oder sehr
+ähnlicher Name am selben Ort.
+
+- **Kunde hinzufügen:** Schon beim Tippen erscheint ein Hinweis, wenn es die
+  Firma gibt. Beim Speichern wird ein sicherer Treffer nicht neu angelegt,
+  sondern kann ergänzt werden.
+- **Dubletten zusammenführen** (im Bereich „Kunden Import“): findet bereits
+  doppelt angelegte Firmen; Besuche, ToDos, Ansprechpartner, Tags,
+  Finanzkennzahlen, Anrufe und Termine wandern auf die gewählte Haupt-Firma.
+  „Sind verschiedene Firmen“ merkt sich das Paar dauerhaft.
 
 Die alte „Excel-Liste importieren“-Funktion (ursprüngliche 215er-Liste,
 `data/adressen.js`) bleibt unabhängig davon bestehen und importiert weiterhin
@@ -173,7 +209,7 @@ oder Straßenzüge, sonst dauert die Berechnung entsprechend lange.
 Direkt nach dem Login zeigt die App oben eine Kennzahlen-Übersicht: Anzahl
 angelegter Kunden, bestätigte Besuche, abgeschlossene BdSt-Mitgliedschaften
 und gewünschte Beratungstermine – standardmäßig für die eigenen Daten. Für
-die Rolle „owner“ mit aktiviertem „Alle Kollegen anzeigen“ werden zusätzlich
+die Rolle „owner“ mit aktiviertem „Alle Firmen anzeigen“ werden zusätzlich
 die Gesamtzahlen sowie eine Tabelle mit den Werten pro Person angezeigt.
 
 ## Route drucken / als PDF, QR-Codes
