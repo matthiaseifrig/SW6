@@ -1235,7 +1235,7 @@ a.tile:hover .tile-icon, a.tile:focus-visible .tile-icon { color: var(--brand-go
 #search-more { margin-top: 0.75rem; }
 
 /* Startseite: Spruch */
-.home-saying { margin: 0.2rem 0 0; font-size: 1.1rem; color: var(--color-muted); font-style: italic; max-width: 60ch; }
+.home-saying { margin: 0.2rem 0 0; font-size: 1.1rem; color: var(--color-muted); font-style: italic; max-width: none; }
 
 /* Eigentumshinweis */
 .data-notice { margin: 1rem 0 0; padding: 0.6rem 0.8rem; border-left: 3px solid var(--brand-gold); background: var(--surface-alt); font-size: 0.85rem; color: var(--color-muted); }
