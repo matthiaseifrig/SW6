@@ -21,10 +21,16 @@ Login und alle Kunden-/Besuchsdaten laufen über ein Firebase-Projekt
   (E-Mail/Passwort), angelegt in der Firebase-Konsole unter
   **Authentication → Nutzer → Nutzer hinzufügen**. Es gibt keine
   Selbstregistrierung in der App.
-- Standardmäßig bekommt jeder neue Nutzer die Rolle **„colleague“** und
-  sieht/bearbeitet nur die eigenen angelegten Kunden.
-- Eine Person mit der Rolle **„owner“** sieht zusätzlich einen Schalter „Alle
-  Kollegen anzeigen“ und kann so auf die Gesamtdaten aller zugreifen.
+- Standardmäßig bekommt jeder neue Nutzer die Rolle **„colleague“**. Alle
+  Angemeldeten sehen alle Firmen (Schalter „Alle Firmen anzeigen“; ohne
+  Schalter nur die eigenen). Finanzkennzahlen bleiben gesperrt (siehe unten),
+  Dashboard-Zahlen zeigen für Kolleg:innen nur die eigenen Firmen.
+- **Funktionen** (Pre-Sales, BdSt-Werber, Makler – auch mehrere) und den
+  Anzeigenamen setzt „owner“ direkt in der App im Bereich **„Benutzer“**. Eine
+  Person erscheint dort, sobald sie sich einmal angemeldet hat.
+- Eine Person mit der Rolle **„owner“** sieht im Dashboard bei „Alle Firmen
+  anzeigen“ die Gesamtzahlen aller, darf Firmen löschen, importieren und
+  Benutzer verwalten.
   Die Rolle wird **einmalig manuell** gesetzt: Firebase-Konsole →
   **Firestore Database → Daten** → Sammlung `users` → das Dokument mit der
   eigenen User-ID öffnen → Feld `role` von `colleague` auf `owner` ändern.
@@ -101,7 +107,7 @@ Adresse nur einmal, egal wer sie zuerst berechnet.
 
 - **Kunde suchen**: Suchfeld oben in der App, durchsucht Firmenname, Ort,
   Straße, PLZ sowie Ansprechpartner/gesetzliche Vertreter der eigenen (bzw.
-  bei „owner“ + „Alle Kollegen anzeigen“ aller) Kunden – unabhängig von der
+  bei „owner“ + „Alle Firmen anzeigen“ aller) Kunden – unabhängig von der
   Ortsauswahl weiter unten. Ein Treffer lässt sich aufklappen und zeigt
   dieselben Details/Aktionen wie ein Stopp in der Route (Kontakt, Besuch
   bestätigen, Verlauf).
@@ -173,7 +179,7 @@ oder Straßenzüge, sonst dauert die Berechnung entsprechend lange.
 Direkt nach dem Login zeigt die App oben eine Kennzahlen-Übersicht: Anzahl
 angelegter Kunden, bestätigte Besuche, abgeschlossene BdSt-Mitgliedschaften
 und gewünschte Beratungstermine – standardmäßig für die eigenen Daten. Für
-die Rolle „owner“ mit aktiviertem „Alle Kollegen anzeigen“ werden zusätzlich
+die Rolle „owner“ mit aktiviertem „Alle Firmen anzeigen“ werden zusätzlich
 die Gesamtzahlen sowie eine Tabelle mit den Werten pro Person angezeigt.
 
 ## Route drucken / als PDF, QR-Codes

@@ -20,8 +20,9 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20260812b";
-import { buildAddressMeta } from "./address-utils.js?v=20260812b";
+import { db } from "./firebase-app.js?v=20261109a";
+import { buildAddressMeta } from "./address-utils.js?v=20261109a";
+import { normalizeFunctions } from "./roles.js?v=20261109a";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -429,4 +430,14 @@ export async function getCustomersForOwner(ownerUid) {
 export async function listUsers() {
   const snap = await getDocs(collection(db, "users"));
   return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+}
+
+// Name und Funktionen (presales/werber/makler) einer Person setzen - nur
+// "owner" (siehe firestore.rules). Rolle und financialsAccess bleiben
+// bewusst Sache der Firebase-Konsole.
+export async function updateUserProfile(uid, { name, functions }) {
+  await updateDoc(doc(db, "users", uid), {
+    name: String(name || "").trim(),
+    functions: normalizeFunctions(functions),
+  });
 }

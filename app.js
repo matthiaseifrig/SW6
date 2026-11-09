@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20260812b";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109a";
 import {
   subscribeCustomers,
   addCustomer,
@@ -26,9 +26,11 @@ import {
   addTag,
   removeTag,
   backfillSourceTag,
-} from "./js/data-store.js?v=20260812b";
-import { parseNorthDataCsv } from "./js/northdata-import.js?v=20260812b";
-import { TAG_OPTIONS } from "./js/tags.js?v=20260812b";
+  updateUserProfile,
+} from "./js/data-store.js?v=20261109a";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109a";
+import { parseNorthDataCsv } from "./js/northdata-import.js?v=20261109a";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109a";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -53,6 +55,7 @@ let mapLayer = null;
 const state = {
   user: null, // { uid, email }
   role: "colleague",
+  functions: [], // "presales" | "werber" | "makler" (siehe js/roles.js)
   canSeeFinancials: false,
   customers: [], // aktuelle Firestore-Kundenliste (je nach scope)
   byCity: {},
@@ -117,6 +120,12 @@ function cacheEls() {
   els.printListUser = document.getElementById("print-list-user");
   els.printListBtn = document.getElementById("print-list-btn");
   els.printListStatus = document.getElementById("print-list-status");
+
+  els.usersPanel = document.getElementById("users-panel");
+  els.usersToggle = document.getElementById("users-toggle");
+  els.usersBody = document.getElementById("users-body");
+  els.usersList = document.getElementById("users-list");
+  els.usersStatus = document.getElementById("users-status");
 
   els.welcomeBanner = document.getElementById("welcome-banner");
   els.welcomeText = document.getElementById("welcome-text");
@@ -218,6 +227,11 @@ function bindStaticEvents() {
   els.backfillBtn.addEventListener("click", onBackfillClick);
   els.printListBtn.addEventListener("click", onPrintListClick);
 
+  els.usersToggle.addEventListener("click", () => {
+    els.usersBody.classList.toggle("hidden");
+    if (!els.usersBody.classList.contains("hidden")) renderUsersList();
+  });
+
   els.citySelect.addEventListener("change", onCityChange);
   els.streetSelect.addEventListener("change", refreshStartAddressOptions);
   els.startModeRadios.forEach((r) => r.addEventListener("change", onStartModeChange));
@@ -306,19 +320,25 @@ async function handleAuthChange(user) {
   const profile = await ensureUserDoc(user);
   state.user = { uid: user.uid, email: user.email, name: profile.name || user.email };
   state.role = profile.role || "colleague";
+  state.functions = normalizeFunctions(profile.functions);
   state.canSeeFinancials = state.role === "owner" || Boolean(profile.financialsAccess);
 
   els.loginPanel.classList.add("hidden");
   els.appRoot.classList.remove("hidden");
   els.userBar.classList.remove("hidden");
-  els.userInfo.textContent = user.email + (state.role === "owner" ? " (Admin)" : "");
-  els.scopeToggleLabel.classList.toggle("hidden", state.role !== "owner");
+  const roleParts = state.functions.map(functionLabel);
+  if (state.role === "owner") roleParts.unshift("Admin");
+  els.userInfo.textContent = state.user.name + (roleParts.length ? " (" + roleParts.join(", ") + ")" : "");
+  // Alle im Team sehen alle Firmen (Finanzkennzahlen bleiben gesperrt) -
+  // standardmaessig startet die Liste aber mit den eigenen Firmen.
+  els.scopeToggleLabel.classList.remove("hidden");
   els.scopeToggle.checked = false;
   state.scopeAll = false;
 
   showWelcomeBanner(state.user.name);
 
   els.adminImportPanel.classList.toggle("hidden", state.role !== "owner");
+  els.usersPanel.classList.toggle("hidden", state.role !== "owner");
   if (state.role === "owner") {
     populateAdminImportUsers();
     populatePrintListUsers();
@@ -435,8 +455,16 @@ function maybeShowImportPanel() {
 // Mitgliedschaft und Beratungstermin sind dafuer als "letzter Stand" am
 // Kundendokument gespiegelt (siehe updateVisitOutcome in data-store.js).
 
+// Zahlen im Dashboard: "owner" sieht je nach Schalter eigene oder alle,
+// Kolleg:innen immer nur die eigenen - auch wenn sie "Alle Firmen
+// anzeigen" eingeschaltet haben (das dient nur der Suche/Tour).
+function dashboardCustomers() {
+  if (state.role === "owner") return state.customers;
+  return state.customers.filter((c) => c.ownerUid === state.user.uid);
+}
+
 function refreshDashboard() {
-  const customers = state.customers;
+  const customers = dashboardCustomers();
   els.statCustomers.textContent = String(customers.length);
   els.statVisits.textContent = String(customers.filter((c) => c.lastVisitedAt).length);
   els.statMemberships.textContent = String(customers.filter((c) => c.membershipSigned).length);
@@ -623,7 +651,7 @@ function renderCustomerLinkList(container, entries) {
 // anderen Dashboard-Kacheln. "erledigt" gibt es hier bewusst nicht direkt
 // (nur read-only Übersicht) - dafür auf die Kundenseite durchklicken.
 function renderTodoOverview(container) {
-  const withTodo = state.customers.filter((c) => c.openTodo && c.openTodo.text);
+  const withTodo = dashboardCustomers().filter((c) => c.openTodo && c.openTodo.text);
   if (!withTodo.length) {
     const p = document.createElement("p");
     p.className = "hint";
@@ -660,14 +688,14 @@ function renderTodoOverview(container) {
 
 async function openStatDetail(stat) {
   els.statDetailTitle.textContent = STAT_LABELS[stat] || stat;
-  els.statDetailSubtitle.textContent = state.role === "owner" && state.scopeAll ? "Alle Kollegen · aktueller Stand" : "Eigene Kunden · aktueller Stand";
+  els.statDetailSubtitle.textContent = state.role === "owner" && state.scopeAll ? "Alle Firmen · aktueller Stand" : "Eigene Kunden · aktueller Stand";
   els.statDetailBody.innerHTML = "";
   els.statDetailOverlay.classList.remove("hidden");
 
   if (stat === "customers") {
     const buckets = {};
     const entries = [];
-    state.customers.forEach((c) => {
+    dashboardCustomers().forEach((c) => {
       const d = toJsDate(c.createdAt);
       if (!d) return;
       const key = monthKeyFromDate(d);
@@ -690,7 +718,7 @@ async function openStatDetail(stat) {
   els.statDetailBody.appendChild(loading);
 
   try {
-    const visits = await loadAllVisitsForCustomers(state.customers, (done, total) => {
+    const visits = await loadAllVisitsForCustomers(dashboardCustomers(), (done, total) => {
       loading.textContent = `Lade Besuchsdaten … ${done}/${total} Kunden`;
     });
     const buckets = {};
@@ -783,7 +811,7 @@ function refreshCustomerPage() {
 }
 
 async function renderCustomerPage(meta) {
-  if (state.canSeeFinancials && meta.financials === undefined) {
+  if (canSeeFinancialsOf(meta) && meta.financials === undefined) {
     try {
       meta.financials = (await getFinancials(meta.id)) || null;
     } catch (e) {
@@ -1175,13 +1203,108 @@ function buildContactsSection(meta) {
   return wrap;
 }
 
+// Finanzkennzahlen: "owner" bei allen Firmen, Personen mit
+// financialsAccess nur bei eigenen Firmen (wie in firestore.rules).
+function canSeeFinancialsOf(meta) {
+  if (state.role === "owner") return true;
+  return state.canSeeFinancials && meta && meta.ownerUid === state.user.uid;
+}
+
+// ---------- Benutzer (nur "owner"): Name und Funktionen ----------
+
+async function renderUsersList() {
+  els.usersList.innerHTML = "";
+  els.usersStatus.textContent = "Lade Benutzer …";
+  let users = [];
+  try {
+    users = await listUsers();
+  } catch (err) {
+    els.usersStatus.textContent = "Fehler beim Laden: " + err.message;
+    return;
+  }
+  els.usersStatus.textContent = "";
+  users.sort((a, b) => (a.name || a.email || "").localeCompare(b.name || b.email || "", "de"));
+  users.forEach((u) => els.usersList.appendChild(buildUserCard(u)));
+}
+
+function buildUserCard(u) {
+  const card = document.createElement("div");
+  card.className = "user-card";
+
+  const head = document.createElement("div");
+  head.className = "user-card-head";
+  head.textContent = (u.email || u.uid) + (u.role === "owner" ? " · Admin" : "") + (u.financialsAccess ? " · Finanzzugriff" : "");
+  card.appendChild(head);
+
+  const nameLabel = document.createElement("label");
+  nameLabel.className = "user-card-label";
+  nameLabel.textContent = "Name";
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.value = u.name && u.name !== u.email ? u.name : "";
+  nameInput.placeholder = "Vor- und Nachname";
+  nameLabel.appendChild(nameInput);
+  card.appendChild(nameLabel);
+
+  const fnWrap = document.createElement("div");
+  fnWrap.className = "user-card-functions";
+  const current = normalizeFunctions(u.functions);
+  const boxes = FUNCTIONS.map((f) => {
+    const lbl = document.createElement("label");
+    lbl.className = "big-check";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = f.key;
+    cb.checked = current.includes(f.key);
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(" " + f.label));
+    fnWrap.appendChild(lbl);
+    return cb;
+  });
+  card.appendChild(fnWrap);
+
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.className = "primary";
+  saveBtn.textContent = "Speichern";
+  const status = document.createElement("p");
+  status.className = "hint";
+  saveBtn.addEventListener("click", async () => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      status.textContent = "Bitte einen Namen eintragen.";
+      return;
+    }
+    saveBtn.disabled = true;
+    status.textContent = "Speichere …";
+    try {
+      const functions = boxes.filter((b) => b.checked).map((b) => b.value);
+      await updateUserProfile(u.uid, { name, functions });
+      u.name = name;
+      u.functions = functions;
+      status.textContent = "Gespeichert: " + name + (functions.length ? " – " + functions.map(functionLabel).join(", ") : " – keine Funktion");
+      if (u.uid === state.user.uid) {
+        state.user.name = name;
+        state.functions = normalizeFunctions(functions);
+      }
+    } catch (err) {
+      status.textContent = "Fehler: " + err.message;
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+  card.appendChild(saveBtn);
+  card.appendChild(status);
+  return card;
+}
+
 // ---------- Provisionen für ältere Einträge nachtragen (Dashboard) ----------
 
 async function onBackfillProvisionsClick() {
   els.backfillProvisionsBtn.disabled = true;
   els.backfillProvisionsStatus.textContent = "Prüfe bestehende Einträge …";
   try {
-    const result = await backfillMissingProvisions(state.customers, (done, total) => {
+    const result = await backfillMissingProvisions(dashboardCustomers(), (done, total) => {
       els.backfillProvisionsStatus.textContent = `Prüfe … ${done}/${total}`;
     });
     els.backfillProvisionsStatus.textContent =
@@ -1953,7 +2076,7 @@ async function onComputeClick() {
       setProgress(1, "Lade Finanzkennzahlen …");
       await Promise.all(
         orderedMeta.map(async (meta) => {
-          if (!meta || meta.waypoint) return;
+          if (!meta || meta.waypoint || !canSeeFinancialsOf(meta)) return;
           try {
             meta.financials = await getFinancials(meta.id);
           } catch (e) {

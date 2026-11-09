@@ -6,10 +6,19 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function myUserPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    // Teammitglied = angemeldet UND hat ein users/{uid}-Dokument (entsteht
+    // automatisch beim ersten Login). Zugaenge legt nur der Chef in der
+    // Firebase-Konsole an, eine Selbstregistrierung gibt es nicht.
+    function isMember() {
+      return isSignedIn() && exists(myUserPath());
+    }
+
     function isOwnerRole() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
+      return isMember() && get(myUserPath()).data.role == 'owner';
     }
 
     // Einzelnen Kolleg:innen kann "owner" zusaetzlich Lesezugriff auf die
@@ -17,43 +26,48 @@ service cloud.firestore {
     // dem eigenen users/{uid}-Dokument, manuell in der Firebase-Konsole
     // gesetzt - genau wie die Rolle "owner" selbst).
     function hasFinancialsAccess() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.financialsAccess == true;
+      return isMember() && get(myUserPath()).data.financialsAccess == true;
     }
 
-    // Jede/r Angemeldete darf das eigene Profil lesen/anlegen.
-    // Die Rolle darf man sich nicht selbst setzen - das darf nur "owner".
-    // Ebenso darf financialsAccess beim Selbst-Anlegen nicht mitgegeben werden.
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // Benutzer: Alle im Team duerfen die Benutzerliste lesen (Namen und
+    // Funktionen, z. B. fuer "Termin fuer wen?"). Beim ersten Login legt
+    // jede/r das eigene Profil an - nur mit Name, E-Mail, Rolle "colleague"
+    // und Zeitstempel. Rolle, Funktionen (presales/werber/makler) und
+    // financialsAccess setzt ausschliesslich "owner".
     match /users/{uid} {
-      allow read: if isSignedIn() && (request.auth.uid == uid || isOwnerRole());
+      allow read: if isMember() || (isSignedIn() && request.auth.uid == uid);
       allow create: if isSignedIn() && request.auth.uid == uid
                     && request.resource.data.role == 'colleague'
-                    && !('financialsAccess' in request.resource.data);
+                    && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'createdAt']);
       allow update: if isOwnerRole();
     }
 
+    // Firmen: Alle im Team sehen alle Firmen (noetig fuer den Hinweis
+    // "schon angerufen von ..." und die Dublettenpruefung) und duerfen den
+    // Stand fortschreiben (Anruf, Termin, Besuch, ToDo ...). Wem eine
+    // Firma "gehoert" (ownerUid, createdBy, createdAt, source), aendert nur
+    // "owner"; loeschen bzw. zusammenfuehren ebenfalls nur "owner".
     match /customers/{customerId} {
-      allow read: if isSignedIn() &&
-        (resource.data.ownerUid == request.auth.uid || isOwnerRole());
-      // "owner" darf Kunden auch im Namen einer/s Kolleg:in anlegen (Import).
-      allow create: if isSignedIn() &&
+      allow read: if isMember();
+      // "owner" darf Firmen auch im Namen einer/s Kolleg:in anlegen (Import).
+      allow create: if isMember() &&
         (request.resource.data.ownerUid == request.auth.uid || isOwnerRole());
-      allow update, delete: if isSignedIn() &&
-        (resource.data.ownerUid == request.auth.uid || isOwnerRole());
+      allow update: if isMember() &&
+        (isOwnerRole() || !changedKeys().hasAny(['ownerUid', 'createdBy', 'createdAt', 'source']));
+      allow delete: if isOwnerRole();
 
       match /visits/{visitId} {
-        allow read: if isSignedIn() &&
-          (get(/databases/$(database)/documents/customers/$(customerId)).data.ownerUid == request.auth.uid
-            || isOwnerRole());
-        allow create: if isSignedIn() &&
-          (get(/databases/$(database)/documents/customers/$(customerId)).data.ownerUid == request.auth.uid
-            || isOwnerRole())
-          && request.resource.data.byUid == request.auth.uid;
-        // Nachtraegliches Ergaenzen von Mitgliedsaufnahme/Beratungstermin
+        allow read: if isMember();
+        allow create: if isMember() && request.resource.data.byUid == request.auth.uid;
+        // Nachtraegliches Ergaenzen (Mitgliedsaufnahme, ToDo erledigt ...)
         // durch die Person, die den Besuch eingetragen hat (oder "owner").
-        allow update: if isSignedIn() &&
+        allow update: if isMember() &&
           (resource.data.byUid == request.auth.uid || isOwnerRole());
+        allow delete: if isOwnerRole();
       }
 
       // Finanzkennzahlen (Umsatz, Gewinn, CAGR, Mitarbeiterzahl,
@@ -67,6 +81,38 @@ service cloud.firestore {
             get(/databases/$(database)/documents/customers/$(customerId)).data.ownerUid == request.auth.uid);
         allow write: if isOwnerRole();
       }
+    }
+
+    // Anrufe (Telefonakquise): alle im Team lesen; eintragen nur im eigenen
+    // Namen (owner auch fuer andere, z. B. bei der Cockpit-Uebernahme);
+    // korrigieren nur die anrufende Person bzw. "owner".
+    match /calls/{callId} {
+      allow read: if isMember();
+      allow create: if isMember() &&
+        (request.resource.data.byUid == request.auth.uid || isOwnerRole());
+      allow update: if isMember() &&
+        (resource.data.byUid == request.auth.uid || isOwnerRole()) &&
+        request.resource.data.byUid == resource.data.byUid;
+      allow delete: if isOwnerRole();
+    }
+
+    // Termine: alle im Team lesen. Vereinbaren im eigenen Namen (setByUid).
+    // Aendern (verschieben, absagen, weiterleiten) duerfen, wer den Termin
+    // vereinbart hat, wer ihn wahrnimmt (forUid) und "owner". "Durchgefuehrt"
+    // und das Ergebnis (Mitglied / Abschluss) setzt nur, wer den Termin
+    // wahrnimmt - oder "owner". Wer den Termin vereinbart hat, bleibt fest.
+    match /appointments/{apptId} {
+      allow read: if isMember();
+      allow create: if isMember() &&
+        (request.resource.data.setByUid == request.auth.uid || isOwnerRole());
+      allow update: if isMember() &&
+        (isOwnerRole() ||
+          (request.resource.data.setByUid == resource.data.setByUid &&
+            (request.auth.uid == resource.data.forUid ||
+              (request.auth.uid == resource.data.setByUid &&
+                request.resource.data.status != 'durchgefuehrt' &&
+                !changedKeys().hasAny(['outcome', 'doneAt', 'doneByUid'])))));
+      allow delete: if isOwnerRole();
     }
   }
 }
