@@ -234,12 +234,16 @@ hochladen und im Namen einer bestimmten Person importieren:
    vorhanden – werden ergänzt“ und „bitte prüfen“; unklare Fälle lassen sich
    einzeln entscheiden. Erst **„Import starten“** schreibt die Daten.
 4. Übernommen werden: Firmenname, Rechtsform, Adresse, Registernummer
-   (HR Amtsgericht + Register-ID), Branche, North-Data-Link, bis zu drei
-   gesetzliche Vertreter, Telefon/E-Mail/Website. Umsatz, Gewinn, CAGR %,
-   Mitarbeiterzahl, Bilanzsumme, Eigenkapital, Personalaufwand,
-   **Pensionsrückstellungen (Betrag in EUR)** und der Stichtag landen in der
-   gesperrten `financials`-Unter-Sammlung (owner + `financialsAccess` bei
-   eigenen Firmen).
+   (HR Amtsgericht + Register-ID), Status, Unternehmensgegenstand, Branche,
+   USt.-Id., North-Data-Link, bis zu drei gesetzliche Vertreter,
+   Telefon/Fax/E-Mail/Website. **Alle Kennzahlen-Spalten** (u. a. Umsatz,
+   Gewinn, CAGR, Bilanzsumme, Stammkapital, Kassenbestand, Forderungen,
+   Verbindlichkeiten, Eigenkapital und -quote, Renditen, Personal- und
+   Materialaufwand, Steuern, Pensionsrückstellungen, Immobilien, Förderungen,
+   Patente, Marken) und der Stichtag landen in der gesperrten
+   `financials`-Unter-Sammlung (owner + `financialsAccess` bei eigenen Firmen).
+   Import „für mich (Admin)“: vorhandene Firmen werden nur ergänzt und
+   niemandem zusätzlich zugeordnet – richtig für das Nachladen von Kennzahlen.
 
 Ein **erneuter Import** derselben oder einer erweiterten Datei ist gefahrlos:
 vorhandene Firmen werden nur ergänzt (leere Felder gefüllt, nie

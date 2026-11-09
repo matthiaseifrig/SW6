@@ -20,10 +20,10 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20261109k";
-import { buildAddressMeta } from "./address-utils.js?v=20261109k";
-import { normalizeFunctions } from "./roles.js?v=20261109k";
-import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109k";
+import { db } from "./firebase-app.js?v=20261109o";
+import { buildAddressMeta } from "./address-utils.js?v=20261109o";
+import { normalizeFunctions } from "./roles.js?v=20261109o";
+import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109o";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -57,6 +57,10 @@ function customerCoreFields(fields) {
     registerNr: fields.registerNr || "",
     branche: fields.branche || "",
     northDataUrl: fields.northDataUrl || "",
+    gegenstand: fields.gegenstand || "",
+    northDataStatus: fields.northDataStatus || "",
+    ustId: fields.ustId || "",
+    fax: fields.fax || "",
     tags: normalizeTags(fields.tags),
     dedupKeys: buildDedupKeys(fields),
     hasAddress: meta.hasAddress,
@@ -550,7 +554,12 @@ export async function runImportPlan(plan, targetOwnerUid, createdByUid, onProgre
       await writeFirmKeys(docRef.id, buildDedupKeys(item.rec), true);
       result.created++;
     } else if (item.action === "merge" && item.target) {
-      await mergeIntoCustomer(item.target, item.rec, { withFinancials: true, addPoolUid: targetOwnerUid });
+      // Import "fuer mich" (Admin): vorhandene Firmen nur ergaenzen, niemandem
+      // zusaetzlich zuordnen. Import fuer eine Person: zusaetzlich in deren Pool.
+      await mergeIntoCustomer(item.target, item.rec, {
+        withFinancials: true,
+        addPoolUid: targetOwnerUid !== createdByUid ? targetOwnerUid : null,
+      });
       await writeFirmKeys(item.target.id, buildDedupKeys({ ...item.rec, ...item.target }), true);
       result.merged++;
     } else {

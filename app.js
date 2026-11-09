@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109k";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109o";
 import {
   subscribeCustomers,
   addCustomer,
@@ -34,9 +34,9 @@ import {
   updateUserProfile,
   lookupFirmKeys,
   rebuildKeysAndPools,
-} from "./js/data-store.js?v=20261109k";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109k";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109k";
+} from "./js/data-store.js?v=20261109o";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109o";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109o";
 import {
   initCalls,
   onCustomersChanged,
@@ -46,10 +46,10 @@ import {
   buildFirmActivitySection,
   firmStatusHtml,
   callFirm,
-} from "./js/calls-ui.js?v=20261109k";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109k";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261109k";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261109k";
+} from "./js/calls-ui.js?v=20261109o";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109o";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261109o";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109o";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -493,8 +493,13 @@ async function populateUserSelect(selectEl) {
   }
 }
 
-function populateAdminImportUsers() {
-  return populateUserSelect(els.adminImportUser);
+async function populateAdminImportUsers() {
+  await populateUserSelect(els.adminImportUser);
+  const own = document.createElement("option");
+  own.value = state.user.uid;
+  own.textContent = "Mich (Admin) – vorhandene Firmen nur ergänzen, niemandem zuordnen";
+  els.adminImportUser.insertBefore(own, els.adminImportUser.firstChild);
+  els.adminImportUser.value = state.user.uid;
 }
 
 // Kundenliste drucken: eigene Firmen vorausgewaehlt; "owner" kann auch
@@ -2761,23 +2766,64 @@ function formatPercent(n) {
   return n.toLocaleString("de-DE", { maximumFractionDigits: 1 }) + " %";
 }
 
+// Finanzkennzahlen (aus North Data) als uebersichtliches Raster in
+// Gruppen. Nur Werte, die vorhanden sind, werden gezeigt.
+const FIN_GROUPS = [
+  ["Größe", [
+    ["umsatz", "Umsatz", "eur"], ["umsatzCagr", "Umsatz-Wachstum p. a. (CAGR)", "pct"],
+    ["gewinn", "Gewinn", "eur"], ["gewinnCagr", "Gewinn-Wachstum p. a. (CAGR)", "pct"],
+    ["bilanzsumme", "Bilanzsumme", "eur"], ["mitarbeiterzahl", "Mitarbeiter", "num"],
+    ["stammkapital", "Stamm-/Grundkapital", "eur"],
+  ]],
+  ["Liquidität", [
+    ["kassenbestand", "Kassenbestand", "eur"], ["forderungen", "Forderungen", "eur"],
+    ["verbindlichkeiten", "Verbindlichkeiten", "eur"],
+  ]],
+  ["Kapital & Rendite", [
+    ["eigenkapital", "Eigenkapital", "eur"], ["ekQuote", "Eigenkapitalquote", "pct"],
+    ["ekRendite", "Eigenkapitalrendite", "pct"], ["umsatzrendite", "Umsatzrendite", "pct"],
+  ]],
+  ["Kosten & Steuern", [
+    ["personalaufwand", "Personalaufwand", "eur"], ["personalaufwandProMitarbeiter", "Personalaufwand je Mitarbeiter", "eur"],
+    ["umsatzProMitarbeiter", "Umsatz je Mitarbeiter", "eur"], ["materialaufwand", "Materialaufwand", "eur"],
+    ["steuern", "Steuern", "eur"], ["steuerQuote", "Steuerquote", "pct"],
+  ]],
+  ["Vorsorge & Vermögen", [
+    ["pensionsrueckstellungenEur", "Pensionsrückstellungen", "eur"], ["immobilien", "Immobilien und Grundstücke", "eur"],
+  ]],
+  ["Weiteres", [
+    ["foerdersummeProJahr", "Fördersumme pro Jahr", "eur"], ["foerderungenProJahr", "Förderungen pro Jahr", "num"],
+    ["patenteProJahr", "Patente pro Jahr", "num"], ["markenProJahr", "Marken pro Jahr", "num"],
+  ]],
+];
+
+function formatFinValue(v, kind) {
+  if (typeof v !== "number") return null;
+  if (kind === "eur") return formatEuro(v);
+  if (kind === "pct") return formatPercent(v);
+  return v.toLocaleString("de-DE");
+}
+
 function buildFinancialsText(f) {
-  const bits = [];
-  const umsatz = formatEuro(f.umsatz);
-  if (umsatz) bits.push("Umsatz " + umsatz + (typeof f.umsatzCagr === "number" ? " (CAGR " + formatPercent(f.umsatzCagr) + ")" : ""));
-  const gewinn = formatEuro(f.gewinn);
-  if (gewinn) bits.push("Gewinn " + gewinn + (typeof f.gewinnCagr === "number" ? " (CAGR " + formatPercent(f.gewinnCagr) + ")" : ""));
-  if (typeof f.mitarbeiterzahl === "number") bits.push("Mitarbeiter " + f.mitarbeiterzahl);
-  const bilanz = formatEuro(f.bilanzsumme);
-  if (bilanz) bits.push("Bilanzsumme " + bilanz);
-  if (typeof f.pensionsrueckstellungenEur === "number") {
-    bits.push(f.pensionsrueckstellungenEur > 0 ? "Pensionsrückstellungen " + formatEuro(f.pensionsrueckstellungenEur) : "Keine Pensionsrückstellungen");
-  } else if (f.pensionsrueckstellungen) {
-    bits.push("Pensionsrückstellungen vorhanden");
+  let html = "";
+  FIN_GROUPS.forEach(([title, fields]) => {
+    const rows = fields
+      .map(([key, label, kind]) => [label, formatFinValue(f[key], kind)])
+      .filter(([, v]) => v !== null);
+    if (!rows.length) return;
+    html +=
+      '<div class="fin-group"><span class="fin-group-title">' + escapeHtml(title) + "</span><dl>" +
+      rows.map(([l, v]) => "<dt>" + escapeHtml(l) + "</dt><dd>" + escapeHtml(v) + "</dd>").join("") +
+      "</dl></div>";
+  });
+  if (typeof f.pensionsrueckstellungenEur !== "number" && f.pensionsrueckstellungen) {
+    html += '<div class="fin-group"><span class="fin-group-title">Vorsorge</span><dl><dt>Pensionsrückstellungen</dt><dd>vorhanden</dd></dl></div>';
   }
-  if (f.finanzkennzahlenDatum) bits.push("Stand " + f.finanzkennzahlenDatum);
-  if (!bits.length) return "";
-  return '<span class="label">Nur für dich:</span><ul class="financials-list">' + bits.map((b) => "<li>" + escapeHtml(b) + "</li>").join("") + "</ul>";
+  if (!html) return "";
+  return (
+    '<span class="label">Kennzahlen' + (f.finanzkennzahlenDatum ? " · Stand " + escapeHtml(f.finanzkennzahlenDatum) : "") + " · nur für dich</span>" +
+    '<div class="fin-grid">' + html + "</div>"
+  );
 }
 
 // Pensionsrückstellungen kommen nicht aus dem North-Data-Import und
@@ -3228,6 +3274,8 @@ function buildCustomerDetailsHtml(meta) {
   if (meta.website) contactBits.push(escapeHtml(meta.website));
   if (contactBits.length) html += '<div class="contact">' + contactBits.join(" · ") + "</div>";
   if (meta.registerNr) html += '<div class="register">' + escapeHtml(meta.registerNr) + "</div>";
+  if (meta.northDataStatus && !/aktiv/i.test(meta.northDataStatus)) html += '<div class="nd-status">Status laut Register: ' + escapeHtml(meta.northDataStatus) + "</div>";
+  if (meta.gegenstand) html += '<div class="gegenstand"><span class="label">Unternehmensgegenstand:</span> ' + escapeHtml(meta.gegenstand) + "</div>";
   html += firmStatusHtml(meta);
 
   // "Ges. Vertreter" aus North Data sind i.d.R. die Geschäftsführer -

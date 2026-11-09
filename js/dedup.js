@@ -277,6 +277,10 @@ export const FILLABLE_FIELDS = [
   "registerNr",
   "branche",
   "northDataUrl",
+  "gegenstand",
+  "northDataStatus",
+  "ustId",
+  "fax",
 ];
 
 // Liefert nur die Felder, die an der vorhandenen Firma leer sind und im
