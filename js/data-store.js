@@ -20,10 +20,10 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20261109e";
-import { buildAddressMeta } from "./address-utils.js?v=20261109e";
-import { normalizeFunctions } from "./roles.js?v=20261109e";
-import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109e";
+import { db } from "./firebase-app.js?v=20261109f";
+import { buildAddressMeta } from "./address-utils.js?v=20261109f";
+import { normalizeFunctions } from "./roles.js?v=20261109f";
+import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109f";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -67,17 +67,45 @@ function customerCoreFields(fields) {
 // Liefert laufend (Realtime) die Kundenliste. scope.all=true liefert alle
 // Kunden aller Kollegen (nur fuer die Rolle "owner" von den Sicherheits-
 // regeln erlaubt), sonst nur die eigenen (ownerUid = eigene uid).
+// "Eigene" Firmen = Firmen, die einem gehoeren (ownerUid) ODER in deren
+// Adresspool man aufgenommen ist (poolUids, z. B. dieselbe Firma bei
+// Pre-Sales und Werber). Zwei Live-Abfragen, zusammengefuehrt.
 export function subscribeCustomers(scope, onChange, onError) {
   const col = collection(db, CUSTOMERS);
-  const q = scope.all ? query(col) : query(col, where("ownerUid", "==", scope.ownerUid));
-  return onSnapshot(
-    q,
+  if (scope.all) {
+    return onSnapshot(
+      query(col),
+      (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      onError
+    );
+  }
+  const parts = { owner: null, pool: null };
+  const emit = () => {
+    if (!parts.owner || !parts.pool) return;
+    const byId = new Map();
+    [...parts.owner, ...parts.pool].forEach((r) => byId.set(r.id, r));
+    onChange(Array.from(byId.values()));
+  };
+  const un1 = onSnapshot(
+    query(col, where("ownerUid", "==", scope.ownerUid)),
     (snap) => {
-      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      onChange(rows);
+      parts.owner = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      emit();
     },
     onError
   );
+  const un2 = onSnapshot(
+    query(col, where("poolUids", "array-contains", scope.ownerUid)),
+    (snap) => {
+      parts.pool = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      emit();
+    },
+    onError
+  );
+  return () => {
+    un1();
+    un2();
+  };
 }
 
 export async function addCustomer(fields, ownerUid) {
@@ -95,6 +123,7 @@ export async function addCustomer(fields, ownerUid) {
     totalProvision: 0,
     source: "manual",
     ownerUid,
+    poolUids: [ownerUid],
     createdBy: ownerUid,
     createdAt: serverTimestamp(),
   });
@@ -371,6 +400,7 @@ export async function importStaticAddresses(ownerUid, staticRecords, onProgress)
       totalProvision: 0,
       source: "excel",
       ownerUid,
+      poolUids: [ownerUid],
       createdBy: ownerUid,
       createdAt: serverTimestamp(),
     });
@@ -395,9 +425,14 @@ export async function countOwnCustomers(ownerUid) {
 // einen Komplett-Ausdruck fuer Kollegen, die die App nicht selbst
 // nutzen koennen.
 export async function getCustomersForOwner(ownerUid) {
-  const q = query(collection(db, CUSTOMERS), where("ownerUid", "==", ownerUid));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const col = collection(db, CUSTOMERS);
+  const [a, b] = await Promise.all([
+    getDocs(query(col, where("ownerUid", "==", ownerUid))),
+    getDocs(query(col, where("poolUids", "array-contains", ownerUid))),
+  ]);
+  const byId = new Map();
+  [...a.docs, ...b.docs].forEach((d) => byId.set(d.id, { id: d.id, ...d.data() }));
+  return Array.from(byId.values());
 }
 
 // Liste aller registrierten Nutzer - Sicherheitsregeln erlauben das
@@ -447,8 +482,11 @@ function nonEmptyValues(obj) {
 // North-Data-Import) werden aktualisiert - dabei kommen u. a. die
 // Pensionsrueckstellungen als Betrag dazu. Liefert die Liste der
 // ergaenzten Felder.
-export async function mergeIntoCustomer(existing, incoming, { withFinancials = false } = {}) {
+export async function mergeIntoCustomer(existing, incoming, { withFinancials = false, addPoolUid = null } = {}) {
   const update = fillEmptyFields(existing, incoming);
+  if (addPoolUid && existing.ownerUid !== addPoolUid && !(existing.poolUids || []).includes(addPoolUid)) {
+    update.poolUids = arrayUnion(addPoolUid);
+  }
   const merged = { ...existing, ...update };
   const tags = Array.from(new Set([...(existing.tags || []), ...((incoming.tags || []).filter(Boolean))]));
   if (tags.length !== (existing.tags || []).length) update.tags = tags;
@@ -463,7 +501,7 @@ export async function mergeIntoCustomer(existing, incoming, { withFinancials = f
   update.lastMergedAt = serverTimestamp();
   await updateDoc(doc(db, CUSTOMERS, existing.id), update);
 
-  const changed = Object.keys(update).filter((k) => !["dedupKeys", "lastMergedAt", "hasAddress", "geocodeQuery", "lat", "lon"].includes(k));
+  const changed = Object.keys(update).filter((k) => !["dedupKeys", "lastMergedAt", "hasAddress", "geocodeQuery", "lat", "lon", "poolUids"].includes(k));
   if (withFinancials && incoming.financials) {
     const fin = nonEmptyValues(incoming.financials);
     if (Object.keys(fin).length) {
@@ -495,6 +533,7 @@ export async function runImportPlan(plan, targetOwnerUid, createdByUid, onProgre
         totalProvision: 0,
         source: item.rec.source || "import",
         ownerUid: targetOwnerUid,
+        poolUids: [targetOwnerUid],
         createdBy: createdByUid,
         createdAt: serverTimestamp(),
         importedAt: serverTimestamp(),
@@ -504,7 +543,7 @@ export async function runImportPlan(plan, targetOwnerUid, createdByUid, onProgre
       }
       result.created++;
     } else if (item.action === "merge" && item.target) {
-      await mergeIntoCustomer(item.target, item.rec, { withFinancials: true });
+      await mergeIntoCustomer(item.target, item.rec, { withFinancials: true, addPoolUid: targetOwnerUid });
       result.merged++;
     } else {
       result.skipped++;
@@ -712,7 +751,7 @@ export async function getFirmActivity(customerId) {
 export async function assignFirms(customerIds, targetUid, onProgress) {
   let done = 0;
   for (const id of customerIds) {
-    await updateDoc(doc(db, CUSTOMERS, id), { ownerUid: targetUid });
+    await updateDoc(doc(db, CUSTOMERS, id), { poolUids: arrayUnion(targetUid) });
     done++;
     if (onProgress) onProgress(done, customerIds.length);
   }
@@ -753,3 +792,9 @@ export async function updateAppointment(appt, update, historyEntry, firmUpdate, 
 }
 
 export { increment as fsIncrement, arrayUnion as fsArrayUnion, Timestamp as FsTimestamp };
+
+
+// Liegt eine Firma im Pool einer Person (Besitzer oder poolUids)?
+export function inPoolOf(firm, uid) {
+  return Boolean(firm) && (firm.ownerUid === uid || (firm.poolUids || []).includes(uid));
+}

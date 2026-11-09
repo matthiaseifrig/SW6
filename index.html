@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – Kunden &amp; Termine</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20261109e">
+<link rel="stylesheet" href="style.css?v=20261109f">
 </head>
 <body>
 <header class="topbar">
@@ -354,9 +354,11 @@
           <hr class="divider">
           <h3>Adresspool zuweisen</h3>
           <p class="hint">
-            Gibt vorhandene Firmen einer Person – z. B. dem Pre-Sales-Kollegen
-            zum Anrufen. Bereits BdSt-Mitglieder, Firmen mit „Nicht mehr
-            anrufen“ und Firmen mit offenem Termin werden nicht verschoben.
+            Nimmt vorhandene Firmen zusätzlich in den Pool einer Person auf –
+            z. B. für den Pre-Sales-Kollegen zum Anrufen. Die Firmen bleiben
+            auch bei der bisherigen Person; alle Eintragungen (Anrufe, Termine,
+            Besuche) sehen beide. BdSt-Mitglieder, Firmen mit „Nicht mehr
+            anrufen“ und Firmen mit offenem Termin werden nicht aufgenommen.
           </p>
           <div class="field-row">
             <div class="field">
@@ -374,7 +376,7 @@
             <select id="assign-to"></select>
           </div>
           <button type="button" id="assign-preview-btn" class="secondary">Anzahl prüfen</button>
-          <button type="button" id="assign-btn" class="primary" disabled>Zuweisen</button>
+          <button type="button" id="assign-btn" class="primary" disabled>In den Pool aufnehmen</button>
           <p id="assign-status" class="hint"></p>
 
           <hr class="divider">
@@ -608,6 +610,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20261109e"></script>
+<script type="module" src="app.js?v=20261109f"></script>
 </body>
 </html>

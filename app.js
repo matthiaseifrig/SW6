@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109e";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109f";
 import {
   subscribeCustomers,
   addCustomer,
@@ -32,9 +32,9 @@ import {
   removeTag,
   backfillSourceTag,
   updateUserProfile,
-} from "./js/data-store.js?v=20261109e";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109e";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109e";
+} from "./js/data-store.js?v=20261109f";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109f";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109f";
 import {
   initCalls,
   onCustomersChanged,
@@ -43,10 +43,10 @@ import {
   populateAssignSelects,
   buildFirmActivitySection,
   firmStatusHtml,
-} from "./js/calls-ui.js?v=20261109e";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109e";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109e";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261109e";
+} from "./js/calls-ui.js?v=20261109f";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109f";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109f";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109f";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -522,7 +522,7 @@ function maybeShowImportPanel() {
 // anzeigen" eingeschaltet haben (das dient nur der Suche/Tour).
 function dashboardCustomers() {
   if (state.role === "owner") return state.customers;
-  return state.customers.filter((c) => c.ownerUid === state.user.uid);
+  return state.customers.filter((c) => c.ownerUid === state.user.uid || (c.poolUids || []).includes(state.user.uid));
 }
 
 function refreshDashboard() {
@@ -1973,7 +1973,7 @@ function renderImportPreview() {
   summary.className = "import-summary";
   summary.innerHTML =
     "<div><strong>" + fixedNew.length + "</strong> neu</div>" +
-    "<div><strong>" + fixedMerge.length + "</strong> schon vorhanden – werden ergänzt</div>" +
+    "<div><strong>" + fixedMerge.length + "</strong> schon vorhanden – werden ergänzt und zusätzlich in den Pool der gewählten Person aufgenommen (bleiben auch bei der bisherigen Person)</div>" +
     (fixedSkip.length ? "<div><strong>" + fixedSkip.length + "</strong> doppelt in der Datei – zusammengelegt</div>" : "") +
     "<div><strong>" + review.length + "</strong> bitte prüfen</div>";
   box.appendChild(summary);
@@ -3212,7 +3212,9 @@ function renderSearchResults(results, totalCount) {
       escapeHtml(meta.unternehmen) +
       '</div><div class="address">' +
       escapeHtml(addrLine) +
-      "</div></div>";
+      "</div>" +
+      firmStatusHtml(meta) +
+      "</div>";
     li.appendChild(summary);
 
     summary.addEventListener("click", () => openCustomerPage(meta.id));

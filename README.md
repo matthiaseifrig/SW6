@@ -19,9 +19,14 @@ Bildschirm mit Hinweisen (schon angerufen von wem/wann, Mitglied, offener
 Termin, nicht mehr anrufen), großem Wählknopf und den Ergebnissen Nicht
 erreicht / Später nochmal / Kein Interesse / Termin vereinbart (Worum, für
 wen, wann). Gespeichert wird in den Sammlungen `calls` und `appointments`.
-Der **Adresspool** sind die Firmen der Person (`ownerUid`); der Admin weist
-Firmen unter „Import & Dubletten → Adresspool zuweisen“ zu oder importiert
-direkt für die Person. **Meine Zahlen** zeigt Anrufe, erreicht, Termine,
+Der **Adresspool** einer Person sind die Firmen, die ihr gehören
+(`ownerUid`) **oder** in deren Pool sie aufgenommen ist (`poolUids`). Eine
+Firma gibt es nur einmal, sie kann aber in mehreren Pools liegen (z. B. bei
+Pre-Sales und beim Werber); alle Eintragungen (Anrufe, Termine, Besuche)
+hängen an der einen Firma und sind für alle sichtbar. Beim CSV-Import für eine
+Person werden schon vorhandene Firmen ergänzt und zusätzlich in deren Pool
+aufgenommen; unter „Import & Dubletten → Adresspool zuweisen“ lassen sich
+vorhandene Firmen nach PLZ/Ort in einen Pool aufnehmen. **Meine Zahlen** zeigt Anrufe, erreicht, Termine,
 durchgeführt, Quoten und die Kennzahl (50 € je durchgeführtem Termin).
 
 **Meine Termine (Werber/Makler):** „Bitte Ergebnis eintragen“ (vergangene,
