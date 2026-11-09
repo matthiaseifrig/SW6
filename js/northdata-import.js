@@ -1,4 +1,4 @@
-import { formatRegister } from "./dedup.js?v=20261109k";
+import { formatRegister } from "./dedup.js?v=20261109o";
 
 // Parst CSV-Exporte von North Data (semikolon-getrennt, Windows-1252 oder
 // UTF-8 kodiert, deutsches Zahlenformat) in die Kundenstruktur der App.
@@ -76,25 +76,48 @@ const COLUMN_MAP = {
   vertreter1: "Ges. Vertreter 1",
   vertreter2: "Ges. Vertreter 2",
   vertreter3: "Ges. Vertreter 3",
+  gegenstand: "Gegenstand",
+  northDataStatus: "Status",
+  ustId: "USt.-Id.",
+  fax: "Fax",
 };
 
 // Zahlen-Kennzahlen (deutsches Zahlenformat). Pensionsrückstellungen kommen
 // seit dem erweiterten Export als Betrag in EUR mit.
+// Alle Kennzahlen-Spalten des North-Data-Exports.
 const FINANCIAL_COLUMN_MAP = {
-  umsatz: "Umsatz EUR",
-  umsatzCagr: "Umsatz CAGR %",
+  stammkapital: "Stamm-/Grundkapital EUR",
+  bilanzsumme: "Bilanzsumme EUR",
   gewinn: "Gewinn EUR",
   gewinnCagr: "Gewinn CAGR %",
-  mitarbeiterzahl: "Mitarbeiterzahl",
-  bilanzsumme: "Bilanzsumme EUR",
+  umsatz: "Umsatz EUR",
+  umsatzCagr: "Umsatz CAGR %",
+  umsatzrendite: "Umsatzrendite %",
   eigenkapital: "Eigenkapital EUR",
+  ekQuote: "EK-Quote %",
+  ekRendite: "EK-Rendite %",
+  mitarbeiterzahl: "Mitarbeiterzahl",
+  umsatzProMitarbeiter: "Umsatz pro Mitarbeiter EUR",
+  steuern: "Steuern EUR",
+  steuerQuote: "Steuer-Quote %",
+  kassenbestand: "Kassenbestand EUR",
+  forderungen: "Forderungen EUR",
+  verbindlichkeiten: "Verbindlichkeiten EUR",
+  materialaufwand: "Materialaufwand EUR",
   personalaufwand: "Personalaufwand EUR",
+  personalaufwandProMitarbeiter: "Personalaufwand pro Mitarbeiter EUR",
   pensionsrueckstellungenEur: "Pensionsrückstellungen EUR",
+  immobilien: "Immobilien und Grundstücke EUR",
+  foerderungenProJahr: "Anzahl Förderungen pro Jahr",
+  foerdersummeProJahr: "Gesamtfördersumme pro Jahr EUR",
+  patenteProJahr: "Patente pro Jahr",
+  markenProJahr: "Marken pro Jahr",
 };
 
 // Text-Kennzahlen (z. B. Stichtag der Finanzkennzahlen)
 const FINANCIAL_TEXT_COLUMN_MAP = {
   finanzkennzahlenDatum: "Finanzkennzahlen Datum",
+  mktgTechZeitraum: "Mktg&Tech Bezugszeitraum",
 };
 
 // North-Data-Exporte kommen je nach Einstellung als Windows-1252 (ANSI)
