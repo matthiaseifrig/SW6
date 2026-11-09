@@ -14,7 +14,8 @@ import {
   getAllCustomers,
   assignFirms,
   listUsers,
-} from "./data-store.js?v=20261109e";
+  inPoolOf,
+} from "./data-store.js?v=20261109f";
 
 let ctx = null;
 const els = {};
@@ -117,7 +118,7 @@ export function initCalls(context) {
 
 function myPool() {
   const uid = ctx.state.user.uid;
-  return ctx.state.customers.filter((c) => c.ownerUid === uid);
+  return ctx.state.customers.filter((c) => inPoolOf(c, uid));
 }
 
 function isFresh(c) {
@@ -188,6 +189,7 @@ async function reloadCallbacks() {
 
 // Beim Oeffnen des Bildschirms "Anrufen"
 export function onEnterCallView() {
+  loadUsers();
   if (ctx.state.pendingCallFirm) {
     const firm = ctx.state.pendingCallFirm;
     ctx.state.pendingCallFirm = null;
@@ -386,6 +388,8 @@ function buildWarnings(firm) {
   const items = [];
   const uid = ctx.state.user.uid;
   if (firm.doNotCall) items.push(["stop", "Nicht mehr anrufen – die Firma möchte keine Anrufe."]);
+  const others = sharedWith(firm);
+  if (others.length) items.push(["info", "Liegt auch bei " + others.join(", ") + " – deine Eintragungen sehen alle."]);
   if (firm.membershipSigned) items.push(["info", "Ist bereits BdSt-Mitglied."]);
   if (firm.nextAppointment && firm.nextAppointment.date) {
     const n = firm.nextAppointment;
@@ -411,6 +415,17 @@ function buildWarnings(firm) {
     box.appendChild(p);
   });
   return box;
+}
+
+// Namen der anderen Personen, bei denen die Firma liegt (Besitzer + Pool)
+function sharedWith(firm) {
+  const uid = ctx.state.user.uid;
+  const ids = new Set([firm.ownerUid, ...(firm.poolUids || [])].filter((x) => x && x !== uid));
+  const users = call.users || [];
+  return Array.from(ids).map((id) => {
+    const u = users.find((x) => x.uid === id);
+    return u ? u.name || u.email : "einer Kollegin / einem Kollegen";
+  });
 }
 
 function renderResultButtons(area) {
@@ -856,8 +871,8 @@ async function onAssignPreview() {
     const onlyFresh = els["assign-only-fresh"].checked;
     call.assignCandidates = all.filter(
       (c) =>
-        c.ownerUid !== toUid &&
-        (!fromUid || c.ownerUid === fromUid) &&
+        !inPoolOf(c, toUid) &&
+        (!fromUid || inPoolOf(c, fromUid)) &&
         matchesArea(c, filter) &&
         !c.membershipSigned &&
         !c.doNotCall &&
@@ -866,7 +881,7 @@ async function onAssignPreview() {
     );
     const n = call.assignCandidates.length;
     const toName = els["assign-to"].options[els["assign-to"].selectedIndex].textContent;
-    els["assign-status"].textContent = n ? n + " Firmen würden an " + toName + " gehen." : "Keine passenden Firmen gefunden.";
+    els["assign-status"].textContent = n ? n + " Firmen würden zusätzlich in den Pool von " + toName + " kommen." : "Keine passenden Firmen gefunden.";
     els["assign-btn"].disabled = !n;
   } catch (err) {
     els["assign-status"].textContent = "Fehler: " + err.message;
@@ -876,13 +891,13 @@ async function onAssignPreview() {
 async function onAssignRun() {
   const n = call.assignCandidates.length;
   const toName = els["assign-to"].options[els["assign-to"].selectedIndex].textContent;
-  if (!n || !confirm(n + " Firmen an " + toName + " zuweisen?")) return;
+  if (!n || !confirm(n + " Firmen in den Pool von " + toName + " aufnehmen? Sie bleiben auch bei der bisherigen Person.")) return;
   els["assign-btn"].disabled = true;
   try {
     await assignFirms(call.assignCandidates.map((c) => c.id), els["assign-to"].value, (done, total) => {
       els["assign-status"].textContent = "Weise zu … " + done + "/" + total;
     });
-    els["assign-status"].textContent = "Fertig: " + n + " Firmen an " + toName + " zugewiesen.";
+    els["assign-status"].textContent = "Fertig: " + n + " Firmen im Pool von " + toName + ".";
     call.assignCandidates = [];
   } catch (err) {
     els["assign-status"].textContent = "Fehler: " + err.message;
