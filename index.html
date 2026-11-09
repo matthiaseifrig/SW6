@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – Kunden &amp; Termine</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20261109m">
+<link rel="stylesheet" href="style.css?v=20261109n">
 </head>
 <body>
 <header class="topbar">
@@ -640,12 +640,18 @@
 
 <footer>
   <div class="data-notice" role="note">
-    <p class="data-notice-title">Vertrauliche Geschäftsdaten – Nutzung nur im Auftrag der G.B.V.M. GmbH</p>
-    <p>Die angezeigten Firmendaten sind Eigentum der G.B.V.M. GmbH und dürfen ausschließlich für vertriebliche Zwecke in Zusammenarbeit mit der G.B.V.M. GmbH verwendet werden.</p>
-    <p><strong>Untersagt</strong> sind insbesondere die Weitergabe an Dritte, das Kopieren, Abfotografieren, Exportieren oder Speichern außerhalb dieser Anwendung sowie jede Nutzung für eigene oder fremde Zwecke – auch nach Ende der Zusammenarbeit.</p>
-    <p><strong>Bei Zuwiderhandlungen</strong> behält sich die G.B.V.M. GmbH die zivil- und strafrechtliche Verfolgung vor, insbesondere Unterlassungs-, Auskunfts- und Schadensersatzansprüche (u. a. nach dem Gesetz zum Schutz von Geschäftsgeheimnissen, dem UWG und der DSGVO) sowie die fristlose Beendigung der Zusammenarbeit.</p>
+    <div class="data-notice-inner">
+      <p class="data-notice-title">Vertrauliche Geschäftsdaten – Nutzung nur im Auftrag der G.B.V.M. GmbH</p>
+      <p>Die angezeigten Firmendaten sind Eigentum der G.B.V.M. GmbH und dürfen ausschließlich für vertriebliche Zwecke in Zusammenarbeit mit der G.B.V.M. GmbH verwendet werden.</p>
+      <input type="checkbox" id="notice-toggle" class="notice-toggle">
+      <div class="notice-more">
+        <p><strong>Untersagt</strong> sind insbesondere die Weitergabe an Dritte, das Kopieren, Abfotografieren, Exportieren oder Speichern außerhalb dieser Anwendung sowie jede Nutzung für eigene oder fremde Zwecke – auch nach Ende der Zusammenarbeit.</p>
+        <p><strong>Bei Zuwiderhandlungen</strong> behält sich die G.B.V.M. GmbH die zivil- und strafrechtliche Verfolgung vor, insbesondere Unterlassungs-, Auskunfts- und Schadensersatzansprüche (u. a. nach dem Gesetz zum Schutz von Geschäftsgeheimnissen, dem UWG und der DSGVO) sowie die fristlose Beendigung der Zusammenarbeit.</p>
+      </div>
+      <label for="notice-toggle" class="notice-toggle-label"><span class="more">Ganz anzeigen …</span><span class="less">Weniger anzeigen</span></label>
+    </div>
   </div>
-  <p>G.B.V.M. GmbH · Ismaninger Str. 7b, 85609 Aschheim · Geokodierung: OpenStreetMap Nominatim · Routing: OSRM (project-osrm.org) · Kunden-, Besuchs- und Notizdaten: Firebase.</p>
+  <p class="footer-meta">G.B.V.M. GmbH · Ismaninger Str. 7b, 85609 Aschheim · Geokodierung: OpenStreetMap Nominatim · Routing: OSRM (project-osrm.org) · Kunden-, Besuchs- und Notizdaten: Firebase.</p>
 </footer>
 
 <script src="vendor/leaflet/leaflet.js"></script>
