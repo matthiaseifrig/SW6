@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109d";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109e";
 import {
   subscribeCustomers,
   addCustomer,
@@ -32,9 +32,9 @@ import {
   removeTag,
   backfillSourceTag,
   updateUserProfile,
-} from "./js/data-store.js?v=20261109d";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109d";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109d";
+} from "./js/data-store.js?v=20261109e";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109e";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109e";
 import {
   initCalls,
   onCustomersChanged,
@@ -43,9 +43,10 @@ import {
   populateAssignSelects,
   buildFirmActivitySection,
   firmStatusHtml,
-} from "./js/calls-ui.js?v=20261109d";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109d";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261109d";
+} from "./js/calls-ui.js?v=20261109e";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109e";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109e";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109e";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -99,6 +100,7 @@ function init() {
     toast,
     canCall: () => state.role === "owner" || state.functions.includes("presales"),
   });
+  initAppointments({ state, navigate, currentView, toast });
   onAuthChange(handleAuthChange);
 }
 
@@ -896,6 +898,7 @@ function toast(message) {
 const VIEW_TITLES = {
   home: "",
   anrufen: "Anrufen",
+  termine: "Meine Termine",
   suche: "Firma suchen",
   neu: "Neue Firma",
   tour: "Tour planen",
@@ -944,7 +947,12 @@ function renderView() {
     window.scrollTo(0, 0);
     if (view === "benutzer") renderUsersList();
     if (view === "anrufen") onEnterCallView();
-    if (view === "zahlen") renderPresalesStats();
+    if (view === "zahlen") {
+      renderPresalesStats();
+      renderApptStats();
+    }
+    if (view === "termine") onEnterApptView();
+    if (view === "home") refreshTileCount();
     if (view === "import") populateAssignSelects();
     if (view === "drucken") populatePrintListUsers();
     if (view === "tour" && map) setTimeout(() => map.invalidateSize(), 50);
@@ -986,6 +994,7 @@ function renderHome() {
   if (isOwner) roles.unshift("Admin");
   els.homeRoles.textContent = roles.length ? roles.join(" | ") : "G.B.V.M. GmbH";
   els.tileZahlenLabel.textContent = isOwner ? "Zahlen & Auswertung" : "Meine Zahlen";
+  refreshTileCount();
 }
 
 function refreshCustomerPage() {

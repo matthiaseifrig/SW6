@@ -24,6 +24,15 @@ Firmen unter „Import & Dubletten → Adresspool zuweisen“ zu oder importiert
 direkt für die Person. **Meine Zahlen** zeigt Anrufe, erreicht, Termine,
 durchgeführt, Quoten und die Kennzahl (50 € je durchgeführtem Termin).
 
+**Meine Termine (Werber/Makler):** „Bitte Ergebnis eintragen“ (vergangene,
+noch offene Termine), Heute, Demnächst, Erledigt. Pro Termin: Anrufen, Route,
+Firma öffnen und **Durchgeführt / Verschoben / Abgesagt**. Werber: Mitglied
+gewonnen? und ggf. direkt einen Makler-Termin vereinbaren (Kennzahl 150 €
+Mitglied, 200 € Mitglied + Makler-Termin, 112,50 € nur Makler-Termin). Makler:
+Abschluss? und Sparte (bAV, PKV, Immobilie, Geldanlage, Sonstiges). Abgesagt
+oder nicht angetroffen → Wiedervorlage in einer Woche bei der Person, die den
+Termin vereinbart hat; „von uns abgesagt“ zählt nicht gegen Pre-Sales.
+
 # Tourenplaner – Jubilare BdSt
 
 Web-App zur Tourenplanung mit eigenem Kundenstamm pro Nutzer: Login,
