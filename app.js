@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109i";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109k";
 import {
   subscribeCustomers,
   addCustomer,
@@ -34,9 +34,9 @@ import {
   updateUserProfile,
   lookupFirmKeys,
   rebuildKeysAndPools,
-} from "./js/data-store.js?v=20261109i";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109i";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109i";
+} from "./js/data-store.js?v=20261109k";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109k";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109k";
 import {
   initCalls,
   onCustomersChanged,
@@ -45,10 +45,11 @@ import {
   populateAssignSelects,
   buildFirmActivitySection,
   firmStatusHtml,
-} from "./js/calls-ui.js?v=20261109i";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109i";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261109i";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261109i";
+  callFirm,
+} from "./js/calls-ui.js?v=20261109k";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109k";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261109k";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109k";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -82,7 +83,8 @@ const state = {
   gpsCoords: null,
   pendingConfirm: null, // { customerId, meta, details, visitId }
   pendingCancel: null, // { customerId, visitId, field }
-  activeSearchFilter: null, // "members" | "consultations" | null
+  activeSearchFilter: "alle", // siehe Filter-Knoepfe in der Suche
+  searchLimit: 60,
   openCustomerId: new URLSearchParams(location.search).get("customer") || null,
   customerPageScrolled: false,
   dedupIndex: null, // { index, loadedAt } - alle Firmen fuer die Dublettenpruefung
@@ -124,8 +126,9 @@ function cacheEls() {
   els.searchInput = document.getElementById("customer-search");
   els.searchResults = document.getElementById("search-results");
   els.searchEmpty = document.getElementById("search-empty");
-  els.filterMembersBtn = document.getElementById("filter-members");
-  els.filterConsultationsBtn = document.getElementById("filter-consultations");
+  els.filterChips = document.querySelectorAll(".search-filters .filter-chip");
+  els.searchCount = document.getElementById("search-count");
+  els.searchMore = document.getElementById("search-more");
 
   els.addCustomerToggle = document.getElementById("add-customer-toggle");
   els.addCustomerForm = document.getElementById("add-customer-form");
@@ -250,8 +253,13 @@ function bindStaticEvents() {
   els.scopeToggle.addEventListener("change", onScopeToggle);
 
   els.searchInput.addEventListener("input", onSearchInput);
-  els.filterMembersBtn.addEventListener("click", () => onFilterChipClick("members"));
-  els.filterConsultationsBtn.addEventListener("click", () => onFilterChipClick("consultations"));
+  els.filterChips.forEach((b) => b.addEventListener("click", () => onFilterChipClick(b.dataset.filter)));
+  els.searchMore.addEventListener("click", () => {
+    state.searchLimit += 60;
+    applySearchFiltersAndRender();
+  });
+  document.getElementById("fin-check-btn").addEventListener("click", onFinCheckClick);
+  document.getElementById("fin-csv-btn").addEventListener("click", onFinCsvClick);
 
   els.addCustomerForm.addEventListener("submit", onAddCustomerSubmit);
   ["nc-unternehmen", "nc-plz", "nc-ort", "nc-telefon"].forEach((id) => {
@@ -325,6 +333,11 @@ function bindStaticEvents() {
     if (!nav) return;
     if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;
     ev.preventDefault();
+    // Auf der Firmen-Seite fuehrt der Knopf zurueck in die vorige Ansicht
+    if (nav.classList.contains("back-home") && currentView() === "firma") {
+      closeCustomerPage();
+      return;
+    }
     navigate(nav.dataset.nav);
   });
 
@@ -403,13 +416,34 @@ async function handleAuthChange(user) {
   subscribeToCustomers();
 }
 
+// Motivierende Saetze mit Augenzwinkern - wechseln bei jedem Aufruf der
+// Startseite.
 const WELCOME_SAYINGS = [
-  "Auf einen erfolgreichen Tag!",
-  "Jeder Besuch zählt.",
-  "Schön, dass du da bist.",
-  "Viel Erfolg unterwegs!",
-  "Auf gute Gespräche heute.",
+  "Lass uns starten und Umsatz machen. Der Kaffee ist schon warm. ☕",
+  "Bleib dran – der Fleißige gewinnt immer. Und der Zweitfleißigste wenigstens das Kantinen-Duell.",
+  "Heute ist ein guter Tag für ein „Ja“. Morgen übrigens auch.",
+  "Jedes „Nein“ bringt dich näher ans nächste „Ja“. Statistik ist auf deiner Seite.",
+  "Wer anruft, gewinnt. Wer nicht anruft, gewinnt … Zeit zum Nachdenken.",
+  "Die Telefonnummern wählen sich leider noch nicht von allein. Aber du bist ja da.",
+  "Mittelstand ruft – du gehst ran. Bzw. du rufst an. Du weißt, was gemeint ist.",
+  "Der frühe Vogel fängt den Geschäftsführer, bevor das Meeting beginnt.",
+  "Ein Termin am Tag hält die Flaute fern.",
+  "Lächeln beim Telefonieren hört man. Ausprobieren lohnt sich.",
+  "Erfolg ist kein Zufall – meistens ist es eine gut gepflegte Wiedervorlage.",
+  "Heute schon jemanden zum Mitglied gemacht? Der Tag ist noch jung.",
+  "Steuern sparen ist schön. Kunden glücklich machen noch schöner.",
+  "Du bist der Grund, warum der Bund der Steuerzahler wächst. Kein Druck. 😉",
+  "Nicht jede Firma wartet auf deinen Anruf – aber die richtige schon.",
+  "Ran an die Liste! Die erledigt sich nämlich nicht durch Hinschauen.",
+  "Ein gutes Gespräch ist wie ein guter Espresso: kurz, stark, wirkt lange.",
+  "Wer Termine sät, wird Abschlüsse ernten.",
+  "Heute wird ein Tag für die Statistik. Die schöne Seite der Statistik.",
+  "Auf geht's – die Konkurrenz telefoniert auch nicht für dich.",
 ];
+
+function randomSaying() {
+  return WELCOME_SAYINGS[Math.floor(Math.random() * WELCOME_SAYINGS.length)];
+}
 
 function friendlyFirstName(name) {
   const raw = (name || "").trim();
@@ -512,6 +546,7 @@ function subscribeToCustomers() {
       refreshDashboard();
       refreshCustomerPage();
       onCustomersChanged();
+      if (currentView() === "suche") applySearchFiltersAndRender();
     },
     (err) => {
       console.error(err);
@@ -877,7 +912,10 @@ async function findCustomerAnywhere(id) {
 async function openCustomerPage(id) {
   const meta = await findCustomerAnywhere(id);
   if (!meta) return;
-  history.pushState({ customerId: id }, "", "?customer=" + encodeURIComponent(id));
+  // Merken, wohin "Zurueck" fuehrt (Suche, Tour, Termine ...) und wo man war
+  state.returnScroll = window.scrollY;
+  rememberRecent(id);
+  history.pushState({ customerId: id, fromApp: true }, "", "?customer=" + encodeURIComponent(id));
   state.openCustomerId = id;
   state.customerPageScrolled = false;
   renderView();
@@ -961,8 +999,11 @@ function renderView() {
   document.body.dataset.screen = view;
   els.viewTitle.textContent = VIEW_TITLES[view] || "";
   document.title = "G.B.V.M. GmbH – " + (VIEW_TITLES[view] || "Kunden & Termine");
+  const backBtn = els.viewBar.querySelector(".back-home");
+  if (backBtn) backBtn.textContent = view === "firma" ? "← Zurück" : "← Startseite";
   if (view !== lastRenderedView) {
-    window.scrollTo(0, 0);
+    const cameBack = lastRenderedView === "firma" && typeof state.returnScroll === "number";
+    window.scrollTo(0, cameBack ? state.returnScroll : 0);
     if (view === "benutzer") renderUsersList();
     if (view === "anrufen") onEnterCallView();
     if (view === "zahlen") {
@@ -970,7 +1011,11 @@ function renderView() {
       renderApptStats();
     }
     if (view === "termine") onEnterApptView();
-    if (view === "home") refreshTileCount();
+    if (view === "home") {
+      refreshTileCount();
+      document.getElementById("home-saying").textContent = randomSaying();
+    }
+    if (view === "suche") applySearchFiltersAndRender();
     if (view === "import") populateAssignSelects();
     if (view === "drucken") populatePrintListUsers();
     if (view === "tour" && map) setTimeout(() => map.invalidateSize(), 50);
@@ -1012,6 +1057,7 @@ function renderHome() {
   if (isOwner) roles.unshift("Admin");
   els.homeRoles.textContent = roles.length ? roles.join(" | ") : "G.B.V.M. GmbH";
   els.tileZahlenLabel.textContent = isOwner ? "Zahlen & Auswertung" : "Meine Zahlen";
+  document.getElementById("home-saying").textContent = randomSaying();
   refreshTileCount();
 }
 
@@ -1046,28 +1092,124 @@ async function renderCustomerPage(meta) {
   }
 
   els.deeplinkBody.innerHTML = "";
-  const detailsDiv = document.createElement("div");
-  detailsDiv.innerHTML = buildCustomerDetailsHtml(meta);
-  els.deeplinkBody.appendChild(detailsDiv);
+  const layout = document.createElement("div");
+  layout.className = "firm-layout";
+  els.deeplinkBody.appendChild(layout);
 
-  // Manuelles Ja/Nein nur, solange North Data keinen Betrag geliefert hat.
-  const hasPensionAmount = meta.financials && typeof meta.financials.pensionsrueckstellungenEur === "number";
-  if (state.role === "owner" && !hasPensionAmount) {
-    detailsDiv.appendChild(buildPensionToggle(meta));
+  // Kopf: Name, Adresse, Status + grosse Kontakt-Knoepfe
+  const hero = document.createElement("section");
+  hero.className = "firm-hero";
+  const addrLine = [meta.strasse, [meta.plz, meta.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  hero.innerHTML =
+    '<div class="firm-hero-text"><h2>' + escapeHtml(meta.unternehmen) + "</h2>" +
+    '<p class="firm-hero-address">' + escapeHtml(addrLine) + (meta.registerNr ? " · " + escapeHtml(meta.registerNr) : "") + "</p>" +
+    firmStatusHtml(meta) + "</div>";
+  const contact = document.createElement("div");
+  contact.className = "firm-contact";
+  const tel = telLink(meta.telefon);
+  if (tel) {
+    contact.insertAdjacentHTML("beforeend", '<a class="contact-btn contact-call" href="' + escapeHtml(tel) + '"><span class="contact-label">Anrufen</span><span class="contact-value">' + escapeHtml(meta.telefon) + "</span></a>");
+  } else {
+    contact.insertAdjacentHTML("beforeend", '<div class="contact-btn contact-missing"><span class="contact-label">Telefon</span><span class="contact-value">nicht hinterlegt</span></div>');
   }
+  if (meta.email) {
+    contact.insertAdjacentHTML("beforeend", '<a class="contact-btn contact-mail" href="mailto:' + escapeHtml(meta.email) + '"><span class="contact-label">E-Mail schreiben</span><span class="contact-value">' + escapeHtml(meta.email) + "</span></a>");
+  }
+  if (meta.website) {
+    const url = /^https?:/i.test(meta.website) ? meta.website : "https://" + meta.website;
+    contact.insertAdjacentHTML("beforeend", '<a class="contact-btn contact-web" target="_blank" rel="noopener" href="' + escapeHtml(url) + '"><span class="contact-label">Website</span><span class="contact-value">' + escapeHtml(meta.website.replace(/^https?:\/\//i, "")) + "</span></a>");
+  }
+  if (addrLine) {
+    contact.insertAdjacentHTML("beforeend", '<a class="contact-btn contact-route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(addrLine) + '"><span class="contact-label">Route</span><span class="contact-value">Google Maps</span></a>');
+  }
+  hero.appendChild(contact);
+  layout.appendChild(hero);
 
-  els.deeplinkBody.appendChild(buildTodoSection(meta));
-  els.deeplinkBody.appendChild(buildTagsSection(meta));
-  els.deeplinkBody.appendChild(buildContactsSection(meta));
-  els.deeplinkBody.appendChild(buildVisitControls(meta));
+  // Aktionen als grosse Kacheln
+  const actions = document.createElement("section");
+  actions.className = "firm-actions";
+  layout.appendChild(actions);
+
+  const colLeft = document.createElement("div");
+  colLeft.className = "firm-col";
+  const colRight = document.createElement("div");
+  colRight.className = "firm-col";
+  layout.appendChild(colLeft);
+  layout.appendChild(colRight);
+
+  const card = (title, content) => {
+    const c = document.createElement("section");
+    c.className = "firm-card";
+    if (title) {
+      const h = document.createElement("h3");
+      h.textContent = title;
+      c.appendChild(h);
+    }
+    if (content) c.appendChild(content);
+    return c;
+  };
+
+  // Firmendaten (Geschaeftsfuehrer, Kennzahlen, Pensionsrueckstellungen)
+  const detailsDiv = document.createElement("div");
+  detailsDiv.className = "firm-details";
+  detailsDiv.innerHTML = buildCustomerDetailsHtml(meta);
+  const hasPensionAmount = meta.financials && typeof meta.financials.pensionsrueckstellungenEur === "number";
+  if (state.role === "owner" && !hasPensionAmount) detailsDiv.appendChild(buildPensionToggle(meta));
+  if (canSeeFinancialsOf(meta) && !meta.financials) {
+    detailsDiv.insertAdjacentHTML("beforeend", '<p class="hint">Keine Umsatz-/Bilanzdaten vorhanden.</p>');
+  }
+  colLeft.appendChild(card("Firmendaten", detailsDiv));
+
+  const contactsSection = buildContactsSection(meta);
+  colLeft.appendChild(card(null, contactsSection));
+  detailsDiv.appendChild(buildTagsSection(meta));
+
+  const todoSection = buildTodoSection(meta);
+  const todoCard = card("ToDo / Wiedervorlage", todoSection);
+  colRight.appendChild(todoCard);
+
+  const visitControls = buildVisitControls(meta);
+  const visitCard = card("Besuche", visitControls);
+  colRight.appendChild(visitCard);
+
   const activityHolder = document.createElement("div");
-  els.deeplinkBody.appendChild(activityHolder);
-  buildFirmActivitySection(meta).then((box) => activityHolder.replaceWith(box));
+  colRight.insertBefore(activityHolder, todoCard);
+  buildFirmActivitySection(meta).then((box) => {
+    activityHolder.replaceWith(card(null, box));
+  });
+
+  const tile = (label, sub, onClick, cls) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "action-tile " + (cls || "");
+    b.innerHTML = '<span class="action-label">' + escapeHtml(label) + '</span><span class="action-sub">' + escapeHtml(sub) + "</span>";
+    b.addEventListener("click", onClick);
+    actions.appendChild(b);
+  };
+  const reveal = (section, el) => {
+    if (el && el.classList.contains("hidden")) el.classList.remove("hidden");
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  tile("Telefonat eintragen", "Ergebnis, Wiedervorlage oder Termin", () => callFirm(meta), "primary-tile");
+  tile("Besuchsbericht", "Besuch eintragen", () => {
+    const form = visitControls.querySelector(".visit-form");
+    reveal(visitCard, form);
+  });
+  tile("ToDo / Wiedervorlage", meta.openTodo && meta.openTodo.text ? "Offen: " + meta.openTodo.text : "Neu anlegen", () => {
+    const openBtn = Array.from(todoSection.querySelectorAll("button")).find((x) => /hinzufügen|ändern/i.test(x.textContent));
+    if (openBtn) openBtn.click();
+    reveal(todoCard);
+  });
+  tile("Ansprechpartner", "Hinzufügen oder ansehen", () => {
+    const input = contactsSection.querySelector("input");
+    reveal(contactsSection);
+    if (input) setTimeout(() => input.focus(), 400);
+  });
 
   const historyBox = document.createElement("div");
   historyBox.className = "visit-history-full";
   historyBox.textContent = "Lade Verlauf …";
-  els.deeplinkBody.appendChild(historyBox);
+  visitCard.appendChild(historyBox);
 
   els.deeplinkPanel.classList.remove("hidden");
   if (!state.customerPageScrolled) {
@@ -3218,48 +3360,80 @@ function buildTagsSection(meta) {
 // ---------- Kunden-Suche ----------
 
 const SEARCH_FIELDS = ["unternehmen", "ort", "strasse", "plz", "vertreter1", "vertreter2", "vertreter3", "inhaber"];
-const SEARCH_RESULT_LIMIT = 30;
+function telLink(tel) {
+  const t = String(tel || "").replace(/[^\d+]/g, "");
+  return t.length >= 5 ? "tel:" + t : "";
+}
 
 function onSearchInput() {
-  state.activeSearchFilter = null;
+  state.searchLimit = 60;
   applySearchFiltersAndRender();
 }
 
 function onFilterChipClick(filter) {
-  state.activeSearchFilter = state.activeSearchFilter === filter ? null : filter;
-  if (state.activeSearchFilter) els.searchInput.value = "";
+  state.activeSearchFilter = filter;
+  state.searchLimit = 60;
   applySearchFiltersAndRender();
 }
 
-function applySearchFiltersAndRender() {
-  els.filterMembersBtn.classList.toggle("active", state.activeSearchFilter === "members");
-  els.filterConsultationsBtn.classList.toggle("active", state.activeSearchFilter === "consultations");
-
-  if (state.activeSearchFilter === "members") {
-    const matches = state.customers.filter((c) => c.membershipSigned).sort((a, b) => (a.unternehmen || "").localeCompare(b.unternehmen || "", "de"));
-    renderSearchResults(matches.slice(0, SEARCH_RESULT_LIMIT), matches.length);
-    return;
+// "Zuletzt angesehen": pro Person im Browser gemerkt (nur IDs + Zeitpunkt)
+function recentKey() {
+  return "gbvm-recent-" + (state.user ? state.user.uid : "x");
+}
+function loadRecent() {
+  try {
+    return JSON.parse(localStorage.getItem(recentKey()) || "[]");
+  } catch (e) {
+    return [];
   }
-  if (state.activeSearchFilter === "consultations") {
-    const matches = state.customers.filter((c) => c.consultationRequested).sort((a, b) => (a.unternehmen || "").localeCompare(b.unternehmen || "", "de"));
-    renderSearchResults(matches.slice(0, SEARCH_RESULT_LIMIT), matches.length);
-    return;
+}
+function rememberRecent(id) {
+  try {
+    const list = loadRecent().filter((r) => r.id !== id);
+    list.unshift({ id, t: Date.now() });
+    localStorage.setItem(recentKey(), JSON.stringify(list.slice(0, 40)));
+  } catch (e) {
+    /* privater Modus o. ae. - dann eben ohne */
   }
-
-  const q = els.searchInput.value.trim().toLowerCase();
-  if (!q) {
-    els.searchResults.classList.add("hidden");
-    els.searchResults.innerHTML = "";
-    els.searchEmpty.classList.add("hidden");
-    return;
-  }
-  const matches = state.customers
-    .filter((c) => SEARCH_FIELDS.some((f) => (c[f] || "").toLowerCase().includes(q)))
-    .sort((a, b) => (a.unternehmen || "").localeCompare(b.unternehmen || "", "de"));
-  renderSearchResults(matches.slice(0, SEARCH_RESULT_LIMIT), matches.length);
 }
 
-function renderSearchResults(results, totalCount) {
+const SEARCH_FILTERS = {
+  alle: () => true,
+  zuletzt: () => true,
+  wiedervorlage: (c) => {
+    const today = new Date().toISOString().slice(0, 10);
+    return (c.callback && c.callback.date && c.callback.date <= today) || (c.openTodo && c.openTodo.dueDate && c.openTodo.dueDate <= today);
+  },
+  termin: (c) => Boolean(c.nextAppointment && c.nextAppointment.date),
+  neu: (c) => !c.lastCall && !c.lastVisitedAt && !c.nextAppointment && !c.membershipSigned,
+  mitglied: (c) => Boolean(c.membershipSigned),
+  kunde: (c) => Boolean(c.isMaklerKunde),
+  todo: (c) => Boolean(c.openTodo && c.openTodo.text),
+};
+
+function applySearchFiltersAndRender() {
+  const filter = state.activeSearchFilter || "alle";
+  els.filterChips.forEach((b) => b.classList.toggle("active", b.dataset.filter === filter));
+  const q = els.searchInput.value.trim().toLowerCase();
+  let list = state.customers.filter(SEARCH_FILTERS[filter] || (() => true));
+  if (q) list = list.filter((c) => SEARCH_FIELDS.some((f) => (c[f] || "").toLowerCase().includes(q)));
+  if (filter === "zuletzt") {
+    const order = new Map(loadRecent().map((r, i) => [r.id, i]));
+    list = list.filter((c) => order.has(c.id)).sort((a, b) => order.get(a.id) - order.get(b.id));
+  } else if (filter === "wiedervorlage" || filter === "termin") {
+    const key = (c) => (filter === "termin" ? (c.nextAppointment || {}).date : (c.callback || {}).date || (c.openTodo || {}).dueDate) || "9999";
+    list.sort((a, b) => key(a).localeCompare(key(b)));
+  } else {
+    list.sort((a, b) => (a.unternehmen || "").localeCompare(b.unternehmen || "", "de"));
+  }
+  const labels = { alle: "Firmen", zuletzt: "zuletzt angesehen", wiedervorlage: "mit fälliger Wiedervorlage", termin: "mit offenem Termin", neu: "noch nicht kontaktiert", mitglied: "BdSt-Mitglieder", kunde: "Kunden", todo: "mit offenem ToDo" };
+  els.searchCount.textContent = list.length + " " + (filter === "alle" ? (list.length === 1 ? "Firma" : "Firmen") : labels[filter]) + (q ? " für „" + els.searchInput.value.trim() + "“" : "");
+  renderSearchResults(list.slice(0, state.searchLimit), list.length, filter === "alle" && !q);
+  els.searchMore.classList.toggle("hidden", list.length <= state.searchLimit);
+  els.searchMore.textContent = "Weitere anzeigen (" + (list.length - Math.min(list.length, state.searchLimit)) + " übrig)";
+}
+
+function renderSearchResults(results, totalCount, withLetters) {
   els.searchResults.innerHTML = "";
   if (!results.length) {
     els.searchResults.classList.add("hidden");
@@ -3269,7 +3443,18 @@ function renderSearchResults(results, totalCount) {
   els.searchEmpty.classList.add("hidden");
   els.searchResults.classList.remove("hidden");
 
+  let lastLetter = null;
   results.forEach((meta) => {
+    if (withLetters) {
+      const letter = (meta.unternehmen || "#").trim().charAt(0).toUpperCase();
+      if (letter !== lastLetter) {
+        lastLetter = letter;
+        const h = document.createElement("li");
+        h.className = "search-letter";
+        h.textContent = letter;
+        els.searchResults.appendChild(h);
+      }
+    }
     const li = document.createElement("li");
     li.className = "search-result";
 
@@ -3293,17 +3478,20 @@ function renderSearchResults(results, totalCount) {
     li.appendChild(summary);
 
     summary.addEventListener("click", () => openCustomerPage(meta.id));
+    const tel = telLink(meta.telefon);
+    if (tel) {
+      const a = document.createElement("a");
+      a.className = "search-call";
+      a.href = tel;
+      a.title = "Anrufen: " + meta.telefon;
+      a.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>Anrufen</span>';
+      li.appendChild(a);
+    }
 
     els.searchResults.appendChild(li);
   });
 
-  if (totalCount > results.length) {
-    const hint = document.createElement("li");
-    hint.className = "hint";
-    hint.style.padding = "0.5rem 0.2rem";
-    hint.textContent = totalCount + " Treffer, zeige die ersten " + results.length + " - bitte genauer eingrenzen.";
-    els.searchResults.appendChild(hint);
-  }
+
 }
 
 // Kleines Label+Eingabefeld-Paar fuer das Besuchsformular (Besuch am /
@@ -3634,4 +3822,57 @@ async function onOutcomeSaveClick() {
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+
+// ---------- Firmen ohne Umsatzdaten (nur Admin) ----------
+let finMissing = [];
+async function onFinCheckClick() {
+  const btn = document.getElementById("fin-check-btn");
+  const status = document.getElementById("fin-check-status");
+  const csvBtn = document.getElementById("fin-csv-btn");
+  btn.disabled = true;
+  csvBtn.classList.add("hidden");
+  try {
+    const firms = await getAllCustomers();
+    finMissing = [];
+    let done = 0;
+    for (const f of firms) {
+      let fin = null;
+      try {
+        fin = await getFinancials(f.id);
+      } catch (e) {
+        fin = null;
+      }
+      const has = fin && ["umsatz", "gewinn", "bilanzsumme"].some((k) => typeof fin[k] === "number");
+      if (!has) finMissing.push(f);
+      done++;
+      if (done % 20 === 0) status.textContent = "Prüfe … " + done + "/" + firms.length;
+    }
+    status.textContent = finMissing.length + " von " + firms.length + " Firmen ohne Umsatz/Gewinn/Bilanzsumme.";
+    csvBtn.classList.toggle("hidden", !finMissing.length);
+  } catch (err) {
+    status.textContent = "Fehler: " + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function onFinCsvClick() {
+  const esc = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const rows = [["Name", "Straße", "PLZ", "Ort", "HR Amtsgericht", "Register-ID", "Telefon"].map(esc).join(";")];
+  finMissing
+    .slice()
+    .sort((a, b) => (a.unternehmen || "").localeCompare(b.unternehmen || "", "de"))
+    .forEach((f) => rows.push([f.unternehmen, f.strasse, f.plz, f.ort, f.registerGericht, f.registerId, f.telefon].map(esc).join(";")));
+  const blob = new Blob(["\uFEFF" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "firmen-ohne-umsatzdaten.csv";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 1000);
 }

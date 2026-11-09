@@ -20,10 +20,10 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20261109i";
-import { buildAddressMeta } from "./address-utils.js?v=20261109i";
-import { normalizeFunctions } from "./roles.js?v=20261109i";
-import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109i";
+import { db } from "./firebase-app.js?v=20261109k";
+import { buildAddressMeta } from "./address-utils.js?v=20261109k";
+import { normalizeFunctions } from "./roles.js?v=20261109k";
+import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109k";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";

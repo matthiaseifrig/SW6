@@ -8,6 +8,21 @@ Browser-Zurück-Taste funktioniert ebenfalls. Gestaltung nach dem G.B.V.M.
 Markenkit (Nachtblau, Gold als Akzent, Montserrat – lokal eingebunden unter
 `vendor/fonts/`, keine Verbindung zu Google Fonts).
 
+**Firma suchen:** zeigt sofort alle eigenen Firmen alphabetisch (mit
+Buchstaben-Trennern) und Filtern: Alle A–Z, Zuletzt angesehen (pro Person im
+Browser gemerkt), Wiedervorlage fällig, Offener Termin, Noch nicht
+kontaktiert, BdSt-Mitglieder, Kunden, Offene ToDos; Anruf-Knopf je Zeile.
+
+**Firmen-Seite:** großer Anruf-Knopf (wählt direkt am Smartphone), E-Mail-,
+Website- und Route-Knopf; Aktions-Kacheln Telefonat eintragen, Besuchsbericht,
+ToDo/Wiedervorlage, Ansprechpartner; auf breiten Bildschirmen zweispaltig.
+„← Zurück“ führt in die vorige Ansicht (Suche, Tour, Termine …) an dieselbe
+Stelle.
+
+**Hinweis im Fuß jeder Seite:** Die angezeigten Firmendaten sind Eigentum der
+G.B.V.M. GmbH und dürfen nur für vertriebliche Zwecke in Zusammenarbeit mit
+der G.B.V.M. GmbH verwendet werden.
+
 **Kacheln je Funktion** (Bereich „Benutzer“): Pre-Sales sieht Anrufen,
 Firma suchen, Neue Firma und Meine Zahlen; Werber/Makler zusätzlich Tour und
 Kundenliste drucken; der Admin alles.
