@@ -24,10 +24,12 @@ service cloud.firestore {
 
     // Jede/r Angemeldete darf das eigene Profil lesen/anlegen.
     // Die Rolle darf man sich nicht selbst setzen - das darf nur "owner".
+    // Ebenso darf financialsAccess beim Selbst-Anlegen nicht mitgegeben werden.
     match /users/{uid} {
       allow read: if isSignedIn() && (request.auth.uid == uid || isOwnerRole());
       allow create: if isSignedIn() && request.auth.uid == uid
-                    && request.resource.data.role == 'colleague';
+                    && request.resource.data.role == 'colleague'
+                    && !('financialsAccess' in request.resource.data);
       allow update: if isOwnerRole();
     }
 
