@@ -20,10 +20,10 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20261109c";
-import { buildAddressMeta } from "./address-utils.js?v=20261109c";
-import { normalizeFunctions } from "./roles.js?v=20261109c";
-import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109c";
+import { db } from "./firebase-app.js?v=20261109d";
+import { buildAddressMeta } from "./address-utils.js?v=20261109d";
+import { normalizeFunctions } from "./roles.js?v=20261109d";
+import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109d";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -607,4 +607,121 @@ export async function markNotDuplicate(ids) {
     const others = ids.filter((x) => x !== id);
     await updateDoc(doc(db, CUSTOMERS, id), { notDuplicateWith: arrayUnion(...others) });
   }
+}
+
+// ---------- Telefonakquise (Pre-Sales) ----------
+
+const CALLS = "calls";
+const APPOINTMENTS = "appointments";
+
+// Ergebnis eines Anrufs speichern. result:
+//   "nicht_erreicht" | "rueckruf" | "kein_interesse" | "termin" |
+//   "falsche_nummer" | "nicht_mehr_anrufen"
+// Am Firmendokument werden letzter Anruf, Anzahl Anrufe, Wiedervorlage
+// (callback) und ggf. "Nicht mehr anrufen" gespiegelt, damit Listen ohne
+// Extra-Abfrage auskommen.
+export async function logCall(firm, { result, spokeWith, note, callback, appointmentId, byUid, byName }) {
+  const callRef = await addDoc(collection(db, CALLS), {
+    customerId: firm.id,
+    firmName: firm.unternehmen || "",
+    plz: firm.plz || "",
+    ort: firm.ort || "",
+    byUid,
+    byName,
+    at: serverTimestamp(),
+    result,
+    spokeWith: spokeWith || "",
+    note: note || "",
+    callbackDate: callback ? callback.date : null,
+    appointmentId: appointmentId || null,
+  });
+  const update = {
+    lastCall: { at: Timestamp.now(), byUid, byName, result, spokeWith: spokeWith || "" },
+    callCount: increment(1),
+    // Wiedervorlage: nur bei "Spaeter nochmal" neu setzen, sonst erledigt
+    callback: callback
+      ? { date: callback.date, time: callback.time || "", note: callback.note || "", byUid, byName }
+      : null,
+  };
+  if (result === "nicht_mehr_anrufen") update.doNotCall = true;
+  if (result === "kein_interesse") update.stage = "kein_interesse";
+  else if (result === "termin") update.stage = "termin";
+  await updateDoc(doc(db, CUSTOMERS, firm.id), update);
+  return callRef.id;
+}
+
+// Termin vereinbaren (von Pre-Sales oder Werber fuer eine/n Kolleg:in).
+// type: "bdst" (Mitgliedschaft) | "makler" (Steuerthema)
+export async function createAppointment(firm, { type, forUid, forName, date, time, contactName, setByUid, setByName, setByFunction }) {
+  const when = new Date(date + "T" + (time || "09:00") + ":00");
+  const ref = await addDoc(collection(db, APPOINTMENTS), {
+    customerId: firm.id,
+    firmName: firm.unternehmen || "",
+    strasse: firm.strasse || "",
+    plz: firm.plz || "",
+    ort: firm.ort || "",
+    telefon: firm.telefon || "",
+    type,
+    setByUid,
+    setByName,
+    setByFunction: setByFunction || "",
+    forUid,
+    forName,
+    at: Timestamp.fromDate(when),
+    date,
+    time: time || "",
+    contactName: contactName || "",
+    status: "geplant",
+    history: [{ at: new Date().toISOString(), byUid: setByUid, byName: setByName, action: "vereinbart", date, time: time || "" }],
+    createdAt: serverTimestamp(),
+  });
+  await updateDoc(doc(db, CUSTOMERS, firm.id), {
+    nextAppointment: { id: ref.id, at: Timestamp.fromDate(when), date, time: time || "", forUid, forName, type, setByName },
+  });
+  return ref.id;
+}
+
+// Anrufe einer Person (oder aller, uid = null; nur "owner") - fuer die
+// Auswertung. Zeitraum wird in der App gefiltert.
+export async function getCalls(uid) {
+  const col = collection(db, CALLS);
+  const snap = await getDocs(uid ? query(col, where("byUid", "==", uid)) : col);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// Termine, die eine Person vereinbart hat (oder alle, uid = null).
+export async function getAppointmentsSetBy(uid) {
+  const col = collection(db, APPOINTMENTS);
+  const snap = await getDocs(uid ? query(col, where("setByUid", "==", uid)) : col);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// Verlauf einer Firma: Anrufe und Termine.
+export async function getFirmActivity(customerId) {
+  const [calls, appts] = await Promise.all([
+    getDocs(query(collection(db, CALLS), where("customerId", "==", customerId))),
+    getDocs(query(collection(db, APPOINTMENTS), where("customerId", "==", customerId))),
+  ]);
+  return {
+    calls: calls.docs.map((d) => ({ id: d.id, ...d.data() })),
+    appointments: appts.docs.map((d) => ({ id: d.id, ...d.data() })),
+  };
+}
+
+// Adresspool zuweisen (nur "owner"): Firmen einer anderen Person geben.
+export async function assignFirms(customerIds, targetUid, onProgress) {
+  let done = 0;
+  for (const id of customerIds) {
+    await updateDoc(doc(db, CUSTOMERS, id), { ownerUid: targetUid });
+    done++;
+    if (onProgress) onProgress(done, customerIds.length);
+  }
+  return done;
+}
+
+// Offene Wiedervorlagen (Rueckrufe) einer Person - unabhaengig davon, ob
+// die Firma im eigenen Pool liegt.
+export async function getMyCallbacks(uid) {
+  const snap = await getDocs(query(collection(db, CUSTOMERS), where("callback.byUid", "==", uid)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }

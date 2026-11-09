@@ -8,6 +8,22 @@ Browser-Zurück-Taste funktioniert ebenfalls. Gestaltung nach dem G.B.V.M.
 Markenkit (Nachtblau, Gold als Akzent, Montserrat – lokal eingebunden unter
 `vendor/fonts/`, keine Verbindung zu Google Fonts).
 
+**Kacheln je Funktion** (Bereich „Benutzer“): Pre-Sales sieht Anrufen,
+Firma suchen, Neue Firma und Meine Zahlen; Werber/Makler zusätzlich Tour und
+Kundenliste drucken; der Admin alles.
+
+**Anrufen (Pre-Sales, fürs Handy):** Reiter „Wiedervorlagen“ (Rückrufe nach
+Datum, Überfälliges rot, mit Sprung in die Firma) und „Neue Firmen“ (eigener
+Adresspool nach PLZ/Ort, nur noch nicht angerufene). Eine Firma pro
+Bildschirm mit Hinweisen (schon angerufen von wem/wann, Mitglied, offener
+Termin, nicht mehr anrufen), großem Wählknopf und den Ergebnissen Nicht
+erreicht / Später nochmal / Kein Interesse / Termin vereinbart (Worum, für
+wen, wann). Gespeichert wird in den Sammlungen `calls` und `appointments`.
+Der **Adresspool** sind die Firmen der Person (`ownerUid`); der Admin weist
+Firmen unter „Import & Dubletten → Adresspool zuweisen“ zu oder importiert
+direkt für die Person. **Meine Zahlen** zeigt Anrufe, erreicht, Termine,
+durchgeführt, Quoten und die Kennzahl (50 € je durchgeführtem Termin).
+
 # Tourenplaner – Jubilare BdSt
 
 Web-App zur Tourenplanung mit eigenem Kundenstamm pro Nutzer: Login,

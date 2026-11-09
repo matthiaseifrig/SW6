@@ -1016,3 +1016,111 @@ a.tile:hover .kennung, a.tile:hover .tile-sub, a.tile:focus-visible .kennung, a.
   .view-bar, #home-view, #print-panel, #users-panel, .welcome-banner, .user-bar { display: none !important; }
   body[data-screen] #app-root { display: block !important; }
 }
+
+/* ---------- Anrufen (Pre-Sales), fuers Handy optimiert ---------- */
+.call-tabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--brand-navy); margin-bottom: 1.25rem; }
+.call-tab { border: 0; border-radius: 0; background: #fff; color: var(--brand-navy); font-size: 1.1rem; min-height: 56px; }
+.call-tab + .call-tab { border-left: 1px solid var(--brand-navy); }
+.call-tab.active { background: var(--brand-navy); color: #fff; }
+.call-tab-count { display: inline-block; min-width: 1.6em; padding: 0 0.35em; margin-left: 0.3em; background: var(--brand-gold); color: var(--brand-navy); font-weight: 700; }
+.callback-list { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.callback-item { border: 1px solid var(--color-border); border-left: 4px solid var(--color-border); background: #fff; display: grid; }
+.callback-item.today { border-left-color: var(--brand-gold); }
+.callback-item.overdue { border-left-color: #b91c1c; }
+.callback-main { display: grid; gap: 0.15rem; text-align: left; background: transparent; border: 0; border-radius: 0; padding: 0.9rem 1rem; color: var(--brand-navy); font-weight: 400; min-height: 0; cursor: pointer; }
+.callback-main:hover { background: var(--surface-alt); }
+.callback-when { font-weight: 700; font-size: 1rem; }
+.callback-item.overdue .callback-when { color: #b91c1c; }
+.callback-firm { font-size: 1.2rem; font-weight: 700; }
+.callback-place, .callback-note { color: var(--color-muted); font-size: 0.95rem; }
+.callback-open { padding: 0 1rem 0.8rem; font-size: 0.95rem; }
+.empty-hint { color: var(--color-muted); padding: 1rem; border: 1px dashed var(--color-border); list-style: none; }
+.call-info { font-size: 1.05rem; margin: 0.5rem 0 1rem; }
+.big-btn { min-height: 60px; font-size: 1.15rem; width: 100%; max-width: 520px; }
+
+.call-card { display: grid; gap: 1rem; max-width: 720px; }
+.call-card-head h3 { font-size: 1.7rem; line-height: 1.25; margin: 0.3rem 0 0.2rem; color: var(--brand-navy); }
+.call-card-head .kennung { color: var(--color-muted); }
+.call-address { margin: 0; font-size: 1.05rem; }
+.call-people { margin: 0.4rem 0 0; font-size: 1.05rem; }
+.call-warnings { display: grid; gap: 0.4rem; }
+.call-warn { margin: 0; padding: 0.6rem 0.8rem; font-size: 1rem; border-left: 4px solid; background: var(--surface-alt); }
+.call-warn-stop { border-color: #b91c1c; background: #fef2f2; color: #7f1d1d; font-weight: 700; }
+.call-warn-call { border-color: var(--brand-gold); background: #fff8e6; }
+.call-warn-info { border-color: var(--brand-blue); }
+.call-warning { color: #7f1d1d; font-weight: 600; }
+.call-phone {
+  display: grid;
+  justify-items: center;
+  gap: 0.1rem;
+  padding: 1rem;
+  background: #1f7a4d;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  min-height: 84px;
+}
+.call-phone:hover, .call-phone:focus-visible { background: #17603c; }
+.call-phone-label { font-size: 1rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.call-phone-number { font-size: 1.7rem; font-weight: 700; }
+.call-field { display: grid; gap: 0.3rem; font-weight: 600; color: var(--brand-navy); }
+.call-field input { width: 100%; padding: 0.5rem 0.7rem; font-size: 1.05rem; }
+.call-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.call-results { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.result-btn { min-height: 72px; font-size: 1.15rem; border-radius: 4px; background: #fff; color: var(--brand-navy); border: 2px solid var(--brand-navy); }
+.result-btn:hover { background: var(--surface-alt); }
+.result-termin { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
+.result-termin:hover { background: var(--brand-navy); border-color: var(--brand-navy); }
+.call-card.dialed .call-results { outline: 3px solid var(--brand-gold); outline-offset: 4px; }
+.call-more { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+.call-subform { display: grid; gap: 0.8rem; border: 1px solid var(--color-border); padding: 1rem; background: var(--surface-alt); }
+.call-subform h4 { margin: 0; font-size: 1.25rem; color: var(--brand-navy); }
+.call-step { margin: 0.3rem 0 0; font-weight: 700; color: var(--brand-navy); }
+.quick-dates, .choice-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.choice-btn { background: #fff; color: var(--brand-navy); border: 2px solid var(--brand-navy); min-height: 56px; font-size: 1.05rem; flex: 1 1 12rem; }
+.choice-btn.active { background: var(--brand-navy); color: #fff; }
+.call-subform-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+.call-foot { display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: center; padding-top: 0.5rem; border-top: 1px solid var(--color-border); font-size: 1rem; }
+.link-btn { background: none; border: 0; color: var(--brand-blue); text-decoration: underline; min-height: 44px; padding: 0; font-weight: 600; cursor: pointer; }
+.call-msg { margin: 0; font-weight: 600; }
+.call-msg.error { color: #b91c1c; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translate(-50%, 150%);
+  max-width: min(92vw, 640px);
+  background: var(--brand-navy);
+  color: #fff;
+  padding: 0.9rem 1.2rem;
+  border-left: 4px solid var(--brand-gold);
+  font-weight: 600;
+  z-index: 3000;
+  transition: transform 0.25s ease;
+}
+.toast.show { transform: translate(-50%, 0); }
+
+.status-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem; }
+.status-chip { font-size: 0.8rem; padding: 2px 8px; border: 1px solid var(--brand-blue); color: var(--brand-blue); background: #fff; }
+.status-chip.stop { border-color: #b91c1c; color: #b91c1c; font-weight: 700; }
+.status-chip.muted { border-color: var(--color-border); color: var(--color-muted); }
+.firm-activity { border-top: 1px solid var(--color-border); margin-top: 1rem; padding-top: 1rem; display: grid; gap: 0.6rem; }
+.firm-activity h3 { margin: 0; }
+.firm-activity > button { justify-self: start; }
+.activity-list { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.3rem; }
+.activity-date { color: var(--color-muted); font-variant-numeric: tabular-nums; }
+.block-title { margin: 0 0 0.75rem; font-size: 1.3rem; }
+.period-switch { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.period-btn { background: #fff; color: var(--brand-navy); border: 1px solid var(--brand-navy); min-height: 44px; }
+.period-btn.active { background: var(--brand-navy); color: #fff; }
+.stat-tile.static { cursor: default; }
+.tile-count { background: var(--brand-gold); color: var(--brand-navy); border-color: var(--brand-gold); }
+@media (max-width: 420px) {
+  .call-results { grid-template-columns: 1fr; }
+  .call-field-row { grid-template-columns: 1fr; }
+}
+@media print { #call-view, #presales-stats { display: none !important; } }
+.call-tab { min-width: 0; padding: 0.5rem; white-space: normal; line-height: 1.25; }
+@media (max-width: 420px) { .call-tab { font-size: 0.92rem; } }
+.call-foot a { color: var(--brand-blue); text-decoration: underline; font-weight: 600; }

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – Kunden &amp; Termine</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20261109c">
+<link rel="stylesheet" href="style.css?v=20261109d">
 </head>
 <body>
 <header class="topbar">
@@ -64,12 +64,12 @@
         <span class="gold-rule"></span>
       </div>
       <div class="tile-grid" id="tile-grid">
-        <div class="tile tile-soon" data-tile="anrufen">
+        <a class="tile" href="#/anrufen" data-nav="anrufen" data-tile="anrufen">
           <span class="kennung">Pre-Sales</span>
           <span class="tile-label">Anrufen</span>
-          <span class="tile-sub">Firmen anrufen und Termine vereinbaren</span>
-          <span class="tile-badge">kommt als Nächstes</span>
-        </div>
+          <span class="tile-sub">Wiedervorlagen und neue Firmen anrufen, Termine vereinbaren</span>
+          <span class="tile-badge tile-count hidden" id="tile-anrufen-count"></span>
+        </a>
         <div class="tile tile-soon" data-tile="termine">
           <span class="kennung">Werber · Makler</span>
           <span class="tile-label">Meine Termine</span>
@@ -118,6 +118,47 @@
       <span id="welcome-text"></span>
       <button type="button" id="welcome-close" class="welcome-close" aria-label="Schließen">✕</button>
     </div>
+
+    <section class="panel accent" id="call-view" data-view="anrufen">
+      <div class="call-tabs" role="tablist">
+        <button type="button" class="call-tab active" data-calltab="wv" role="tab">Wiedervorlagen <span class="call-tab-count" id="wv-count">0</span></button>
+        <button type="button" class="call-tab" data-calltab="neu" role="tab">Neue Firmen <span class="call-tab-count" id="neu-count">0</span></button>
+      </div>
+
+      <div id="call-wv-pane">
+        <p class="hint">Rückrufe, die du bei „Später nochmal“ eingetragen hast – Fälliges zuerst. Antippen zum Anrufen.</p>
+        <ul id="callback-list" class="callback-list"></ul>
+      </div>
+
+      <div id="call-new-pane" class="hidden">
+        <div class="field">
+          <label for="call-filter">Welche Gegend? PLZ oder Ort</label>
+          <input type="search" id="call-filter" placeholder="z. B. 85 oder Aschheim (leer = alle)" autocomplete="off">
+        </div>
+        <p id="call-new-info" class="call-info"></p>
+        <button type="button" id="call-start-btn" class="primary big-btn">Erste Firma anrufen</button>
+      </div>
+
+      <div id="call-card" class="call-card hidden" aria-live="polite"></div>
+    </section>
+
+    <section class="panel accent" id="presales-stats" data-view="zahlen">
+      <h3 class="block-title">Telefonakquise</h3>
+      <div class="period-switch" role="group" aria-label="Zeitraum">
+        <button type="button" class="period-btn" data-period="woche">Diese Woche</button>
+        <button type="button" class="period-btn active" data-period="monat">Dieser Monat</button>
+        <button type="button" class="period-btn" data-period="quartal">Quartal</button>
+        <button type="button" class="period-btn" data-period="jahr">Jahr</button>
+      </div>
+      <div id="presales-stat-grid" class="stat-grid"></div>
+      <p class="hint">Ein Termin zählt als Erfolg, sobald die Person, die ihn wahrnimmt, „Durchgeführt“ eingetragen hat. Kennzahl = durchgeführte Termine × 50 € netto, nur zur Übersicht.</p>
+      <div id="presales-table-wrap" class="table-scroll hidden">
+        <table>
+          <thead><tr><th>Person</th><th>Anrufe</th><th>Erreicht</th><th>Termine vereinbart</th><th>Durchgeführt</th><th>Quote Termin/Anruf</th><th>Kennzahl</th></tr></thead>
+          <tbody id="presales-table-body"></tbody>
+        </table>
+      </div>
+    </section>
 
     <section class="panel accent" id="dashboard-panel" data-view="zahlen">
       <div class="collapsible-title">
@@ -283,6 +324,32 @@
             <div class="progress-bar"><div id="admin-import-progress-fill"></div></div>
           </div>
           <p id="admin-import-status" class="hint"></p>
+
+          <hr class="divider">
+          <h3>Adresspool zuweisen</h3>
+          <p class="hint">
+            Gibt vorhandene Firmen einer Person – z. B. dem Pre-Sales-Kollegen
+            zum Anrufen. Bereits BdSt-Mitglieder, Firmen mit „Nicht mehr
+            anrufen“ und Firmen mit offenem Termin werden nicht verschoben.
+          </p>
+          <div class="field-row">
+            <div class="field">
+              <label for="assign-from">Von wem?</label>
+              <select id="assign-from"></select>
+            </div>
+            <div class="field">
+              <label for="assign-filter">PLZ beginnt mit / Ort</label>
+              <input type="text" id="assign-filter" placeholder="z. B. 85 oder Erding">
+            </div>
+          </div>
+          <label class="checkbox"><input type="checkbox" id="assign-only-fresh" checked> Nur Firmen, die noch nicht besucht oder angerufen wurden</label>
+          <div class="field">
+            <label for="assign-to">An wen?</label>
+            <select id="assign-to"></select>
+          </div>
+          <button type="button" id="assign-preview-btn" class="secondary">Anzahl prüfen</button>
+          <button type="button" id="assign-btn" class="primary" disabled>Zuweisen</button>
+          <p id="assign-status" class="hint"></p>
 
           <hr class="divider">
           <h3>Dubletten zusammenführen</h3>
@@ -515,6 +582,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20261109c"></script>
+<script type="module" src="app.js?v=20261109d"></script>
 </body>
 </html>
