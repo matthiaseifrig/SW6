@@ -1124,3 +1124,31 @@ a.tile:hover .kennung, a.tile:hover .tile-sub, a.tile:focus-visible .kennung, a.
 .call-tab { min-width: 0; padding: 0.5rem; white-space: normal; line-height: 1.25; }
 @media (max-width: 420px) { .call-tab { font-size: 0.92rem; } }
 .call-foot a { color: var(--brand-blue); text-decoration: underline; font-weight: 600; }
+
+/* Kachel-Icons (Linien-Symbole wie die feine Linie im Logo) */
+.tile-head { order: 2; display: flex; align-items: center; gap: 0.7rem; }
+.tile-head .tile-label { order: 0; }
+.tile-icon { width: 2.1rem; height: 2.1rem; flex: none; color: var(--brand-navy); }
+a.tile:hover .tile-icon, a.tile:focus-visible .tile-icon { color: var(--brand-gold); }
+@media (max-width: 700px) { .tile-icon { width: 1.8rem; height: 1.8rem; } }
+
+/* Meine Termine */
+.appt-group { margin-bottom: 1.5rem; }
+.appt-group h3 { margin: 0 0 0.5rem; font-size: 1.25rem; }
+.appt-group.overdue h3 { color: #b91c1c; }
+.appt-done summary { cursor: pointer; font-weight: 700; font-size: 1.1rem; color: var(--brand-navy); padding: 0.5rem 0; }
+.callback-item.done { opacity: 0.85; }
+.appt-when { font-size: 1.25rem; font-weight: 700; margin: 0.4rem 0 0; }
+.appt-links { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.secondary-link { display: inline-flex; align-items: center; min-height: 48px; padding: 0.5rem 1rem; border: 1px solid var(--brand-navy); color: var(--brand-navy); text-decoration: none; font-weight: 600; border-radius: 4px; background: #fff; }
+.secondary-link:hover { background: var(--surface-alt); }
+.followup { display: grid; gap: 0.6rem; }
+.sparten-list { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; justify-content: center; margin-top: 0.4rem; }
+#appt-view .call-results { grid-template-columns: 1fr; max-width: 520px; }
+@media print { #appt-view, #appt-stats { display: none !important; } }
+.yesno-row { display: grid; grid-template-columns: 1fr 1fr; }
+.table-scroll { margin-top: 1rem; overflow-x: auto; }
+.table-scroll table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.table-scroll th, .table-scroll td { text-align: left; padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+.table-scroll th { background: var(--surface-alt); color: var(--brand-navy); font-weight: 700; }
+.table-scroll td:not(:first-child), .table-scroll th:not(:first-child) { text-align: right; }

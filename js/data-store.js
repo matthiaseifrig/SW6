@@ -20,10 +20,10 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20261109d";
-import { buildAddressMeta } from "./address-utils.js?v=20261109d";
-import { normalizeFunctions } from "./roles.js?v=20261109d";
-import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109d";
+import { db } from "./firebase-app.js?v=20261109e";
+import { buildAddressMeta } from "./address-utils.js?v=20261109e";
+import { normalizeFunctions } from "./roles.js?v=20261109e";
+import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109e";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -725,3 +725,31 @@ export async function getMyCallbacks(uid) {
   const snap = await getDocs(query(collection(db, CUSTOMERS), where("callback.byUid", "==", uid)));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
+
+// ---------- Termine wahrnehmen (Werber / Makler) ----------
+
+// Termine, die eine Person wahrnimmt (forUid) - oder alle (uid = null).
+export async function getAppointmentsFor(uid) {
+  const col = collection(db, APPOINTMENTS);
+  const snap = await getDocs(uid ? query(col, where("forUid", "==", uid)) : col);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// Termin aendern (durchgefuehrt / verschoben / abgesagt) mit Eintrag im
+// Verlauf; optional zugleich die Firma fortschreiben. "nextAppointment"
+// an der Firma wird nur geleert, wenn es noch auf diesen Termin zeigt.
+export async function updateAppointment(appt, update, historyEntry, firmUpdate, { clearNext = false, setNext = null } = {}) {
+  const data = { ...update };
+  if (historyEntry) data.history = arrayUnion({ ...historyEntry, at: new Date().toISOString() });
+  await updateDoc(doc(db, APPOINTMENTS, appt.id), data);
+  const fu = { ...(firmUpdate || {}) };
+  if (clearNext || setNext) {
+    const snap = await getDoc(doc(db, CUSTOMERS, appt.customerId));
+    const next = snap.exists() ? snap.data().nextAppointment : null;
+    if (setNext) fu.nextAppointment = setNext;
+    else if (next && next.id === appt.id) fu.nextAppointment = null;
+  }
+  if (Object.keys(fu).length) await updateDoc(doc(db, CUSTOMERS, appt.customerId), fu);
+}
+
+export { increment as fsIncrement, arrayUnion as fsArrayUnion, Timestamp as FsTimestamp };

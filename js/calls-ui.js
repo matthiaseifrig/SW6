@@ -14,7 +14,7 @@ import {
   getAllCustomers,
   assignFirms,
   listUsers,
-} from "./data-store.js?v=20261109d";
+} from "./data-store.js?v=20261109e";
 
 let ctx = null;
 const els = {};
@@ -47,6 +47,7 @@ const STATUS_LABELS = {
   nicht_angetroffen: "nicht angetroffen",
 };
 export const KENNZAHL_PRESALES = 50;
+export { periodStart, toDate, deDate, deDateTime, esc, todayIso, addDaysIso, TYPE_LABELS, STATUS_LABELS, telHref, loadUsers };
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -90,7 +91,7 @@ export function initCalls(context) {
     els[id] = document.getElementById(id);
   });
   els.tabs = document.querySelectorAll(".call-tab");
-  els.periodBtns = document.querySelectorAll(".period-btn");
+  els.periodBtns = document.querySelectorAll(".period-btn:not(.appt-period)");
 
   els.tabs.forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.calltab)));
   els["call-filter"].addEventListener("input", refreshNewPane);
@@ -725,7 +726,9 @@ function periodStart(period) {
 
 const REACHED = ["rueckruf", "kein_interesse", "termin", "nicht_mehr_anrufen"];
 
-function summarize(calls, appts) {
+function summarize(calls, allAppts) {
+  // Von uns abgesagte Termine zaehlen nicht gegen Pre-Sales
+  const appts = allAppts.filter((a) => a.cancelReason !== "uns");
   const reached = calls.filter((c) => REACHED.includes(c.result) || c.spokeWith).length;
   const done = appts.filter((a) => a.status === "durchgefuehrt").length;
   const cancelled = appts.filter((a) => a.status === "abgesagt" || a.status === "nicht_angetroffen").length;
