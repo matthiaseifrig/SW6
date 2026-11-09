@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – Kunden &amp; Termine</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20261109g">
+<link rel="stylesheet" href="style.css?v=20261109i">
 </head>
 <body>
 <header class="topbar">
@@ -96,7 +96,7 @@
           <span class="tile-head"><svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M8 17v-4M13 17V8M18 17v-7"/></svg><span class="tile-label" id="tile-zahlen-label">Meine Zahlen</span></span>
           <span class="tile-sub">Besuche, Mitglieder, Termine, Wiedervorlagen</span>
         </a>
-        <a class="tile" href="#/drucken" data-nav="drucken" data-tile="drucken">
+        <a class="tile owner-only" href="#/drucken" data-nav="drucken" data-tile="drucken">
           <span class="kennung">Listen</span>
           <span class="tile-head"><svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg><span class="tile-label">Kundenliste drucken</span></span>
           <span class="tile-sub">Als PDF oder auf Papier, mit QR-Codes</span>
@@ -389,6 +389,17 @@
             Haupt-Firma; die anderen Einträge werden gelöscht.
           </p>
           <button type="button" id="dupe-search-btn" class="secondary">Dubletten suchen</button>
+          <hr class="divider">
+          <h3>Dublettenschutz und Zuordnungen aktualisieren</h3>
+          <p class="hint">
+            Einmal nach dem Update ausführen (und gern nach größeren Änderungen):
+            Schreibt die Dubletten-Schlüssel aller Firmen neu – damit
+            Kolleginnen und Kollegen keine Firma doppelt anlegen können, die sie
+            selbst nicht sehen – und ordnet Firmen mit Terminen der Person zu,
+            die den Termin wahrnimmt bzw. vereinbart hat.
+          </p>
+          <button type="button" id="rebuild-keys-btn" class="secondary">Jetzt aktualisieren</button>
+          <p id="rebuild-keys-status" class="hint"></p>
           <p id="dupe-search-status" class="hint"></p>
           <div id="dupe-groups" class="dupe-groups"></div>
 
@@ -610,6 +621,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20261109g"></script>
+<script type="module" src="app.js?v=20261109i"></script>
 </body>
 </html>

@@ -6,7 +6,10 @@ aus North Data), Abschnitt 3 (Startseite, G.B.V.M.-Erscheinungsbild),
 Abschnitt 4 (Anrufen), Abschnitt 5 (Meine Termine), Abschnitt 6 (Kette an der
 Firma: wer hat terminiert / aufgenommen / Makler-Termin vereinbart).
 Ergänzt: gemeinsame Adresspools (`poolUids`) – eine Firma kann bei mehreren
-Personen liegen, alle Eintragungen sind für alle sichtbar.
+Personen liegen; alle, bei denen sie liegt, sehen alle Eintragungen dazu.
+**Geändert (09.11.2026):** Kolleg:innen sehen nur ihre eigenen/zugeordneten
+Firmen (nicht mehr alle); Drucken/Export nur Admin; Dublettenschutz über
+Prüfschlüssel (`firmKeys`) auch für Firmen, die man nicht sieht.
 
 Entscheidungen zu den offenen Fragen (09.11.2026): Pre-Sales = Thomas Kühne;
 Vorschlag zu abgesagt/verschoben gilt; alle sehen alle Firmen (ohne
