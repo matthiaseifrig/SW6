@@ -2,7 +2,7 @@
 // "owner"/"colleague". Eine Person kann mehrere Funktionen haben.
 // Gesetzt vom Chef (owner) in der App unter "Benutzer".
 export const FUNCTIONS = [
-  { key: "presales", label: "Pre-Sales (Telefon)" },
+  { key: "presales", label: "Pre-Sales" },
   { key: "werber", label: "BdSt-Werber" },
   { key: "makler", label: "Makler" },
 ];

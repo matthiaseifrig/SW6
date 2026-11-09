@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109c";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109d";
 import {
   subscribeCustomers,
   addCustomer,
@@ -32,11 +32,20 @@ import {
   removeTag,
   backfillSourceTag,
   updateUserProfile,
-} from "./js/data-store.js?v=20261109c";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109c";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109c";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109c";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261109c";
+} from "./js/data-store.js?v=20261109d";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109d";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109d";
+import {
+  initCalls,
+  onCustomersChanged,
+  onEnterCallView,
+  renderPresalesStats,
+  populateAssignSelects,
+  buildFirmActivitySection,
+  firmStatusHtml,
+} from "./js/calls-ui.js?v=20261109d";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109d";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109d";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -83,6 +92,13 @@ document.addEventListener("DOMContentLoaded", init);
 function init() {
   cacheEls();
   bindStaticEvents();
+  initCalls({
+    state,
+    navigate,
+    currentView,
+    toast,
+    canCall: () => state.role === "owner" || state.functions.includes("presales"),
+  });
   onAuthChange(handleAuthChange);
 }
 
@@ -475,6 +491,7 @@ function subscribeToCustomers() {
       maybeShowImportPanel();
       refreshDashboard();
       refreshCustomerPage();
+      onCustomersChanged();
     },
     (err) => {
       console.error(err);
@@ -857,10 +874,28 @@ function closeCustomerPage() {
   navigate("home");
 }
 
+// Kurze Bestaetigung unten am Bildschirm ("Gespeichert: ...")
+let toastTimer = null;
+function toast(message) {
+  let el = document.getElementById("toast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "toast";
+    el.className = "toast";
+    el.setAttribute("role", "status");
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 4500);
+}
+
 // ---------- Bildschirme (Startseite mit Kacheln + einzelne Bereiche) ----------
 
 const VIEW_TITLES = {
   home: "",
+  anrufen: "Anrufen",
   suche: "Firma suchen",
   neu: "Neue Firma",
   tour: "Tour planen",
@@ -908,15 +943,41 @@ function renderView() {
   if (view !== lastRenderedView) {
     window.scrollTo(0, 0);
     if (view === "benutzer") renderUsersList();
+    if (view === "anrufen") onEnterCallView();
+    if (view === "zahlen") renderPresalesStats();
+    if (view === "import") populateAssignSelects();
     if (view === "drucken") populatePrintListUsers();
     if (view === "tour" && map) setTimeout(() => map.invalidateSize(), 50);
     lastRenderedView = view;
   }
 }
 
+// Welche Kacheln jemand sieht, haengt an den Funktionen (Benutzer):
+// Pre-Sales: Anrufen, Firma suchen, Neue Firma, Meine Zahlen.
+// Werber/Makler: Termine, Suche, Neue Firma, Tour, Zahlen, Drucken.
+// Admin: alles. Ohne Funktion: alles ausser Anrufen (wie bisher).
+function visibleTiles() {
+  const f = state.functions;
+  if (state.role === "owner") return null; // alle
+  const set = new Set(["suche", "neu", "zahlen"]);
+  if (f.includes("presales")) set.add("anrufen");
+  if (f.includes("werber") || f.includes("makler") || !f.length) {
+    ["termine", "tour", "drucken"].forEach((t) => set.add(t));
+  }
+  return set;
+}
+
 function renderHome() {
   const isOwner = state.role === "owner";
   document.querySelectorAll(".owner-only").forEach((el) => el.classList.toggle("hidden", !isOwner));
+  const tiles = visibleTiles();
+  document.querySelectorAll("#tile-grid [data-tile]").forEach((el) => {
+    if (el.classList.contains("owner-only")) return;
+    el.classList.toggle("hidden", Boolean(tiles) && !tiles.has(el.dataset.tile));
+  });
+  // Reine Pre-Sales-Kolleg:innen brauchen das Besuchs-Dashboard nicht
+  const presalesOnly = !isOwner && state.functions.length > 0 && state.functions.every((x) => x === "presales");
+  els.dashboardPanel.classList.toggle("hidden", presalesOnly);
   const first = friendlyFirstName(state.user.name);
   const hour = new Date().getHours();
   const hello = hour < 11 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
@@ -972,6 +1033,9 @@ async function renderCustomerPage(meta) {
   els.deeplinkBody.appendChild(buildTagsSection(meta));
   els.deeplinkBody.appendChild(buildContactsSection(meta));
   els.deeplinkBody.appendChild(buildVisitControls(meta));
+  const activityHolder = document.createElement("div");
+  els.deeplinkBody.appendChild(activityHolder);
+  buildFirmActivitySection(meta).then((box) => activityHolder.replaceWith(box));
 
   const historyBox = document.createElement("div");
   historyBox.className = "visit-history-full";
@@ -2938,6 +3002,7 @@ function buildCustomerDetailsHtml(meta) {
   if (meta.website) contactBits.push(escapeHtml(meta.website));
   if (contactBits.length) html += '<div class="contact">' + contactBits.join(" · ") + "</div>";
   if (meta.registerNr) html += '<div class="register">' + escapeHtml(meta.registerNr) + "</div>";
+  html += firmStatusHtml(meta);
 
   // "Ges. Vertreter" aus North Data sind i.d.R. die Geschäftsführer -
   // deshalb einheitlich so benannt statt "Vertretung". Pipe als Trenner
