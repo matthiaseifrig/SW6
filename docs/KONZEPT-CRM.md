@@ -2,7 +2,11 @@
 
 Stand: 09.11.2026 – **freigegeben.** Erledigt: Abschnitt 1 (Rollen/Regeln),
 Abschnitt 2 (Dublettenschutz inkl. Registernummer und Pensionsrückstellungen
-aus North Data).
+aus North Data), Abschnitt 3 (Startseite, G.B.V.M.-Erscheinungsbild),
+Abschnitt 4 (Anrufen), Abschnitt 5 (Meine Termine), Abschnitt 6 (Kette an der
+Firma: wer hat terminiert / aufgenommen / Makler-Termin vereinbart).
+Ergänzt: gemeinsame Adresspools (`poolUids`) – eine Firma kann bei mehreren
+Personen liegen, alle Eintragungen sind für alle sichtbar.
 
 Entscheidungen zu den offenen Fragen (09.11.2026): Pre-Sales = Thomas Kühne;
 Vorschlag zu abgesagt/verschoben gilt; alle sehen alle Firmen (ohne

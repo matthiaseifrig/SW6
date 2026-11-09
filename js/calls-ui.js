@@ -15,7 +15,7 @@ import {
   assignFirms,
   listUsers,
   inPoolOf,
-} from "./data-store.js?v=20261109f";
+} from "./data-store.js?v=20261109g";
 
 let ctx = null;
 const els = {};
@@ -665,7 +665,7 @@ export async function buildFirmActivitySection(meta) {
   const box = document.createElement("div");
   box.className = "firm-activity";
   const h = document.createElement("h3");
-  h.textContent = "Anrufe & Termine";
+  h.textContent = "Verlauf: wer hat was gemacht";
   box.appendChild(h);
   if (ctx.canCall()) {
     const btn = document.createElement("button");
@@ -675,12 +675,20 @@ export async function buildFirmActivitySection(meta) {
     btn.addEventListener("click", () => callFirm(meta));
     box.appendChild(btn);
   }
+  const chainBox = document.createElement("ol");
+  chainBox.className = "chain";
+  box.appendChild(chainBox);
+  const h2 = document.createElement("h4");
+  h2.className = "activity-title";
+  h2.textContent = "Alle Einträge";
+  box.appendChild(h2);
   const list = document.createElement("ul");
   list.className = "activity-list";
   list.innerHTML = '<li class="hint">Lade …</li>';
   box.appendChild(list);
   try {
     const { calls, appointments } = await getFirmActivity(meta.id);
+    renderChain(chainBox, meta, calls, appointments);
     const items = [];
     calls.forEach((c) =>
       items.push({
@@ -711,6 +719,11 @@ export async function buildFirmActivitySection(meta) {
 // Kurzinfo fuer die Firmenkarte (Suche, Tour, Firmen-Seite)
 export function firmStatusHtml(meta) {
   const bits = [];
+  // Kette: Terminierung (Pre-Sales) -> Aufnahme (Werber) -> Makler-Termin
+  if (meta.terminiertVon && meta.terminiertVon.name) bits.push('<span class="status-chip chain">Terminiert: ' + esc(meta.terminiertVon.name) + "</span>");
+  if (meta.membershipSigned) bits.push('<span class="status-chip chain">Mitglied' + (meta.memberWonBy ? " · Aufnahme: " + esc(meta.memberWonBy) : "") + "</span>");
+  if (meta.maklerTerminVon && meta.maklerTerminVon.name) bits.push('<span class="status-chip chain">Makler-Termin: ' + esc(meta.maklerTerminVon.name) + (meta.maklerTerminVon.forName ? " → " + esc(meta.maklerTerminVon.forName) : "") + "</span>");
+  if (meta.isMaklerKunde) bits.push('<span class="status-chip chain">Kunde' + (meta.sparten && meta.sparten.length ? " · " + esc(meta.sparten.join(", ")) : "") + "</span>");
   if (meta.doNotCall) bits.push('<span class="status-chip stop">Nicht mehr anrufen</span>');
   if (meta.nextAppointment && meta.nextAppointment.date) {
     const n = meta.nextAppointment;
@@ -902,4 +915,60 @@ async function onAssignRun() {
   } catch (err) {
     els["assign-status"].textContent = "Fehler: " + err.message;
   }
+}
+
+
+// Kette ①②③: Terminierung (Pre-Sales) -> Termin/Aufnahme (Werber) ->
+// Termin nach Aufnahme (Makler). Jede Station zeigt, WER es gemacht hat.
+function renderChain(ol, meta, calls, appts) {
+  ol.innerHTML = "";
+  const byDate = (a, b) => ((a.date || "") + (a.time || "")).localeCompare((b.date || "") + (b.time || ""));
+  const bdst = appts.filter((a) => a.type === "bdst").sort(byDate);
+  const makler = appts.filter((a) => a.type === "makler").sort(byDate);
+  const presalesCalls = calls.slice().sort((a, b) => (toDate(a.at) || 0) - (toDate(b.at) || 0));
+  const step = (num, title, lines, state) => {
+    const li = document.createElement("li");
+    li.className = "chain-step " + (state || "");
+    li.innerHTML =
+      '<span class="chain-num">' + num + "</span>" +
+      '<div class="chain-body"><span class="kennung">' + esc(title) + "</span>" +
+      lines.map((l) => "<p>" + l + "</p>").join("") + "</div>";
+    ol.appendChild(li);
+  };
+
+  // ① Pre-Sales: Anrufe + Terminierung
+  const termAppt = appts.filter((a) => a.setByFunction === "presales").sort(byDate)[0];
+  const l1 = [];
+  if (presalesCalls.length) {
+    const callers = Array.from(new Set(presalesCalls.map((c) => c.byName).filter(Boolean)));
+    l1.push(esc(presalesCalls.length + " Anruf" + (presalesCalls.length === 1 ? "" : "e")) + " von <strong>" + esc(callers.join(", ")) + "</strong>, zuletzt " + esc(deDateTime(presalesCalls[presalesCalls.length - 1].at).split(",")[0]));
+  }
+  if (termAppt) {
+    l1.push("Terminiert von <strong>" + esc(termAppt.setByName || "?") + "</strong>: " + esc(TYPE_LABELS[termAppt.type] || termAppt.type) + " am " + esc(deDate(termAppt.date)) + (termAppt.time ? " " + esc(termAppt.time) + " Uhr" : "") + " für <strong>" + esc(termAppt.forName || "?") + "</strong>");
+  } else if (meta.terminiertVon && meta.terminiertVon.name) {
+    l1.push("Terminiert von <strong>" + esc(meta.terminiertVon.name) + "</strong>");
+  }
+  if (!l1.length) l1.push('<span class="hint">Noch nicht angerufen bzw. terminiert.</span>');
+  step("1", "Pre-Sales · Terminierung", l1, termAppt || meta.terminiertVon ? "done" : presalesCalls.length ? "active" : "");
+
+  // ② BdSt-Termin + Aufnahme
+  const l2 = [];
+  bdst.forEach((a) => {
+    let res = STATUS_LABELS[a.status] || a.status;
+    if (a.status === "durchgefuehrt") res += a.outcome && a.outcome.memberWon ? " – <strong>Mitglied aufgenommen von " + esc(a.forName || "?") + "</strong>" : " – kein Mitglied";
+    l2.push("Termin " + esc(deDate(a.date)) + (a.time ? " " + esc(a.time) + " Uhr" : "") + " bei <strong>" + esc(a.forName || "?") + "</strong>: " + res);
+  });
+  if (!bdst.length && meta.membershipSigned) l2.push("Mitglied" + (meta.memberWonBy ? " – Aufnahme durch <strong>" + esc(meta.memberWonBy) + "</strong>" : " (aus Besuch)"));
+  if (!l2.length) l2.push('<span class="hint">Noch kein BdSt-Termin.</span>');
+  step("2", "BdSt-Werber · Termin und Aufnahme", l2, meta.membershipSigned ? "done" : bdst.length ? "active" : "");
+
+  // ③ Termin nach Aufnahme (Makler)
+  const l3 = [];
+  makler.forEach((a) => {
+    let res = STATUS_LABELS[a.status] || a.status;
+    if (a.status === "durchgefuehrt") res += a.outcome && a.outcome.deal ? " – <strong>Abschluss " + esc(a.outcome.sparte || "") + "</strong>" : " – kein Abschluss";
+    l3.push("Vereinbart von <strong>" + esc(a.setByName || "?") + "</strong> für <strong>" + esc(a.forName || "?") + "</strong>, " + esc(deDate(a.date)) + (a.time ? " " + esc(a.time) + " Uhr" : "") + ": " + res);
+  });
+  if (!l3.length) l3.push('<span class="hint">Noch kein Makler-Termin.</span>');
+  step("3", "Makler · Termin nach Aufnahme", l3, meta.isMaklerKunde ? "done" : makler.length ? "active" : "");
 }

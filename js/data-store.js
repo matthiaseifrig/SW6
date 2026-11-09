@@ -20,10 +20,10 @@ import {
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20261109f";
-import { buildAddressMeta } from "./address-utils.js?v=20261109f";
-import { normalizeFunctions } from "./roles.js?v=20261109f";
-import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109f";
+import { db } from "./firebase-app.js?v=20261109g";
+import { buildAddressMeta } from "./address-utils.js?v=20261109g";
+import { normalizeFunctions } from "./roles.js?v=20261109g";
+import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261109g";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -714,9 +714,16 @@ export async function createAppointment(firm, { type, forUid, forName, date, tim
     history: [{ at: new Date().toISOString(), byUid: setByUid, byName: setByName, action: "vereinbart", date, time: time || "" }],
     createdAt: serverTimestamp(),
   });
-  await updateDoc(doc(db, CUSTOMERS, firm.id), {
+  const firmUpdate = {
     nextAppointment: { id: ref.id, at: Timestamp.fromDate(when), date, time: time || "", forUid, forName, type, setByName },
-  });
+  };
+  // Kette an der Firma festhalten: wer hat terminiert (Pre-Sales) bzw.
+  // wer hat nach der Aufnahme den Makler-Termin vereinbart (Werber).
+  const today = new Date().toISOString().slice(0, 10);
+  const link = { uid: setByUid, name: setByName || "", forName: forName || "", date: today, apptDate: date };
+  if (setByFunction === "presales") firmUpdate.terminiertVon = link;
+  else if (type === "makler") firmUpdate.maklerTerminVon = link;
+  await updateDoc(doc(db, CUSTOMERS, firm.id), firmUpdate);
   return ref.id;
 }
 
