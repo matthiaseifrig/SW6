@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109b";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109c";
 import {
   subscribeCustomers,
   addCustomer,
@@ -32,11 +32,11 @@ import {
   removeTag,
   backfillSourceTag,
   updateUserProfile,
-} from "./js/data-store.js?v=20261109b";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109b";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109b";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109b";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261109b";
+} from "./js/data-store.js?v=20261109c";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109c";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109c";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109c";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109c";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -135,6 +135,11 @@ function cacheEls() {
   els.printListBtn = document.getElementById("print-list-btn");
   els.printListStatus = document.getElementById("print-list-status");
 
+  els.viewBar = document.getElementById("view-bar");
+  els.viewTitle = document.getElementById("view-title");
+  els.homeGreeting = document.getElementById("home-greeting");
+  els.homeRoles = document.getElementById("home-roles");
+  els.tileZahlenLabel = document.getElementById("tile-zahlen-label");
   els.usersPanel = document.getElementById("users-panel");
   els.usersToggle = document.getElementById("users-toggle");
   els.usersBody = document.getElementById("users-body");
@@ -228,9 +233,6 @@ function bindStaticEvents() {
   els.filterMembersBtn.addEventListener("click", () => onFilterChipClick("members"));
   els.filterConsultationsBtn.addEventListener("click", () => onFilterChipClick("consultations"));
 
-  els.addCustomerToggle.addEventListener("click", () => {
-    els.addCustomerForm.classList.toggle("hidden");
-  });
   els.addCustomerForm.addEventListener("submit", onAddCustomerSubmit);
   ["nc-unternehmen", "nc-plz", "nc-ort", "nc-telefon"].forEach((id) => {
     document.getElementById(id).addEventListener("input", scheduleLiveDupeCheck);
@@ -239,17 +241,10 @@ function bindStaticEvents() {
   els.dupeSearchBtn.addEventListener("click", onDupeSearchClick);
   els.importBtn.addEventListener("click", onImportClick);
 
-  els.adminImportToggle.addEventListener("click", () => {
-    els.adminImportBody.classList.toggle("hidden");
-  });
   els.adminImportBtn.addEventListener("click", onAdminImportClick);
   els.backfillBtn.addEventListener("click", onBackfillClick);
   els.printListBtn.addEventListener("click", onPrintListClick);
 
-  els.usersToggle.addEventListener("click", () => {
-    els.usersBody.classList.toggle("hidden");
-    if (!els.usersBody.classList.contains("hidden")) renderUsersList();
-  });
 
   els.citySelect.addEventListener("change", onCityChange);
   els.streetSelect.addEventListener("change", refreshStartAddressOptions);
@@ -290,9 +285,14 @@ function bindStaticEvents() {
     openCustomerPage(link.dataset.customerId);
   });
 
-  window.addEventListener("popstate", () => {
-    state.openCustomerId = new URLSearchParams(location.search).get("customer") || null;
-    refreshCustomerPage();
+  window.addEventListener("popstate", syncFromUrl);
+  window.addEventListener("hashchange", syncFromUrl);
+  document.addEventListener("click", (ev) => {
+    const nav = ev.target.closest("[data-nav]");
+    if (!nav) return;
+    if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return;
+    ev.preventDefault();
+    navigate(nav.dataset.nav);
   });
 
   populateTagCheckboxes();
@@ -354,7 +354,8 @@ async function handleAuthChange(user) {
   els.scopeToggle.checked = false;
   state.scopeAll = false;
 
-  showWelcomeBanner(state.user.name);
+  renderHome();
+  renderView();
 
   els.adminImportPanel.classList.toggle("hidden", state.role !== "owner");
   els.usersPanel.classList.toggle("hidden", state.role !== "owner");
@@ -426,8 +427,31 @@ function populateAdminImportUsers() {
   return populateUserSelect(els.adminImportUser);
 }
 
-function populatePrintListUsers() {
-  return populateUserSelect(els.printListUser);
+// Kundenliste drucken: eigene Firmen vorausgewaehlt; "owner" kann auch
+// fuer jede andere Person drucken (alle anderen ebenfalls, da alle im Team
+// alle Firmen sehen).
+async function populatePrintListUsers() {
+  const sel = els.printListUser;
+  const keep = sel.value;
+  sel.innerHTML = "";
+  const own = document.createElement("option");
+  own.value = state.user.uid;
+  own.textContent = "Meine Firmen (" + (state.user.name || state.user.email) + ")";
+  sel.appendChild(own);
+  try {
+    const users = (await listUsers()).filter((u) => u.uid !== state.user.uid);
+    users
+      .sort((a, b) => (a.name || a.email || "").localeCompare(b.name || b.email || "", "de"))
+      .forEach((u) => {
+        const opt = document.createElement("option");
+        opt.value = u.uid;
+        opt.textContent = u.name || u.email || u.uid;
+        sel.appendChild(opt);
+      });
+  } catch (err) {
+    console.error(err);
+  }
+  if (keep && Array.from(sel.options).some((o) => o.value === keep)) sel.value = keep;
 }
 
 function onScopeToggle() {
@@ -561,7 +585,7 @@ const STAT_LABELS = {
   memberships: "BdSt-Mitgliedschaften",
   consultations: "Beratungstermine",
   todos: "Wiedervorlagen",
-  provision: "Provision (netto)",
+  provision: "Kennzahl (netto)",
 };
 
 function monthKeyFromDate(d) {
@@ -772,7 +796,7 @@ async function openStatDetail(stat) {
           entries.push({ customerId: v.customerId, unternehmen: v.unternehmen, date: d, valueText: formatEuroPrecise(v.provisionAmount) });
         }
         isEuro = true;
-        valueLabel = "Provision";
+        valueLabel = "Kennzahl";
       }
     });
     els.statDetailBody.innerHTML = "";
@@ -819,14 +843,88 @@ async function openCustomerPage(id) {
   history.pushState({ customerId: id }, "", "?customer=" + encodeURIComponent(id));
   state.openCustomerId = id;
   state.customerPageScrolled = false;
+  renderView();
   renderCustomerPage(meta);
 }
 
+// Zurueck von der Firmen-Seite: dorthin, wo man herkam (Suche, Tour ...),
+// sonst zur Startseite (z. B. nach Aufruf ueber QR-Code).
 function closeCustomerPage() {
-  history.pushState({}, "", location.pathname);
-  state.openCustomerId = null;
-  els.deeplinkPanel.classList.add("hidden");
-  els.deeplinkBody.innerHTML = "";
+  if (history.state && history.state.fromApp) {
+    history.back();
+    return;
+  }
+  navigate("home");
+}
+
+// ---------- Bildschirme (Startseite mit Kacheln + einzelne Bereiche) ----------
+
+const VIEW_TITLES = {
+  home: "",
+  suche: "Firma suchen",
+  neu: "Neue Firma",
+  tour: "Tour planen",
+  zahlen: "Zahlen",
+  drucken: "Kundenliste drucken",
+  import: "Import & Dubletten",
+  benutzer: "Benutzer",
+  firma: "Firma",
+};
+const OWNER_VIEWS = ["import", "benutzer"];
+
+function currentView() {
+  if (state.openCustomerId) return "firma";
+  const h = location.hash.replace(/^#\/?/, "");
+  if (!VIEW_TITLES.hasOwnProperty(h) || h === "firma") return "home";
+  if (OWNER_VIEWS.includes(h) && state.role !== "owner") return "home";
+  return h || "home";
+}
+
+function navigate(view) {
+  const hash = view && view !== "home" ? "#/" + view : "#/";
+  history.pushState({ view, fromApp: true }, "", location.pathname + hash);
+  syncFromUrl();
+}
+
+function syncFromUrl() {
+  state.openCustomerId = new URLSearchParams(location.search).get("customer") || null;
+  renderView();
+  refreshCustomerPage();
+}
+
+let lastRenderedView = null;
+function renderView() {
+  const view = currentView();
+  // Ergebnisbereich: Tour oder gedruckte Kundenliste - je nachdem, was
+  // zuletzt erzeugt wurde.
+  if (els.resultsPanel) els.resultsPanel.dataset.view = state.resultsMode === "liste" ? "drucken" : "tour";
+  document.querySelectorAll("[data-view]").forEach((el) => {
+    el.classList.toggle("view-hidden", !el.dataset.view.split(" ").includes(view));
+  });
+  els.viewBar.classList.toggle("view-hidden", view === "home");
+  document.body.dataset.screen = view;
+  els.viewTitle.textContent = VIEW_TITLES[view] || "";
+  document.title = "G.B.V.M. GmbH – " + (VIEW_TITLES[view] || "Kunden & Termine");
+  if (view !== lastRenderedView) {
+    window.scrollTo(0, 0);
+    if (view === "benutzer") renderUsersList();
+    if (view === "drucken") populatePrintListUsers();
+    if (view === "tour" && map) setTimeout(() => map.invalidateSize(), 50);
+    lastRenderedView = view;
+  }
+}
+
+function renderHome() {
+  const isOwner = state.role === "owner";
+  document.querySelectorAll(".owner-only").forEach((el) => el.classList.toggle("hidden", !isOwner));
+  const first = friendlyFirstName(state.user.name);
+  const hour = new Date().getHours();
+  const hello = hour < 11 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
+  els.homeGreeting.textContent = hello + (first ? ", " + first : "");
+  const roles = state.functions.map(functionLabel);
+  if (isOwner) roles.unshift("Admin");
+  els.homeRoles.textContent = roles.length ? roles.join(" | ") : "G.B.V.M. GmbH";
+  els.tileZahlenLabel.textContent = isOwner ? "Zahlen & Auswertung" : "Meine Zahlen";
 }
 
 function refreshCustomerPage() {
@@ -883,7 +981,7 @@ async function renderCustomerPage(meta) {
   els.deeplinkPanel.classList.remove("hidden");
   if (!state.customerPageScrolled) {
     state.customerPageScrolled = true;
-    els.deeplinkPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.scrollTo(0, 0);
   }
 
   try {
@@ -989,7 +1087,7 @@ function renderVisitHistoryFull(container, meta, visits) {
     if (v.provisionAmount) {
       const span = document.createElement("span");
       span.className = "visit-badge-item";
-      span.textContent = "Provision: " + formatEuroPrecise(v.provisionAmount);
+      span.textContent = "Kennzahl: " + formatEuroPrecise(v.provisionAmount);
       badgesDiv.appendChild(span);
     }
 
@@ -1406,10 +1504,10 @@ async function onPrintListClick() {
       if (plz) return plz;
       return (a.strasse || "").localeCompare(b.strasse || "", "de");
     });
-    const label = els.printListUser.options[els.printListUser.selectedIndex].textContent;
+    const opt = els.printListUser.options[els.printListUser.selectedIndex];
+    const label = targetUid === state.user.uid ? state.user.name || state.user.email : opt.textContent;
     renderCustomerListForPrint(customers, label);
-    showWelcomeBanner(label);
-    els.printListStatus.textContent = `Fertig: ${customers.length} Kunden. Weiter unten über "Drucken / PDF" ausdrucken.`;
+    els.printListStatus.textContent = `Fertig: ${customers.length} Firmen. Unten auf „Drucken / PDF“ tippen und im Druckfenster „Als PDF speichern“ wählen.`;
   } catch (err) {
     els.printListStatus.textContent = "Fehler: " + err.message;
   } finally {
@@ -1418,6 +1516,8 @@ async function onPrintListClick() {
 }
 
 function renderCustomerListForPrint(customers, label) {
+  state.resultsMode = "liste";
+  renderView();
   els.resultsPanel.classList.remove("hidden");
   els.mapDiv.classList.add("hidden");
   els.mapsLinksToggle.classList.add("hidden");
@@ -2442,6 +2542,8 @@ async function onComputeClick() {
     alert("Bitte zuerst mindestens einen Ort auswählen.");
     return;
   }
+  state.resultsMode = "tour";
+  renderView();
   const city = cities.join(", ");
   const mode = currentStartMode();
   if (mode === "gps" && !state.gpsCoords) {

@@ -1,4 +1,4 @@
-import { formatRegister } from "./dedup.js?v=20261109b";
+import { formatRegister } from "./dedup.js?v=20261109c";
 
 // Parst CSV-Exporte von North Data (semikolon-getrennt, Windows-1252 oder
 // UTF-8 kodiert, deutsches Zahlenformat) in die Kundenstruktur der App.

@@ -3,32 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>G.B.V.M. GmbH – BdSt – Tourenplaner</title>
+<title>G.B.V.M. GmbH – Kunden &amp; Termine</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20261109b">
+<link rel="stylesheet" href="style.css?v=20261109c">
 </head>
 <body>
 <header class="topbar">
-  <div class="topbar-logos">
-    <span class="logo-badge"><img src="assets/logo-gbvm.png" alt="G.B.V.M. GmbH Logo"></span>
-    <span class="logo-badge"><img src="assets/logo-bdst.png" alt="BdSt Logo"></span>
+  <div class="topbar-inner">
+    <a href="#/" class="brand-link" data-nav="home" aria-label="Zur Startseite">
+      <img src="assets/gbvm-logo-weiss.svg" alt="G.B.V.M. GmbH" class="brand-logo">
+    </a>
+    <div class="brand-text">
+      <span class="kennung">Finanzen | Vorsorge | Versichern | Immobilien</span>
+      <h1>Kunden &amp; Termine</h1>
+      <p class="subtitle">Firmen, Anrufe, Termine und Touren an einem Ort</p>
+    </div>
+    <span class="partner-badge"><img src="assets/logo-bdst.png" alt="Bund der Steuerzahler"></span>
   </div>
-  <h1>G.B.V.M. GmbH – BdSt – Tourenplaner und Mitgliederpflege</h1>
-  <p class="subtitle">Adressliste, Routenplanung &amp; Besuchsnotizen</p>
   <div id="user-bar" class="user-bar hidden">
     <span id="user-info"></span>
     <label id="scope-toggle-label" class="scope-toggle hidden">
       <input type="checkbox" id="scope-toggle">
       <span id="scope-toggle-text">Alle Firmen anzeigen</span>
     </label>
-    <button id="logout-btn" class="secondary small">Abmelden</button>
+    <button id="logout-btn" class="ghost small">Abmelden</button>
   </div>
 </header>
 
 <main>
 
   <section class="panel" id="login-panel">
-    <span class="login-icon">🔒</span>
+    <img src="assets/gbvm-logo-nachtblau.svg" alt="G.B.V.M. GmbH" class="login-logo">
     <h2>Anmelden</h2>
     <p class="hint">Zugangsdaten hast du von deinem Chef/Admin erhalten (in der Firebase-Konsole angelegt).</p>
     <form id="login-form">
@@ -47,14 +52,75 @@
 
   <div id="app-root" class="hidden">
 
-    <div id="welcome-banner" class="welcome-banner hidden">
+    <nav id="view-bar" class="view-bar view-hidden" aria-label="Navigation">
+      <button type="button" class="back-home" data-nav="home">← Startseite</button>
+      <h2 id="view-title"></h2>
+    </nav>
+
+    <section id="home-view" class="home-view" data-view="home">
+      <div class="home-head">
+        <span class="kennung" id="home-roles"></span>
+        <h2 id="home-greeting">Guten Tag</h2>
+        <span class="gold-rule"></span>
+      </div>
+      <div class="tile-grid" id="tile-grid">
+        <div class="tile tile-soon" data-tile="anrufen">
+          <span class="kennung">Pre-Sales</span>
+          <span class="tile-label">Anrufen</span>
+          <span class="tile-sub">Firmen anrufen und Termine vereinbaren</span>
+          <span class="tile-badge">kommt als Nächstes</span>
+        </div>
+        <div class="tile tile-soon" data-tile="termine">
+          <span class="kennung">Werber · Makler</span>
+          <span class="tile-label">Meine Termine</span>
+          <span class="tile-sub">Termine wahrnehmen und Ergebnis eintragen</span>
+          <span class="tile-badge">kommt als Nächstes</span>
+        </div>
+        <a class="tile" href="#/suche" data-nav="suche" data-tile="suche">
+          <span class="kennung">Firmen</span>
+          <span class="tile-label">Firma suchen</span>
+          <span class="tile-sub">Name, Ort, PLZ oder Ansprechpartner</span>
+        </a>
+        <a class="tile" href="#/neu" data-nav="neu" data-tile="neu">
+          <span class="kennung">Firmen</span>
+          <span class="tile-label">Neue Firma</span>
+          <span class="tile-sub">Anlegen mit Dublettenprüfung</span>
+        </a>
+        <a class="tile" href="#/tour" data-nav="tour" data-tile="tour">
+          <span class="kennung">Unterwegs</span>
+          <span class="tile-label">Tour planen</span>
+          <span class="tile-sub">Route berechnen, Karte, Google Maps</span>
+        </a>
+        <a class="tile" href="#/zahlen" data-nav="zahlen" data-tile="zahlen">
+          <span class="kennung">Übersicht</span>
+          <span class="tile-label" id="tile-zahlen-label">Meine Zahlen</span>
+          <span class="tile-sub">Besuche, Mitglieder, Termine, Wiedervorlagen</span>
+        </a>
+        <a class="tile" href="#/drucken" data-nav="drucken" data-tile="drucken">
+          <span class="kennung">Listen</span>
+          <span class="tile-label">Kundenliste drucken</span>
+          <span class="tile-sub">Als PDF oder auf Papier, mit QR-Codes</span>
+        </a>
+        <a class="tile owner-only" href="#/import" data-nav="import" data-tile="import">
+          <span class="kennung">Verwaltung</span>
+          <span class="tile-label">Import &amp; Dubletten</span>
+          <span class="tile-sub">North-Data-Import, doppelte Firmen zusammenführen</span>
+        </a>
+        <a class="tile owner-only" href="#/benutzer" data-nav="benutzer" data-tile="benutzer">
+          <span class="kennung">Verwaltung</span>
+          <span class="tile-label">Benutzer</span>
+          <span class="tile-sub">Namen und Funktionen im Team</span>
+        </a>
+      </div>
+    </section>
+
+    <div id="welcome-banner" class="welcome-banner hidden" data-view="home">
       <span id="welcome-text"></span>
       <button type="button" id="welcome-close" class="welcome-close" aria-label="Schließen">✕</button>
     </div>
 
-    <section class="panel accent" id="dashboard-panel">
+    <section class="panel accent" id="dashboard-panel" data-view="zahlen">
       <div class="collapsible-title">
-        <span class="add-icon">📊</span>
         <h2>Dashboard</h2>
       </div>
       <div id="dashboard-stats" class="stat-grid">
@@ -80,7 +146,7 @@
         </button>
         <button type="button" class="stat-tile wide" data-stat="provision">
           <div class="stat-value" id="stat-provision">–</div>
-          <div class="stat-label">Provision (netto)</div>
+          <div class="stat-label">Kennzahl (netto)</div>
         </button>
       </div>
       <p class="hint">Auf einen Wert tippen für die Aufschlüsselung nach Monat.</p>
@@ -89,7 +155,7 @@
         <div class="table-scroll">
           <table id="dashboard-breakdown-table">
             <thead>
-              <tr><th>Person</th><th>Kunden</th><th>Besuche</th><th>Mitglieder</th><th>Termine</th><th>Provision</th></tr>
+              <tr><th>Person</th><th>Kunden</th><th>Besuche</th><th>Mitglieder</th><th>Termine</th><th>Kennzahl</th></tr>
             </thead>
             <tbody id="dashboard-breakdown-body"></tbody>
           </table>
@@ -98,26 +164,24 @@
       <hr class="divider">
       <p class="hint">
         Falls ein Besuch mit Mitgliedschaft/Beratungstermin vor Einführung
-        der Provisionsberechnung eingetragen wurde, hier einmalig
+        der Kennzahl-Berechnung eingetragen wurde, hier einmalig
         nachtragen:
       </p>
-      <button type="button" id="backfill-provisions-btn" class="secondary small">Provisionen für ältere Einträge nachtragen</button>
+      <button type="button" id="backfill-provisions-btn" class="secondary small">Kennzahl für ältere Einträge nachtragen</button>
       <p id="backfill-provisions-status" class="hint"></p>
     </section>
 
-    <section class="panel accent hidden" id="deeplink-panel">
+    <section class="panel accent hidden" id="deeplink-panel" data-view="firma">
       <div class="collapsible-title">
-        <span class="add-icon">🔗</span>
         <h2>Kundenseite</h2>
       </div>
       <button type="button" id="deeplink-back-btn" class="link-btn">← Zurück zur Übersicht</button>
       <div id="deeplink-body"></div>
     </section>
 
-    <section class="panel accent" id="search-panel">
+    <section class="panel accent" id="search-panel" data-view="suche">
       <div class="field">
         <div class="collapsible-title">
-          <span class="add-icon">🔍</span>
           <label for="customer-search">Kunde suchen</label>
         </div>
         <input type="text" id="customer-search" placeholder="Firmenname, Ort, Straße oder Ansprechpartner …">
@@ -130,16 +194,13 @@
       <p id="search-empty" class="hint hidden">Keine Treffer.</p>
     </section>
 
-    <div class="two-col">
-      <section class="panel accent" id="add-customer-panel">
+      <section class="panel accent" id="add-customer-panel" data-view="neu">
         <div class="collapsible-header" id="add-customer-toggle">
           <div class="collapsible-title">
-            <span class="add-icon">+</span>
             <h2>Kunde hinzufügen</h2>
           </div>
-          <span class="chevron">▾</span>
         </div>
-        <form id="add-customer-form" class="hidden">
+        <form id="add-customer-form">
           <div class="field">
             <label for="nc-unternehmen">Unternehmen *</label>
             <input type="text" id="nc-unternehmen" required>
@@ -190,15 +251,13 @@
         </form>
       </section>
 
-      <section class="panel accent hidden" id="admin-import-panel">
+      <section class="panel accent hidden" id="admin-import-panel" data-view="import">
         <div class="collapsible-header" id="admin-import-toggle">
           <div class="collapsible-title">
-            <span class="add-icon">⇪</span>
             <h2>Kunden Import</h2>
           </div>
-          <span class="chevron">▾</span>
         </div>
-        <div id="admin-import-body" class="hidden">
+        <div id="admin-import-body">
           <p class="hint">
             Lädt eine North-Data-CSV-Exportdatei (Firmenname, Adresse,
             Registernummer, gesetzliche Vertreter, Finanzkennzahlen inkl.
@@ -246,33 +305,36 @@
           <button id="backfill-btn" class="secondary">Tag „North Data“ nachtragen</button>
           <p id="backfill-status" class="hint"></p>
 
-          <hr class="divider">
-          <p class="hint">
-            Komplette Kundenliste einer Person ausdrucken – z. B. für
-            Kollegen, die die App nicht selbst nutzen können. Sortiert nach
-            Ort, PLZ und Straße, im gleichen Format wie die Tourenplanung
-            (Adresse, Kontakt, gesetzliche Vertreter, QR-Code). Enthält
-            keine Finanzkennzahlen.
-          </p>
-          <div class="field">
-            <label for="print-list-user">Für wen drucken?</label>
-            <select id="print-list-user"></select>
-          </div>
-          <button type="button" id="print-list-btn" class="secondary">Kundenliste erstellen</button>
-          <p id="print-list-status" class="hint"></p>
+
         </div>
       </section>
-    </div>
 
-    <section class="panel accent hidden" id="users-panel">
+    <section class="panel accent" id="print-panel" data-view="drucken">
+      <div class="collapsible-title">
+        <h2>Kundenliste drucken</h2>
+      </div>
+      <p class="hint">
+        Komplette Kundenliste einer Person als PDF speichern oder ausdrucken –
+        z. B. für Kolleginnen und Kollegen, die die App nicht selbst nutzen.
+        Sortiert nach Ort, PLZ und Straße, im gleichen Format wie die
+        Tourenplanung (Adresse, Kontakt, Geschäftsführer, QR-Code). Enthält
+        keine Finanzkennzahlen. Im Druckfenster „Als PDF speichern“ wählen.
+      </p>
+      <div class="field">
+        <label for="print-list-user">Wessen Firmen?</label>
+        <select id="print-list-user"></select>
+      </div>
+      <button type="button" id="print-list-btn" class="primary">Kundenliste erstellen</button>
+      <p id="print-list-status" class="hint"></p>
+    </section>
+
+    <section class="panel accent hidden" id="users-panel" data-view="benutzer">
       <div class="collapsible-header" id="users-toggle">
         <div class="collapsible-title">
-          <span class="add-icon">👥</span>
           <h2>Benutzer</h2>
         </div>
-        <span class="chevron">▾</span>
       </div>
-      <div id="users-body" class="hidden">
+      <div id="users-body">
         <p class="hint">
           Hier legst du fest, wie jede Person heißt und welche Arbeit sie
           macht. Eine Person kann mehrere Funktionen haben. Neue Personen
@@ -284,15 +346,14 @@
       </div>
     </section>
 
-    <section class="panel hidden" id="import-panel">
+    <section class="panel hidden" id="import-panel" data-view="import">
       <p class="hint">Deine Kundenliste ist noch leer. Du kannst die ursprüngliche Excel-Liste (215 Adressen) einmalig importieren:</p>
       <button id="import-btn" class="secondary">Excel-Liste importieren</button>
       <p id="import-status" class="hint"></p>
     </section>
 
-    <section class="panel controls accent">
+    <section class="panel controls accent" data-view="tour">
       <div class="collapsible-title">
-        <span class="add-icon">🧭</span>
         <h2>Tourenplanung</h2>
       </div>
       <div class="field">
@@ -344,10 +405,10 @@
       </div>
     </section>
 
-    <section class="panel results hidden" id="results-panel">
+    <section class="panel results hidden" id="results-panel" data-view="tour">
       <p class="print-only print-reminder">
         Wichtig: Besuche nach dem Termin bitte unbedingt im System nachtragen
-        (Tourenplaner öffnen, Kunde antippen oder QR-Code scannen, „Besuch
+        (App öffnen, Kunde antippen oder QR-Code scannen, „Besuch
         eintragen“).
       </p>
       <div class="results-header">
@@ -413,7 +474,7 @@
       </div>
 
       <div id="provision-amount-field" class="field hidden">
-        <label for="provision-amount">Provision (€ netto)</label>
+        <label for="provision-amount">Kennzahl (€ netto, nur zur Übersicht)</label>
         <input type="number" id="provision-amount" step="0.01" min="0">
       </div>
 
@@ -439,7 +500,7 @@
     <p class="confirm-label" id="cancel-label"></p>
     <h2 id="cancel-company"></h2>
     <div class="field">
-      <label for="cancel-amount">Neue Provision für diesen Besuch (€ netto)</label>
+      <label for="cancel-amount">Neue Kennzahl für diesen Besuch (€ netto)</label>
       <input type="number" id="cancel-amount" step="0.01" min="0">
     </div>
     <button type="button" id="cancel-confirm-btn" class="confirm-btn">Stornierung bestätigen</button>
@@ -448,12 +509,12 @@
 </div>
 
 <footer>
-  <p>Geokodierung: OpenStreetMap Nominatim · Routing: OSRM (project-osrm.org) · Kunden-, Besuchs- und Notizdaten: Firebase.</p>
+  <p>G.B.V.M. GmbH · Ismaninger Str. 7b, 85609 Aschheim · Geokodierung: OpenStreetMap Nominatim · Routing: OSRM (project-osrm.org) · Kunden-, Besuchs- und Notizdaten: Firebase.</p>
 </footer>
 
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20261109b"></script>
+<script type="module" src="app.js?v=20261109c"></script>
 </body>
 </html>
