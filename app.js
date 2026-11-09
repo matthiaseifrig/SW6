@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109f";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109g";
 import {
   subscribeCustomers,
   addCustomer,
@@ -32,9 +32,9 @@ import {
   removeTag,
   backfillSourceTag,
   updateUserProfile,
-} from "./js/data-store.js?v=20261109f";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109f";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109f";
+} from "./js/data-store.js?v=20261109g";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109g";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109g";
 import {
   initCalls,
   onCustomersChanged,
@@ -43,10 +43,10 @@ import {
   populateAssignSelects,
   buildFirmActivitySection,
   firmStatusHtml,
-} from "./js/calls-ui.js?v=20261109f";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109f";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109f";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261109f";
+} from "./js/calls-ui.js?v=20261109g";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109g";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups } from "./js/dedup.js?v=20261109g";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109g";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";

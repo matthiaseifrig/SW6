@@ -38,6 +38,13 @@ Abschluss? und Sparte (bAV, PKV, Immobilie, Geldanlage, Sonstiges). Abgesagt
 oder nicht angetroffen → Wiedervorlage in einer Woche bei der Person, die den
 Termin vereinbart hat; „von uns abgesagt“ zählt nicht gegen Pre-Sales.
 
+**Kette an der Firma – wer hat was gemacht:** Auf der Firmen-Seite zeigt
+„Verlauf“ die Stationen ① Pre-Sales (Anrufe, terminiert von …, für …),
+② BdSt-Werber (Termin und Aufnahme durch …), ③ Makler (Termin nach Aufnahme
+vereinbart von … für …, Abschluss/Sparte), darunter alle Einträge. In Suche und
+Listen stehen dieselben Angaben als Plaketten („Terminiert: …“, „Aufnahme: …“,
+„Makler-Termin: … → …“, „Kunde · Sparte“).
+
 # Tourenplaner – Jubilare BdSt
 
 Web-App zur Tourenplanung mit eigenem Kundenstamm pro Nutzer: Login,
