@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109o";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109q";
 import {
   subscribeCustomers,
   addCustomer,
@@ -34,9 +34,9 @@ import {
   updateUserProfile,
   lookupFirmKeys,
   rebuildKeysAndPools,
-} from "./js/data-store.js?v=20261109o";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109o";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109o";
+} from "./js/data-store.js?v=20261109q";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109q";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109q";
 import {
   initCalls,
   onCustomersChanged,
@@ -46,10 +46,10 @@ import {
   buildFirmActivitySection,
   firmStatusHtml,
   callFirm,
-} from "./js/calls-ui.js?v=20261109o";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109o";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261109o";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261109o";
+} from "./js/calls-ui.js?v=20261109q";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109q";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261109q";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261109q";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -386,7 +386,8 @@ async function handleAuthChange(user) {
   state.user = { uid: user.uid, email: user.email, name: profile.name || user.email };
   state.role = profile.role || "colleague";
   state.functions = normalizeFunctions(profile.functions);
-  state.canSeeFinancials = state.role === "owner" || Boolean(profile.financialsAccess);
+  state.canSeeFinancials =
+    state.role === "owner" || Boolean(profile.financialsAccess) || (profile.functions || []).includes("makler");
 
   els.loginPanel.classList.add("hidden");
   els.appRoot.classList.remove("hidden");
@@ -1585,7 +1586,7 @@ function buildContactsSection(meta) {
 // financialsAccess nur bei eigenen Firmen (wie in firestore.rules).
 function canSeeFinancialsOf(meta) {
   if (state.role === "owner") return true;
-  return state.canSeeFinancials && meta && meta.ownerUid === state.user.uid;
+  return state.canSeeFinancials && meta && (meta.ownerUid === state.user.uid || (meta.poolUids || []).includes(state.user.uid));
 }
 
 // ---------- Benutzer (nur "owner"): Name und Funktionen ----------
@@ -1611,7 +1612,7 @@ function buildUserCard(u) {
 
   const head = document.createElement("div");
   head.className = "user-card-head";
-  head.textContent = (u.email || u.uid) + (u.role === "owner" ? " · Admin" : "") + (u.financialsAccess ? " · Finanzzugriff" : "");
+  head.textContent = (u.email || u.uid) + (u.role === "owner" ? " · Admin" : "");
   card.appendChild(head);
 
   const nameLabel = document.createElement("label");
@@ -1641,6 +1642,16 @@ function buildUserCard(u) {
   });
   card.appendChild(fnWrap);
 
+  const finLbl = document.createElement("label");
+  finLbl.className = "big-check fin-check";
+  const finCb = document.createElement("input");
+  finCb.type = "checkbox";
+  finCb.checked = Boolean(u.financialsAccess);
+  finLbl.appendChild(finCb);
+  finLbl.appendChild(document.createTextNode(" Darf Kennzahlen sehen (Umsatz, Bilanz, Liquidität …) – bei Maklern immer"));
+  if (u.role === "owner") finLbl.classList.add("hidden");
+  card.appendChild(finLbl);
+
   const saveBtn = document.createElement("button");
   saveBtn.type = "button";
   saveBtn.className = "primary";
@@ -1657,7 +1668,7 @@ function buildUserCard(u) {
     status.textContent = "Speichere …";
     try {
       const functions = boxes.filter((b) => b.checked).map((b) => b.value);
-      await updateUserProfile(u.uid, { name, functions });
+      await updateUserProfile(u.uid, { name, functions, financialsAccess: finCb.checked });
       u.name = name;
       u.functions = functions;
       status.textContent = "Gespeichert: " + name + (functions.length ? " – " + functions.map(functionLabel).join(", ") : " – keine Funktion");
