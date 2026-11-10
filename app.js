@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261109q";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261110a";
 import {
   subscribeCustomers,
   addCustomer,
@@ -34,9 +34,9 @@ import {
   updateUserProfile,
   lookupFirmKeys,
   rebuildKeysAndPools,
-} from "./js/data-store.js?v=20261109q";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261109q";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261109q";
+} from "./js/data-store.js?v=20261110a";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261110a";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261110a";
 import {
   initCalls,
   onCustomersChanged,
@@ -46,10 +46,11 @@ import {
   buildFirmActivitySection,
   firmStatusHtml,
   callFirm,
-} from "./js/calls-ui.js?v=20261109q";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261109q";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261109q";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261109q";
+} from "./js/calls-ui.js?v=20261110a";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261110a";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261110a";
+import { pickSaying } from "./js/sayings.js?v=20261110a";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261110a";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -249,7 +250,11 @@ function cacheEls() {
 
 function bindStaticEvents() {
   els.loginForm.addEventListener("submit", onLoginSubmit);
-  els.logoutBtn.addEventListener("click", () => logout());
+  els.logoutBtn.addEventListener("click", () => {
+    // naechste Anmeldung bekommt wieder eine Begruessung mit neuem Satz
+    clearSessionGreeting();
+    logout();
+  });
   els.scopeToggle.addEventListener("change", onScopeToggle);
 
   els.searchInput.addEventListener("input", onSearchInput);
@@ -406,6 +411,7 @@ async function handleAuthChange(user) {
 
   renderHome();
   renderView();
+  maybeShowIntro();
 
   els.adminImportPanel.classList.toggle("hidden", state.role !== "owner");
   els.usersPanel.classList.toggle("hidden", state.role !== "owner");
@@ -417,33 +423,94 @@ async function handleAuthChange(user) {
   subscribeToCustomers();
 }
 
-// Motivierende Saetze mit Augenzwinkern - wechseln bei jedem Aufruf der
-// Startseite.
-const WELCOME_SAYINGS = [
-  "Lass uns starten und Umsatz machen. Der Kaffee ist schon warm. ☕",
-  "Bleib dran – der Fleißige gewinnt immer. Und der Zweitfleißigste wenigstens das Kantinen-Duell.",
-  "Heute ist ein guter Tag für ein „Ja“. Morgen übrigens auch.",
-  "Jedes „Nein“ bringt dich näher ans nächste „Ja“. Statistik ist auf deiner Seite.",
-  "Wer anruft, gewinnt. Wer nicht anruft, gewinnt … Zeit zum Nachdenken.",
-  "Die Telefonnummern wählen sich leider noch nicht von allein. Aber du bist ja da.",
-  "Mittelstand ruft – du gehst ran. Bzw. du rufst an. Du weißt, was gemeint ist.",
-  "Der frühe Vogel fängt den Geschäftsführer, bevor das Meeting beginnt.",
-  "Ein Termin am Tag hält die Flaute fern.",
-  "Lächeln beim Telefonieren hört man. Ausprobieren lohnt sich.",
-  "Erfolg ist kein Zufall – meistens ist es eine gut gepflegte Wiedervorlage.",
-  "Heute schon jemanden zum Mitglied gemacht? Der Tag ist noch jung.",
-  "Steuern sparen ist schön. Kunden glücklich machen noch schöner.",
-  "Du bist der Grund, warum der Bund der Steuerzahler wächst. Kein Druck. 😉",
-  "Nicht jede Firma wartet auf deinen Anruf – aber die richtige schon.",
-  "Ran an die Liste! Die erledigt sich nämlich nicht durch Hinschauen.",
-  "Ein gutes Gespräch ist wie ein guter Espresso: kurz, stark, wirkt lange.",
-  "Wer Termine sät, wird Abschlüsse ernten.",
-  "Heute wird ein Tag für die Statistik. Die schöne Seite der Statistik.",
-  "Auf geht's – die Konkurrenz telefoniert auch nicht für dich.",
-];
+// ---------- Motivierende Saetze + Begruessung nach dem Login ----------
+// Die Saetze stehen in js/sayings.js. Pro Anmeldung wird EIN Satz
+// gewaehlt (passend zu Funktion, Tageszeit, Wochentag) und im
+// sessionStorage gemerkt: Die Begruessung und die Startseite zeigen
+// denselben Satz, auch nach einem Neuladen der Seite.
+
+function sessionKey(name) {
+  return "gbvm-" + name + "-" + (state.user ? state.user.uid : "x");
+}
+
+function sessionSaying() {
+  let saying = null;
+  try {
+    saying = sessionStorage.getItem(sessionKey("saying"));
+  } catch (e) {
+    /* privater Modus */
+  }
+  if (!saying) {
+    saying = pickSaying(state.functions);
+    try {
+      sessionStorage.setItem(sessionKey("saying"), saying);
+    } catch (e) {
+      /* egal */
+    }
+  }
+  return saying;
+}
 
 function randomSaying() {
-  return WELCOME_SAYINGS[Math.floor(Math.random() * WELCOME_SAYINGS.length)];
+  return sessionSaying();
+}
+
+function clearSessionGreeting() {
+  try {
+    sessionStorage.removeItem(sessionKey("saying"));
+    sessionStorage.removeItem(sessionKey("intro"));
+  } catch (e) {
+    /* egal */
+  }
+}
+
+// Vollbild-Begruessung: nur einmal pro Anmeldung (nicht bei jedem Neuladen).
+function maybeShowIntro() {
+  let shown = false;
+  try {
+    shown = sessionStorage.getItem(sessionKey("intro")) === "1";
+    sessionStorage.setItem(sessionKey("intro"), "1");
+  } catch (e) {
+    shown = false;
+  }
+  if (shown) return;
+
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const first = friendlyFirstName(state.user.name);
+  const overlay = document.createElement("div");
+  overlay.className = "intro-overlay" + (reduced ? " reduced" : "");
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-label", "Begrüßung");
+  overlay.innerHTML =
+    '<div class="intro-inner">' +
+    '<img src="assets/gbvm-logo-weiss.svg" alt="G.B.V.M. GmbH" class="intro-logo">' +
+    '<p class="intro-kennung">Finanzen | Vorsorge | Versichern | Immobilien</p>' +
+    '<h2 class="intro-title">Willkommen zurück' + (first ? ", " + escapeHtml(first) : "") + "</h2>" +
+    '<p class="intro-saying">' + escapeHtml(sessionSaying()) + "</p>" +
+    '<span class="intro-rule"></span>' +
+    '<p class="intro-skip">Tippen, um direkt loszulegen</p>' +
+    "</div>";
+  document.body.appendChild(overlay);
+
+  let closed = false;
+  // skipped = vom Nutzer uebersprungen -> nur ganz kurz ausblenden
+  const close = (skipped) => {
+    if (closed) return;
+    closed = true;
+    document.removeEventListener("keydown", onKey, true);
+    if (reduced) {
+      overlay.remove();
+      return;
+    }
+    if (skipped) overlay.style.transitionDuration = "0.2s";
+    overlay.classList.add("leaving");
+    setTimeout(() => overlay.remove(), skipped ? 220 : 600);
+  };
+  const onKey = () => close(true);
+  overlay.addEventListener("click", () => close(true));
+  overlay.addEventListener("touchstart", () => close(true), { passive: true });
+  document.addEventListener("keydown", onKey, true);
+  setTimeout(() => close(false), reduced ? 1500 : 3400);
 }
 
 function friendlyFirstName(name) {
@@ -457,7 +524,7 @@ function friendlyFirstName(name) {
 
 function showWelcomeBanner(name) {
   const firstName = friendlyFirstName(name);
-  const saying = WELCOME_SAYINGS[Math.floor(Math.random() * WELCOME_SAYINGS.length)];
+  const saying = sessionSaying();
   els.welcomeText.textContent = "Willkommen zurück" + (firstName ? ", " + firstName : "") + "! " + saying;
   els.welcomeBanner.classList.remove("hidden");
   // Animation neu starten, falls die Bannerklasse schon einmal genutzt wurde.

@@ -23,6 +23,14 @@ Stelle.
 G.B.V.M. GmbH und dürfen nur für vertriebliche Zwecke in Zusammenarbeit mit
 der G.B.V.M. GmbH verwendet werden.
 
+**Begrüßung nach dem Login:** einmal pro Anmeldung ein Vollbild „Willkommen
+zurück, Vorname“ mit einem motivierenden Satz (Navy, Gold-Linie); blendet nach
+ca. 3 Sekunden aus, Tippen/Klicken/Taste überspringt. Bei „weniger Bewegung“
+im System ohne Animation und nur kurz. Der Satz passt zu Funktion
+(Pre-Sales/Werber/Makler), Tageszeit und Wochentag, wiederholt sich nicht
+direkt und steht danach auch auf der Startseite. **Sätze ergänzen:** in
+`js/sayings.js` in die passende Gruppe schreiben.
+
 **Kacheln je Funktion** (Bereich „Benutzer“): Pre-Sales sieht Anrufen,
 Firma suchen, Neue Firma und Meine Zahlen; Werber/Makler zusätzlich Tour und
 Kundenliste drucken; der Admin alles.
