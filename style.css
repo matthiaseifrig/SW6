@@ -1310,3 +1310,62 @@ footer .data-notice,
 .nd-status { margin-top: 0.4rem; color: #b91c1c; font-weight: 700; }
 .firm-details .gegenstand { display: block; }
 .financials { display: block; width: auto; max-width: none; margin-top: 0.8rem; }
+
+/* ---------- Begruessung nach dem Login (Vollbild) ---------- */
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 6000;
+  display: grid;
+  place-items: center;
+  padding: max(24px, 5vw);
+  background: var(--brand-navy);
+  color: #fff;
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  cursor: pointer;
+  animation: intro-in 0.45s ease-out both;
+  transition: opacity 0.55s ease;
+}
+.intro-overlay.leaving { opacity: 0; }
+.intro-inner { width: min(100%, 1000px); display: grid; justify-items: center; text-align: center; gap: 0.9rem; }
+.intro-logo { width: 140px; height: 140px; margin-bottom: -0.6rem; }
+.intro-kennung { margin: 0; font-size: 0.78rem; letter-spacing: 0.2em; text-transform: uppercase; color: #aab8ca; }
+.intro-title { margin: 0.4rem 0 0; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.15; font-weight: 700; color: #fff; }
+.intro-saying {
+  margin: 0.6rem 0 0;
+  font-size: clamp(26px, 3.2vw, 40px);
+  line-height: 1.35;
+  font-weight: 500;
+  color: #fff;
+  max-width: 34ch;
+  overflow-wrap: break-word;
+  hyphens: manual;
+  opacity: 0;
+  animation: intro-fade 0.9s ease-out 0.45s forwards;
+}
+.intro-rule {
+  display: block;
+  height: 3px;
+  width: 0;
+  margin-top: 0.4rem;
+  background: var(--brand-gold);
+  animation: intro-rule 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) 0.9s forwards;
+}
+.intro-skip { margin: 1.6rem 0 0; font-size: 0.9rem; color: #aab8ca; opacity: 0; animation: intro-fade 0.6s ease 1.6s forwards; }
+@keyframes intro-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes intro-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes intro-rule { from { width: 0; } to { width: min(160px, 40vw); } }
+@media (max-width: 600px) {
+  .intro-logo { width: 104px; height: 104px; }
+  .intro-saying { max-width: none; }
+}
+/* Weniger Bewegung gewuenscht: alles sofort sichtbar, nur kurz */
+.intro-overlay.reduced, .intro-overlay.reduced * { animation: none !important; transition: none !important; }
+.intro-overlay.reduced .intro-saying, .intro-overlay.reduced .intro-skip { opacity: 1; }
+.intro-overlay.reduced .intro-rule { width: min(160px, 40vw); }
+@media (prefers-reduced-motion: reduce) {
+  .intro-overlay, .intro-overlay * { animation: none !important; transition: none !important; }
+  .intro-saying, .intro-skip { opacity: 1 !important; }
+  .intro-rule { width: min(160px, 40vw) !important; }
+}
+@media print { .intro-overlay { display: none !important; } }
