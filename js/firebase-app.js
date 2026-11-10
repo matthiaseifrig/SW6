@@ -17,7 +17,7 @@ import {
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { firebaseConfig } from "./firebase-config.js?v=20261110a";
+import { firebaseConfig } from "./firebase-config.js?v=20261110c";
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);

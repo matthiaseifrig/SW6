@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261110a";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261110c";
 import {
   subscribeCustomers,
   addCustomer,
@@ -34,9 +34,9 @@ import {
   updateUserProfile,
   lookupFirmKeys,
   rebuildKeysAndPools,
-} from "./js/data-store.js?v=20261110a";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261110a";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261110a";
+} from "./js/data-store.js?v=20261110c";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261110c";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261110c";
 import {
   initCalls,
   onCustomersChanged,
@@ -46,11 +46,11 @@ import {
   buildFirmActivitySection,
   firmStatusHtml,
   callFirm,
-} from "./js/calls-ui.js?v=20261110a";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261110a";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261110a";
-import { pickSaying } from "./js/sayings.js?v=20261110a";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261110a";
+} from "./js/calls-ui.js?v=20261110c";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261110c";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261110c";
+import { pickSaying } from "./js/sayings.js?v=20261110c";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261110c";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -510,7 +510,11 @@ function maybeShowIntro() {
   overlay.addEventListener("click", () => close(true));
   overlay.addEventListener("touchstart", () => close(true), { passive: true });
   document.addEventListener("keydown", onKey, true);
-  setTimeout(() => close(false), reduced ? 1500 : 3400);
+  // Anzeigedauer: genug Zeit, den Spruch in Ruhe zu lesen. Grundzeit ca.
+  // 6 Sekunden, bei langen Spruechen bis zu 2,5 Sekunden mehr.
+  const sayingLength = (sessionSaying() || "").length;
+  const extraForLength = Math.min(2500, Math.max(0, sayingLength - 70) * 40);
+  setTimeout(() => close(false), (reduced ? 4000 : 5900) + extraForLength);
 }
 
 function friendlyFirstName(name) {

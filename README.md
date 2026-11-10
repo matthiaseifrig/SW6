@@ -25,7 +25,7 @@ der G.B.V.M. GmbH verwendet werden.
 
 **Begrüßung nach dem Login:** einmal pro Anmeldung ein Vollbild „Willkommen
 zurück, Vorname“ mit einem motivierenden Satz (Navy, Gold-Linie); blendet nach
-ca. 3 Sekunden aus, Tippen/Klicken/Taste überspringt. Bei „weniger Bewegung“
+ca. 6 Sekunden aus (bei langen Sätzen bis zu 2,5 s später), Tippen/Klicken/Taste überspringt. Bei „weniger Bewegung“
 im System ohne Animation und nur kurz. Der Satz passt zu Funktion
 (Pre-Sales/Werber/Makler), Tageszeit und Wochentag, wiederholt sich nicht
 direkt und steht danach auch auf der Startseite. **Sätze ergänzen:** in
