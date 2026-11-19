@@ -325,6 +325,15 @@ python3 scripts/convert_excel.py /pfad/zur/neuen/Jubilare_BdSt.xlsx
 
 Das Skript überschreibt beide Dateien im `data/`-Ordner.
 
+## Handbücher im CRM
+
+Die Handbücher liegen im Ordner `handbuch/` und gehören zum CRM:
+`presales.html`, `werber.html`, `makler.html` und eine Übersicht `index.html`.
+Die Kachel **Handbuch** auf der Startseite führt jede Person direkt zum
+Handbuch ihrer Funktion. Wer mehrere Funktionen hat (und der Admin), kommt zur
+Übersicht. Gemeinsamer Stil: `handbuch/handbuch.css` (Schrift lokal, keine
+Google Fonts). Texte ändern: einfach die HTML-Datei bearbeiten.
+
 ## Hinweise & Grenzen
 
 - Die App braucht eine Internetverbindung (Geokodierung, Routing,
