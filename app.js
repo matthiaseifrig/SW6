@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261119a";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261119b";
 import {
   subscribeCustomers,
   addCustomer,
@@ -36,9 +36,9 @@ import {
   rebuildKeysAndPools,
   excludeFirms,
   restoreFirms,
-} from "./js/data-store.js?v=20261119a";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261119a";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261119a";
+} from "./js/data-store.js?v=20261119b";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261119b";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261119b";
 import {
   initCalls,
   onCustomersChanged,
@@ -48,11 +48,11 @@ import {
   buildFirmActivitySection,
   firmStatusHtml,
   callFirm,
-} from "./js/calls-ui.js?v=20261119a";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261119a";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261119a";
-import { pickSaying } from "./js/sayings.js?v=20261119a";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261119a";
+} from "./js/calls-ui.js?v=20261119b";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261119b";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261119b";
+import { pickSaying } from "./js/sayings.js?v=20261119b";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261119b";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -1166,7 +1166,7 @@ function renderView() {
 function visibleTiles() {
   const f = state.functions;
   if (state.role === "owner") return null; // alle
-  const set = new Set(["suche", "neu", "zahlen"]);
+  const set = new Set(["suche", "neu", "zahlen", "handbuch"]);
   if (f.includes("presales")) set.add("anrufen");
   if (f.includes("werber") || f.includes("makler") || !f.length) {
     ["termine", "tour"].forEach((t) => set.add(t));
@@ -1195,6 +1195,23 @@ function renderHome() {
   els.tileZahlenLabel.textContent = isOwner ? "Zahlen & Auswertung" : "Meine Zahlen";
   document.getElementById("home-saying").textContent = randomSaying();
   refreshTileCount();
+  updateHandbookTile(isOwner);
+}
+
+// Kachel "Handbuch": fuehrt direkt zum Handbuch der eigenen Funktion.
+// Admin oder mehrere Funktionen -> Uebersicht mit allen passenden.
+const HANDBOOKS = { presales: "Pre-Sales", werber: "BdSt-Werber", makler: "Makler" };
+function updateHandbookTile(isOwner) {
+  const el = document.getElementById("tile-handbuch");
+  if (!el) return;
+  const own = state.functions.filter((f) => HANDBOOKS[f]);
+  const single = !isOwner && own.length === 1;
+  el.setAttribute("href", single ? "handbuch/" + own[0] + ".html" : "handbuch/");
+  document.getElementById("tile-handbuch-sub").textContent = single
+    ? "Handbuch " + HANDBOOKS[own[0]] + " – Schritt für Schritt"
+    : isOwner
+      ? "Pre-Sales, BdSt-Werber und Makler"
+      : "Schritt für Schritt erklärt";
 }
 
 function refreshCustomerPage() {
