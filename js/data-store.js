@@ -16,14 +16,15 @@ import {
   serverTimestamp,
   arrayUnion,
   arrayRemove,
+  deleteField,
   increment,
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
-import { db } from "./firebase-app.js?v=20261110c";
-import { buildAddressMeta } from "./address-utils.js?v=20261110c";
-import { normalizeFunctions } from "./roles.js?v=20261110c";
-import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261110c";
+import { db } from "./firebase-app.js?v=20261119a";
+import { buildAddressMeta } from "./address-utils.js?v=20261119a";
+import { normalizeFunctions } from "./roles.js?v=20261119a";
+import { buildDedupKeys, fillEmptyFields } from "./dedup.js?v=20261119a";
 
 const CUSTOMERS = "customers";
 const FINANCIALS_DOC = "summary";
@@ -902,4 +903,28 @@ export async function rebuildKeysAndPools(onProgress) {
     }
   }
   return { firms: firms.length, fixed };
+}
+
+
+// ---------- Firmen abwaehlen (pro Person) ----------
+// Wer eine Firma fuer sich ausschliesst (z. B. "zu gross"), sieht sie nicht
+// mehr in Suche, Tour und Anrufliste. Die Firma selbst bleibt erhalten und
+// fuer alle anderen sichtbar; der Admin sieht, wer warum abgewaehlt hat.
+// Rueckgaengig ueber den Filter "Abgewaehlt" in der Suche.
+export async function excludeFirms(ids, { uid, name, reason }) {
+  for (const id of ids) {
+    await updateDoc(doc(db, CUSTOMERS, id), {
+      excludedBy: arrayUnion(uid),
+      ["exclusions." + uid]: { name: name || "", reason: reason || "", at: new Date().toISOString() },
+    });
+  }
+}
+
+export async function restoreFirms(ids, uid) {
+  for (const id of ids) {
+    await updateDoc(doc(db, CUSTOMERS, id), {
+      excludedBy: arrayRemove(uid),
+      ["exclusions." + uid]: deleteField(),
+    });
+  }
 }

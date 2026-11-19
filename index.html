@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>G.B.V.M. GmbH – Kunden &amp; Termine</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="style.css?v=20261110c">
+<link rel="stylesheet" href="style.css?v=20261119a">
 </head>
 <body>
 <header class="topbar">
@@ -263,12 +263,50 @@
         <button type="button" class="filter-chip" data-filter="mitglied">BdSt-Mitglieder</button>
         <button type="button" class="filter-chip" data-filter="kunde">Kunden</button>
         <button type="button" class="filter-chip" data-filter="todo">Offene ToDos</button>
+        <button type="button" class="filter-chip filter-chip-muted" data-filter="abgewaehlt">Abgewählt</button>
+      </div>
+      <div class="search-toolbar">
+        <label class="sort-label" for="search-sort">Sortieren nach</label>
+        <select id="search-sort">
+          <option value="name">Firmenname A–Z</option>
+          <option value="ort">Ort, dann Straße</option>
+          <option value="plz">PLZ, dann Straße</option>
+          <option value="strasse">Straße A–Z</option>
+        </select>
+        <label class="select-all"><input type="checkbox" id="search-select-all"> Alle angezeigten auswählen</label>
       </div>
       <p id="search-count" class="search-count"></p>
       <ul id="search-results" class="search-results hidden"></ul>
       <p id="search-empty" class="hint hidden">Keine Treffer.</p>
       <button type="button" id="search-more" class="secondary hidden">Weitere anzeigen</button>
+      <div id="selection-bar" class="selection-bar hidden" role="region" aria-label="Auswahl">
+        <span id="selection-count" class="selection-count"></span>
+        <button type="button" id="sel-print" class="primary">Als PDF drucken</button>
+        <button type="button" id="sel-exclude" class="secondary">Abwählen</button>
+        <button type="button" id="sel-restore" class="secondary hidden">Wieder aufnehmen</button>
+        <button type="button" id="sel-clear" class="link-btn">Auswahl aufheben</button>
+      </div>
     </section>
+
+    <div id="exclude-overlay" class="confirm-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="exclude-title">
+      <div class="confirm-box">
+        <h3 id="exclude-title">Firmen abwählen</h3>
+        <p id="exclude-text" class="hint"></p>
+        <p class="call-step">Warum?</p>
+        <div class="choice-row" id="exclude-reasons">
+          <button type="button" class="choice-btn" data-reason="Zu groß">Zu groß</button>
+          <button type="button" class="choice-btn" data-reason="Zu klein">Zu klein</button>
+          <button type="button" class="choice-btn" data-reason="Passt nicht zur Zielgruppe">Passt nicht</button>
+          <button type="button" class="choice-btn" data-reason="Gibt es nicht mehr">Gibt es nicht mehr</button>
+          <button type="button" class="choice-btn" data-reason="Sonstiges">Sonstiges</button>
+        </div>
+        <label class="call-field"><span>Notiz (optional)</span><input type="text" id="exclude-note"></label>
+        <div class="call-subform-actions">
+          <button type="button" id="exclude-confirm" class="primary">Abwählen</button>
+          <button type="button" id="exclude-cancel" class="link-btn">Abbrechen</button>
+        </div>
+      </div>
+    </div>
 
       <section class="panel accent" id="add-customer-panel" data-view="neu">
         <div class="collapsible-header" id="add-customer-toggle">
@@ -638,6 +676,8 @@
   </div>
 </div>
 
+<div id="selection-print" class="selection-print" aria-hidden="true"></div>
+
 <footer>
   <div class="data-notice" role="note">
     <div class="data-notice-inner">
@@ -657,6 +697,6 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/qrcode/qrcode.js"></script>
 <script src="data/adressen.js"></script>
-<script type="module" src="app.js?v=20261110c"></script>
+<script type="module" src="app.js?v=20261119a"></script>
 </body>
 </html>

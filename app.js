@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261110c";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261119a";
 import {
   subscribeCustomers,
   addCustomer,
@@ -34,9 +34,11 @@ import {
   updateUserProfile,
   lookupFirmKeys,
   rebuildKeysAndPools,
-} from "./js/data-store.js?v=20261110c";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261110c";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261110c";
+  excludeFirms,
+  restoreFirms,
+} from "./js/data-store.js?v=20261119a";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261119a";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261119a";
 import {
   initCalls,
   onCustomersChanged,
@@ -46,11 +48,11 @@ import {
   buildFirmActivitySection,
   firmStatusHtml,
   callFirm,
-} from "./js/calls-ui.js?v=20261110c";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261110c";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261110c";
-import { pickSaying } from "./js/sayings.js?v=20261110c";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261110c";
+} from "./js/calls-ui.js?v=20261119a";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261119a";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261119a";
+import { pickSaying } from "./js/sayings.js?v=20261119a";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261119a";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -86,6 +88,11 @@ const state = {
   pendingCancel: null, // { customerId, visitId, field }
   activeSearchFilter: "alle", // siehe Filter-Knoepfe in der Suche
   searchLimit: 60,
+  searchSort: "name", // name | ort | plz | strasse
+  selected: new Set(), // ausgewaehlte Firmen (IDs) in der Suche
+  lastSearchList: [],
+  allCustomers: [], // inkl. selbst abgewaehlter Firmen
+  excludedCustomers: [], // von mir abgewaehlte Firmen
   openCustomerId: new URLSearchParams(location.search).get("customer") || null,
   customerPageScrolled: false,
   dedupIndex: null, // { index, loadedAt } - alle Firmen fuer die Dublettenpruefung
@@ -130,6 +137,16 @@ function cacheEls() {
   els.filterChips = document.querySelectorAll(".search-filters .filter-chip");
   els.searchCount = document.getElementById("search-count");
   els.searchMore = document.getElementById("search-more");
+  els.searchSort = document.getElementById("search-sort");
+  els.searchSelectAll = document.getElementById("search-select-all");
+  els.selectionBar = document.getElementById("selection-bar");
+  els.selectionCount = document.getElementById("selection-count");
+  els.selPrint = document.getElementById("sel-print");
+  els.selExclude = document.getElementById("sel-exclude");
+  els.selRestore = document.getElementById("sel-restore");
+  els.selClear = document.getElementById("sel-clear");
+  els.excludeOverlay = document.getElementById("exclude-overlay");
+  els.selectionPrint = document.getElementById("selection-print");
 
   els.addCustomerToggle = document.getElementById("add-customer-toggle");
   els.addCustomerForm = document.getElementById("add-customer-form");
@@ -259,6 +276,43 @@ function bindStaticEvents() {
 
   els.searchInput.addEventListener("input", onSearchInput);
   els.filterChips.forEach((b) => b.addEventListener("click", () => onFilterChipClick(b.dataset.filter)));
+  els.searchSort.addEventListener("change", () => {
+    state.searchSort = els.searchSort.value;
+    try {
+      localStorage.setItem("gbvm-search-sort", state.searchSort);
+    } catch (e) {
+      /* egal */
+    }
+    applySearchFiltersAndRender();
+  });
+  try {
+    const savedSort = localStorage.getItem("gbvm-search-sort");
+    if (savedSort && SEARCH_SORTS[savedSort]) {
+      state.searchSort = savedSort;
+      els.searchSort.value = savedSort;
+    }
+  } catch (e) {
+    /* egal */
+  }
+  els.searchSelectAll.addEventListener("change", () => {
+    state.lastSearchList.forEach((c) => (els.searchSelectAll.checked ? state.selected.add(c.id) : state.selected.delete(c.id)));
+    applySearchFiltersAndRender();
+  });
+  els.selClear.addEventListener("click", () => {
+    state.selected.clear();
+    applySearchFiltersAndRender();
+  });
+  els.selPrint.addEventListener("click", printSelection);
+  els.selExclude.addEventListener("click", () => openExcludeDialog(selectedFirms()));
+  els.selRestore.addEventListener("click", onRestoreSelected);
+  document.querySelectorAll("#exclude-reasons .choice-btn").forEach((b) =>
+    b.addEventListener("click", () => {
+      document.querySelectorAll("#exclude-reasons .choice-btn").forEach((x) => x.classList.toggle("active", x === b));
+      state.excludeReason = b.dataset.reason;
+    })
+  );
+  document.getElementById("exclude-cancel").addEventListener("click", () => els.excludeOverlay.classList.add("hidden"));
+  document.getElementById("exclude-confirm").addEventListener("click", onExcludeConfirm);
   els.searchMore.addEventListener("click", () => {
     state.searchLimit += 60;
     applySearchFiltersAndRender();
@@ -615,7 +669,12 @@ function subscribeToCustomers() {
   state.unsubscribeCustomers = subscribeCustomers(
     scope,
     (rows) => {
-      state.customers = rows;
+      // Von mir abgewaehlte Firmen bleiben in der Datenbank, werden mir aber
+      // in Suche, Tour und Anrufliste nicht mehr angezeigt.
+      const me = state.user.uid;
+      state.allCustomers = rows;
+      state.excludedCustomers = rows.filter((c) => (c.excludedBy || []).includes(me));
+      state.customers = rows.filter((c) => !(c.excludedBy || []).includes(me));
       regroupByCity();
       populateCitySelect();
       if (selectedCities().length) onCityChange();
@@ -976,7 +1035,7 @@ async function openStatDetail(stat) {
 // Firma aus der geladenen Liste - oder (z. B. fremde Firma bei
 // ausgeschaltetem "Alle Firmen anzeigen") einzeln nachladen.
 async function findCustomerAnywhere(id) {
-  const meta = state.customers.find((c) => c.id === id);
+  const meta = state.customers.find((c) => c.id === id) || state.allCustomers.find((c) => c.id === id);
   if (meta) return meta;
   try {
     return await getCustomer(id);
@@ -1144,7 +1203,7 @@ function refreshCustomerPage() {
     return;
   }
   const id = state.openCustomerId;
-  const meta = state.customers.find((c) => c.id === id);
+  const meta = state.customers.find((c) => c.id === id) || state.allCustomers.find((c) => c.id === id);
   if (meta) {
     renderCustomerPage(meta);
     return;
@@ -1276,6 +1335,15 @@ async function renderCustomerPage(meta) {
     const openBtn = Array.from(todoSection.querySelectorAll("button")).find((x) => /hinzufügen|ändern/i.test(x.textContent));
     if (openBtn) openBtn.click();
     reveal(todoCard);
+  });
+  const iExcluded = (meta.excludedBy || []).includes(state.user.uid);
+  tile(iExcluded ? "Wieder aufnehmen" : "Für mich abwählen", iExcluded ? "Firma wieder in deine Listen" : "z. B. zu groß – Daten bleiben erhalten", async () => {
+    if (iExcluded) {
+      await restoreFirms([meta.id], state.user.uid);
+      toast("„" + meta.unternehmen + "“ wieder aufgenommen.");
+    } else {
+      openExcludeDialog([meta]);
+    }
   });
   tile("Ansprechpartner", "Hinzufügen oder ansehen", () => {
     const input = contactsSection.querySelector("input");
@@ -1911,7 +1979,7 @@ function readAddCustomerFields() {
 // anzeigen" an, ist die Live-Liste schon vollstaendig; sonst einmal laden
 // und 2 Minuten zwischenspeichern.
 async function getDedupIndex(force) {
-  if (state.scopeAll || state.role !== "owner") return buildIndex(state.customers.slice());
+  if (state.scopeAll || state.role !== "owner") return buildIndex((state.allCustomers.length ? state.allCustomers : state.customers).slice());
   const fresh = state.dedupIndex && Date.now() - state.dedupIndex.loadedAt < 120000;
   if (!force && fresh) return state.dedupIndex.index;
   const firms = await getAllCustomers();
@@ -2085,7 +2153,7 @@ function finishAddCustomer(message) {
 async function foreignDuplicate(fields) {
   if (state.role === "owner") return null;
   const keys = buildDedupKeys(fields);
-  const own = new Set(state.customers.map((c) => c.id));
+  const own = new Set((state.allCustomers.length ? state.allCustomers : state.customers).map((c) => c.id));
   const hits = (await lookupFirmKeys(keys)).filter((h) => !own.has(h.customerId));
   if (!hits.length) return null;
   const hard = hits.some((h) => !h.key.startsWith("tel:"));
@@ -3539,13 +3607,31 @@ const SEARCH_FILTERS = {
   mitglied: (c) => Boolean(c.membershipSigned),
   kunde: (c) => Boolean(c.isMaklerKunde),
   todo: (c) => Boolean(c.openTodo && c.openTodo.text),
+  abgewaehlt: () => true, // Liste kommt aus state.excludedCustomers
 };
+
+// Hausnummer-bewusster Vergleich ("Hauptstr. 2" vor "Hauptstr. 10")
+function cmpText(a, b) {
+  return String(a || "").localeCompare(String(b || ""), "de", { numeric: true, sensitivity: "base" });
+}
+const SEARCH_SORTS = {
+  name: (a, b) => cmpText(a.unternehmen, b.unternehmen),
+  ort: (a, b) => cmpText(a.ort, b.ort) || cmpText(a.strasse, b.strasse) || cmpText(a.unternehmen, b.unternehmen),
+  plz: (a, b) => cmpText(a.plz, b.plz) || cmpText(a.strasse, b.strasse) || cmpText(a.unternehmen, b.unternehmen),
+  strasse: (a, b) => cmpText(a.strasse, b.strasse) || cmpText(a.ort, b.ort) || cmpText(a.unternehmen, b.unternehmen),
+};
+function groupLabel(c, sort) {
+  if (sort === "ort") return c.ort || "(ohne Ort)";
+  if (sort === "plz") return (c.plz || "(ohne PLZ)") + (c.ort ? " " + c.ort : "");
+  if (sort === "strasse") return ((c.strasse || "#").trim().charAt(0) || "#").toUpperCase();
+  return ((c.unternehmen || "#").trim().charAt(0) || "#").toUpperCase();
+}
 
 function applySearchFiltersAndRender() {
   const filter = state.activeSearchFilter || "alle";
   els.filterChips.forEach((b) => b.classList.toggle("active", b.dataset.filter === filter));
   const q = els.searchInput.value.trim().toLowerCase();
-  let list = state.customers.filter(SEARCH_FILTERS[filter] || (() => true));
+  let list = filter === "abgewaehlt" ? state.excludedCustomers.slice() : state.customers.filter(SEARCH_FILTERS[filter] || (() => true));
   if (q) list = list.filter((c) => SEARCH_FIELDS.some((f) => (c[f] || "").toLowerCase().includes(q)));
   if (filter === "zuletzt") {
     const order = new Map(loadRecent().map((r, i) => [r.id, i]));
@@ -3554,11 +3640,15 @@ function applySearchFiltersAndRender() {
     const key = (c) => (filter === "termin" ? (c.nextAppointment || {}).date : (c.callback || {}).date || (c.openTodo || {}).dueDate) || "9999";
     list.sort((a, b) => key(a).localeCompare(key(b)));
   } else {
-    list.sort((a, b) => (a.unternehmen || "").localeCompare(b.unternehmen || "", "de"));
+    list.sort(SEARCH_SORTS[state.searchSort] || SEARCH_SORTS.name);
   }
-  const labels = { alle: "Firmen", zuletzt: "zuletzt angesehen", wiedervorlage: "mit fälliger Wiedervorlage", termin: "mit offenem Termin", neu: "noch nicht kontaktiert", mitglied: "BdSt-Mitglieder", kunde: "Kunden", todo: "mit offenem ToDo" };
+  state.lastSearchList = list;
+  const labels = { alle: "Firmen", zuletzt: "zuletzt angesehen", wiedervorlage: "mit fälliger Wiedervorlage", termin: "mit offenem Termin", neu: "noch nicht kontaktiert", mitglied: "BdSt-Mitglieder", kunde: "Kunden", todo: "mit offenem ToDo", abgewaehlt: "von dir abgewählt" };
   els.searchCount.textContent = list.length + " " + (filter === "alle" ? (list.length === 1 ? "Firma" : "Firmen") : labels[filter]) + (q ? " für „" + els.searchInput.value.trim() + "“" : "");
-  renderSearchResults(list.slice(0, state.searchLimit), list.length, filter === "alle" && !q);
+  const grouped = !["zuletzt", "wiedervorlage", "termin"].includes(filter);
+  renderSearchResults(list.slice(0, state.searchLimit), list.length, grouped);
+  els.searchSelectAll.checked = list.length > 0 && list.every((c) => state.selected.has(c.id));
+  updateSelectionBar();
   els.searchMore.classList.toggle("hidden", list.length <= state.searchLimit);
   els.searchMore.textContent = "Weitere anzeigen (" + (list.length - Math.min(list.length, state.searchLimit)) + " übrig)";
 }
@@ -3576,7 +3666,7 @@ function renderSearchResults(results, totalCount, withLetters) {
   let lastLetter = null;
   results.forEach((meta) => {
     if (withLetters) {
-      const letter = (meta.unternehmen || "#").trim().charAt(0).toUpperCase();
+      const letter = groupLabel(meta, state.searchSort);
       if (letter !== lastLetter) {
         lastLetter = letter;
         const h = document.createElement("li");
@@ -3586,7 +3676,24 @@ function renderSearchResults(results, totalCount, withLetters) {
       }
     }
     const li = document.createElement("li");
-    li.className = "search-result";
+    li.className = "search-result" + (state.selected.has(meta.id) ? " selected" : "");
+
+    const pick = document.createElement("label");
+    pick.className = "search-pick";
+    pick.title = "Auswählen";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = state.selected.has(meta.id);
+    cb.setAttribute("aria-label", "Auswählen: " + (meta.unternehmen || ""));
+    cb.addEventListener("change", () => {
+      if (cb.checked) state.selected.add(meta.id);
+      else state.selected.delete(meta.id);
+      li.classList.toggle("selected", cb.checked);
+      els.searchSelectAll.checked = state.lastSearchList.length > 0 && state.lastSearchList.every((c) => state.selected.has(c.id));
+      updateSelectionBar();
+    });
+    pick.appendChild(cb);
+    li.appendChild(pick);
 
     const summary = document.createElement("div");
     summary.className = "search-result-summary";
@@ -4005,4 +4112,132 @@ function onFinCsvClick() {
     URL.revokeObjectURL(a.href);
     a.remove();
   }, 1000);
+}
+
+
+// ---------- Auswahl in der Suche: drucken, abwaehlen, wieder aufnehmen ----------
+
+function selectedFirms() {
+  const byId = new Map(state.allCustomers.map((c) => [c.id, c]));
+  return Array.from(state.selected).map((id) => byId.get(id)).filter(Boolean);
+}
+
+function updateSelectionBar() {
+  const n = state.selected.size;
+  els.selectionBar.classList.toggle("hidden", n === 0);
+  els.selectionCount.textContent = n + (n === 1 ? " Firma ausgewählt" : " Firmen ausgewählt");
+  const inExcluded = state.activeSearchFilter === "abgewaehlt";
+  els.selExclude.classList.toggle("hidden", inExcluded);
+  els.selRestore.classList.toggle("hidden", !inExcluded);
+}
+
+// Druck/PDF der ausgewaehlten Firmen - fuer alle Nutzer. Ohne
+// Finanzkennzahlen; mit Eigentumshinweis auf jeder Liste.
+function printSelection() {
+  const sortFn = SEARCH_SORTS[state.searchSort] || SEARCH_SORTS.name;
+  const firms = selectedFirms().sort(sortFn);
+  if (!firms.length) return;
+  const sortLabel = els.searchSort.options[els.searchSort.selectedIndex].textContent;
+  const notice =
+    '<div class="print-notice"><strong>Vertrauliche Geschäftsdaten – Eigentum der G.B.V.M. GmbH.</strong> ' +
+    "Nutzung ausschließlich für vertriebliche Zwecke in Zusammenarbeit mit der G.B.V.M. GmbH. Weitergabe, Vervielfältigung und " +
+    "Nutzung für eigene oder fremde Zwecke sind untersagt; Zuwiderhandlungen werden zivil- und strafrechtlich verfolgt.</div>";
+  let html =
+    '<header class="print-head"><img src="assets/gbvm-logo-nachtblau.svg" alt="G.B.V.M. GmbH"><div>' +
+    "<h1>Firmenliste – " + firms.length + (firms.length === 1 ? " Firma" : " Firmen") + "</h1>" +
+    "<p>Erstellt am " + escapeHtml(new Date().toLocaleDateString("de-DE")) + " von " + escapeHtml(state.user.name || state.user.email) +
+    " · sortiert: " + escapeHtml(sortLabel) + "</p></div></header>" + notice + '<ol class="print-list">';
+  let lastGroup = null;
+  firms.forEach((c) => {
+    const g = state.searchSort === "name" ? null : groupLabel(c, state.searchSort);
+    if (g && g !== lastGroup) {
+      lastGroup = g;
+      html += '<li class="print-group">' + escapeHtml(g) + "</li>";
+    }
+    const addr = [c.strasse, [c.plz, c.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    const people = [c.vertreter1, c.vertreter2, c.vertreter3].filter(Boolean);
+    if (!people.length && c.inhaber) people.push(c.inhaber);
+    const status = [];
+    if (c.membershipSigned) status.push("BdSt-Mitglied");
+    if (c.isMaklerKunde) status.push("Kunde" + (c.sparten && c.sparten.length ? " (" + c.sparten.join(", ") + ")" : ""));
+    if (c.nextAppointment && c.nextAppointment.date) status.push("Termin " + formatPlainDate(c.nextAppointment.date) + (c.nextAppointment.forName ? " · " + c.nextAppointment.forName : ""));
+    if (c.lastVisitedAt) status.push("Besucht " + formatDate(c.lastVisitedAt));
+    if (c.lastCall) status.push("Angerufen " + formatDate(c.lastCall.at));
+    html +=
+      '<li class="print-firm"><div class="pf-name">' + escapeHtml(c.unternehmen) + "</div>" +
+      '<div class="pf-row">' + escapeHtml(addr) + "</div>" +
+      (c.telefon || c.email ? '<div class="pf-row">' + escapeHtml([c.telefon ? "Tel. " + c.telefon : "", c.email || ""].filter(Boolean).join(" · ")) + "</div>" : "") +
+      (people.length ? '<div class="pf-row">Geschäftsführer/Inhaber: ' + escapeHtml(people.join(" | ")) + "</div>" : "") +
+      (status.length ? '<div class="pf-row pf-status">' + escapeHtml(status.join(" · ")) + "</div>" : "") +
+      '<div class="pf-notes">Notizen: ________________________________________________</div></li>';
+  });
+  html += "</ol>" + notice;
+  els.selectionPrint.innerHTML = html;
+
+  // Nur diese Liste drucken - auch fuer Kolleg:innen (sonst ist Drucken gesperrt)
+  const hadNoPrint = document.body.classList.contains("no-print");
+  document.body.classList.remove("no-print");
+  document.body.classList.add("printing-selection");
+  const done = () => {
+    document.body.classList.remove("printing-selection");
+    if (hadNoPrint) document.body.classList.add("no-print");
+    window.removeEventListener("afterprint", done);
+  };
+  window.addEventListener("afterprint", done);
+  // Logo laden lassen, dann Druckdialog
+  setTimeout(() => {
+    window.print();
+    setTimeout(done, 1000);
+  }, 300);
+}
+
+function openExcludeDialog(firms) {
+  if (!firms.length) return;
+  state.excludeTargets = firms.map((f) => f.id);
+  state.excludeReason = null;
+  document.querySelectorAll("#exclude-reasons .choice-btn").forEach((x) => x.classList.remove("active"));
+  document.getElementById("exclude-note").value = "";
+  document.getElementById("exclude-text").textContent =
+    (firms.length === 1 ? "„" + firms[0].unternehmen + "“ wird" : firms.length + " Firmen werden") +
+    " für dich ausgeblendet (Suche, Tour, Anrufliste). Die Daten bleiben vollständig erhalten; " +
+    "über den Filter „Abgewählt“ kannst du sie jederzeit wieder aufnehmen.";
+  els.excludeOverlay.classList.remove("hidden");
+}
+
+async function onExcludeConfirm() {
+  if (!state.excludeReason) {
+    document.getElementById("exclude-text").textContent = "Bitte zuerst einen Grund wählen.";
+    return;
+  }
+  const note = document.getElementById("exclude-note").value.trim();
+  const reason = state.excludeReason + (note ? ": " + note : "");
+  const ids = state.excludeTargets || [];
+  const btn = document.getElementById("exclude-confirm");
+  btn.disabled = true;
+  try {
+    await excludeFirms(ids, { uid: state.user.uid, name: state.user.name || state.user.email, reason });
+    ids.forEach((id) => state.selected.delete(id));
+    els.excludeOverlay.classList.add("hidden");
+    toast(ids.length + (ids.length === 1 ? " Firma" : " Firmen") + " abgewählt (" + state.excludeReason + "). Wiederherstellen über den Filter „Abgewählt“.");
+    if (currentView() === "firma") closeCustomerPage();
+  } catch (err) {
+    document.getElementById("exclude-text").textContent = "Fehler: " + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function onRestoreSelected() {
+  const ids = Array.from(state.selected);
+  if (!ids.length) return;
+  els.selRestore.disabled = true;
+  try {
+    await restoreFirms(ids, state.user.uid);
+    state.selected.clear();
+    toast(ids.length + (ids.length === 1 ? " Firma" : " Firmen") + " wieder aufgenommen.");
+  } catch (err) {
+    toast("Fehler: " + err.message);
+  } finally {
+    els.selRestore.disabled = false;
+  }
 }
