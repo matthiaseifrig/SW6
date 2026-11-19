@@ -12,6 +12,14 @@ Markenkit (Nachtblau, Gold als Akzent, Montserrat – lokal eingebunden unter
 Buchstaben-Trennern) und Filtern: Alle A–Z, Zuletzt angesehen (pro Person im
 Browser gemerkt), Wiedervorlage fällig, Offener Termin, Noch nicht
 kontaktiert, BdSt-Mitglieder, Kunden, Offene ToDos; Anruf-Knopf je Zeile.
+Sortierung wählbar: Firmenname, Ort dann Straße, PLZ dann Straße, Straße
+(Hausnummern richtig: 2 vor 10). Firmen lassen sich per Häkchen auswählen
+(oder „Alle angezeigten auswählen“); die Auswahl kann **jede/r** als PDF
+drucken (nur die ausgewählten Firmen, ohne Finanzkennzahlen, mit
+Eigentumshinweis). **Abwählen:** Wer eine Firma für sich ausschließen will
+(z. B. zu groß), wählt sie mit Grund ab – sie verschwindet nur aus den eigenen
+Listen, bleibt in der Datenbank und bei allen anderen erhalten; der Admin sieht
+„Abgewählt von … : Grund“. Rückgängig über den Filter „Abgewählt“.
 
 **Firmen-Seite:** großer Anruf-Knopf (wählt direkt am Smartphone), E-Mail-,
 Website- und Route-Knopf; Aktions-Kacheln Telefonat eintragen, Besuchsbericht,

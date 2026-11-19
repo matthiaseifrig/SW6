@@ -14,7 +14,7 @@ import {
   assignFirms,
   listUsers,
   inPoolOf,
-} from "./data-store.js?v=20261110c";
+} from "./data-store.js?v=20261119a";
 
 let ctx = null;
 const els = {};
@@ -711,6 +711,14 @@ export async function buildFirmActivitySection(meta) {
 // Kurzinfo fuer die Firmenkarte (Suche, Tour, Firmen-Seite)
 export function firmStatusHtml(meta) {
   const bits = [];
+  // Abgewaehlt: der Admin sieht alle (wer, warum), alle anderen nur die eigene
+  const ex = meta.exclusions || {};
+  Object.entries(ex).forEach(([uid, e]) => {
+    if (!e) return;
+    if (ctx && ctx.state && (ctx.state.role === "owner" || uid === ctx.state.user.uid)) {
+      bits.push('<span class="status-chip stop">Abgewählt von ' + esc(uid === ctx.state.user.uid ? "dir" : e.name || "?") + (e.reason ? ": " + esc(e.reason) : "") + "</span>");
+    }
+  });
   // Kette: Terminierung (Pre-Sales) -> Aufnahme (Werber) -> Makler-Termin
   if (meta.terminiertVon && meta.terminiertVon.name) bits.push('<span class="status-chip chain">Terminiert: ' + esc(meta.terminiertVon.name) + "</span>");
   if (meta.membershipSigned) bits.push('<span class="status-chip chain">Mitglied' + (meta.memberWonBy ? " · Aufnahme: " + esc(meta.memberWonBy) : "") + "</span>");
