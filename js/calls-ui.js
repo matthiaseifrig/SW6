@@ -14,7 +14,7 @@ import {
   assignFirms,
   listUsers,
   inPoolOf,
-} from "./data-store.js?v=20261119b";
+} from "./data-store.js?v=20261120a";
 
 let ctx = null;
 const els = {};

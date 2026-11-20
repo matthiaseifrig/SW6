@@ -104,9 +104,11 @@ Login und alle Kunden-/Besuchsdaten laufen über ein Firebase-Projekt
   Adresspool `poolUids`) samt deren Anrufen, Terminen und Besuchen – von den
   Firestore-Regeln erzwungen. Nur der Admin („owner“) sieht alle Firmen
   (Schalter „Alle Firmen anzeigen“).
-- **Drucken und Export nur für den Admin:** Kundenliste drucken und
-  „Drucken / PDF“ gibt es nur für „owner“; druckt ein Kollege über den
-  Browser, erscheint nur ein Hinweis statt der Daten. (Abschreiben oder
+- **Drucken und Export:** Die Kundenliste drucken und den Import gibt es nur
+  für „owner“. Kolleg:innen dürfen ihre **Tour** drucken („Drucken / PDF“)
+  und ihre **Auswahl** unter „Firma suchen“ („Als PDF drucken“). Druckt ein
+  Kollege eine andere Seite über den Browser, erscheint nur ein Hinweis
+  statt der Daten. (Abschreiben oder
   Bildschirmfotos lassen sich technisch nicht verhindern.)
 - **Dublettenschutz über alle Firmen:** Damit niemand eine Firma doppelt
   anlegt, die er selbst nicht sieht, gibt es je Firma Prüfschlüssel
