@@ -2,7 +2,7 @@
  * Login/Daten: Firebase (Authentication + Firestore).
  * Geokodierung via OpenStreetMap Nominatim, Routing/Distanzmatrix via OSRM (project-osrm.org).
  */
-import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261119b";
+import { onAuthChange, login, logout, ensureUserDoc } from "./js/firebase-app.js?v=20261120a";
 import {
   subscribeCustomers,
   addCustomer,
@@ -36,9 +36,9 @@ import {
   rebuildKeysAndPools,
   excludeFirms,
   restoreFirms,
-} from "./js/data-store.js?v=20261119b";
-import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261119b";
-import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261119b";
+} from "./js/data-store.js?v=20261120a";
+import { FUNCTIONS, functionLabel, normalizeFunctions } from "./js/roles.js?v=20261120a";
+import { parseNorthDataCsv, decodeCsvBytes } from "./js/northdata-import.js?v=20261120a";
 import {
   initCalls,
   onCustomersChanged,
@@ -48,11 +48,11 @@ import {
   buildFirmActivitySection,
   firmStatusHtml,
   callFirm,
-} from "./js/calls-ui.js?v=20261119b";
-import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261119b";
-import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261119b";
-import { pickSaying } from "./js/sayings.js?v=20261119b";
-import { TAG_OPTIONS } from "./js/tags.js?v=20261119b";
+} from "./js/calls-ui.js?v=20261120a";
+import { initAppointments, onEnterApptView, renderApptStats, refreshTileCount } from "./js/appointments-ui.js?v=20261120a";
+import { buildIndex, addToIndex, findMatches, findDuplicateGroups, buildDedupKeys } from "./js/dedup.js?v=20261120a";
+import { pickSaying } from "./js/sayings.js?v=20261120a";
+import { TAG_OPTIONS } from "./js/tags.js?v=20261120a";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/";
@@ -457,9 +457,9 @@ async function handleAuthChange(user) {
   // Alle im Team sehen alle Firmen (Finanzkennzahlen bleiben gesperrt) -
   // standardmaessig startet die Liste aber mit den eigenen Firmen.
   els.scopeToggleLabel.classList.toggle("hidden", state.role !== "owner");
-  // Drucken / Export nur fuer den Admin
+  // Drucken: Admin ueberall, Kolleg:innen nur Tour + eigene Auswahl
+  // (wird in renderView je Ansicht gesetzt)
   document.body.classList.toggle("no-print", state.role !== "owner");
-  els.printBtn.classList.toggle("hidden", state.role !== "owner");
   els.scopeToggle.checked = false;
   state.scopeAll = false;
 
@@ -1133,6 +1133,10 @@ function renderView() {
   });
   els.viewBar.classList.toggle("view-hidden", view === "home");
   document.body.dataset.screen = view;
+  // Drucken: Admin ueberall; Kolleg:innen nur die Tour (und ihre Auswahl
+  // unter "Firma suchen", siehe printSelection). Sonst druckt der Browser
+  // nur einen Hinweis.
+  if (state.user) document.body.classList.toggle("no-print", state.role !== "owner" && view !== "tour");
   els.viewTitle.textContent = VIEW_TITLES[view] || "";
   document.title = "G.B.V.M. GmbH – " + (VIEW_TITLES[view] || "Kunden & Termine");
   const backBtn = els.viewBar.querySelector(".back-home");
